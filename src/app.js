@@ -188,7 +188,7 @@ function getUploadState() {
 
 // --- INITIALIZATION ---
 function init() {
-    console.log("App Initialized");
+    console.log("ND Studio Pro: Initializing...");
     renderContent();
     
     // Start real-time progress simulation
@@ -209,6 +209,7 @@ function init() {
     });
 
     checkDisclaimer();
+    console.log("ND Studio Pro: Initialization complete.");
 }
 
 function startProgressSimulation() {
@@ -231,42 +232,57 @@ function startProgressSimulation() {
 // --- CORE FUNCTIONS ---
 
 function renderContent() {
-    const app = document.getElementById('app');
-    if (!app) return;
+    try {
+        const app = document.getElementById('app');
+        if (!app) {
+            console.error("Element #app not found!");
+            return;
+        }
 
-    // If no API key or showSetup is true, show setup page
-    if (!state.apiKey || state.showSetup) {
-        app.innerHTML = `
-            ${renderHeader()}
-            <main>
-                ${renderGlobalError()}
-                ${renderSetupPage()}
-            </main>
-            ${renderFooter()}
-        `;
-    } else {
-        const activeGen = GENERATORS.find(g => g.id === state.activeGenerator) || GENERATORS[0];
-        app.innerHTML = `
-            ${renderHeader()}
-            <main>
-                ${renderGlobalError()}
-                ${renderUsageStats()}
-                ${renderModelSelector()}
-                ${renderModelInfo(activeGen)}
-                <div class="upload-section-wrapper">${renderUploadSection(activeGen)}</div>
-                ${renderPromptSection()}
-                ${renderSettings(activeGen)}
-                ${renderGenerateButton(activeGen)}
-                <div id="active-tasks-container">${renderActiveTasks()}</div>
-                <div id="results-container">${renderResults()}</div>
-            </main>
-            ${renderFooter()}
-        `;
-    }
+        // If no API key or showSetup is true, show setup page
+        if (!state.apiKey || state.showSetup) {
+            app.innerHTML = `
+                ${renderHeader()}
+                <main>
+                    ${renderGlobalError()}
+                    ${renderSetupPage()}
+                </main>
+                ${renderFooter()}
+            `;
+        } else {
+            const activeGen = GENERATORS.find(g => g.id === state.activeGenerator) || GENERATORS[0];
+            app.innerHTML = `
+                ${renderHeader()}
+                <main>
+                    ${renderGlobalError()}
+                    ${renderUsageStats()}
+                    ${renderModelSelector()}
+                    ${renderModelInfo(activeGen)}
+                    <div class="upload-section-wrapper">${renderUploadSection(activeGen)}</div>
+                    ${renderPromptSection()}
+                    ${renderSettings(activeGen)}
+                    ${renderGenerateButton(activeGen)}
+                    <div id="active-tasks-container">${renderActiveTasks()}</div>
+                    <div id="results-container">${renderResults()}</div>
+                </main>
+                ${renderFooter()}
+            `;
+        }
 
-    // Re-initialize Lucide icons
-    if (window.lucide) {
-        lucide.createIcons();
+        // Re-initialize Lucide icons
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+    } catch (error) {
+        console.error("Render Error:", error);
+        const app = document.getElementById('app');
+        if (app) {
+            app.innerHTML = `<div style="padding: 20px; color: red; font-family: sans-serif;">
+                <h3>Critical Render Error</h3>
+                <p>${error.message}</p>
+                <pre style="font-size: 10px; opacity: 0.7;">${error.stack}</pre>
+            </div>`;
+        }
     }
 }
 
@@ -2147,4 +2163,26 @@ function acceptDisclaimer() {
 }
 
 // Run App
-init();
+window.addEventListener('DOMContentLoaded', () => {
+    // Expose functions to window for HTML onclick handlers
+    window.saveApiKey = saveApiKey;
+    window.handleStatusClick = handleStatusClick;
+    window.toggleModal = toggleModal;
+    window.acceptDisclaimer = acceptDisclaimer;
+    window.setActiveGenerator = setActiveGenerator;
+    window.triggerUpload = triggerUpload;
+    window.removeFile = removeFile;
+    window.toggleUrlInput = toggleUrlInput;
+    window.generate = generate;
+    window.pollTaskStatus = pollTaskStatus;
+    window.cancelTask = cancelTask;
+    window.syncTasks = syncTasks;
+    window.editWithSeedream = editWithSeedream;
+    window.editPrompt = editPrompt;
+    window.regeneratePrompt = regeneratePrompt;
+    window.deleteResult = deleteResult;
+    window.clearGlobalError = clearGlobalError;
+    window.updateSetting = updateSetting;
+
+    init();
+});

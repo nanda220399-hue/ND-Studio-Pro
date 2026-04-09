@@ -1,8 +1,8 @@
 {
-  "apiKey": "AIzaSyC8n-FbVfdRCPlLQqQ8ax9GHoAQEBGqQY0",
+  "apiKey": "PASTE_YOUR_API_KEY_HERE",
   "authDomain": "nd-studio-3ff81.firebaseapp.com",
   "projectId": "nd-studio-3ff81",
   "storageBucket": "nd-studio-3ff81.appspot.com",
   "messagingSenderId": "788696610459",
-  "appId": "1:788696610459:web:12e896626da62faff5383e"
+  "appId": "PASTE_YOUR_APP_ID_HERE"
 }
