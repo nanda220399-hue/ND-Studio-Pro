@@ -372,8 +372,8 @@ function renderSetupPage() {
         <div class="setup-page">
             <div class="setup-hero">
                 <div class="setup-logo-large">
-                    <img src="https://img.icons8.com/?size=160&id=67587&format=png" style="width: 48px; height: 48px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">
-                    <i data-lucide="zap" class="emoji-fallback" style="display:none; width: 48px; height: 48px;"></i>
+                    <img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 48px; height: 48px; filter: drop-shadow(0 0 4px rgba(93, 95, 239, 0.5));" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">
+                    <i data-lucide="sparkles" class="emoji-fallback" style="display:none; width: 48px; height: 48px;"></i>
                 </div>
                 <h1>Selamat Datang di ND STUDIO PRO</h1>
                 <p>AI Video Generator dengan 20+ model AI</p>
