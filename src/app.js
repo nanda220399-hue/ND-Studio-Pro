@@ -6,6 +6,32 @@
 // --- CONFIG & GENERATORS ---
 const GENERATORS = [
     {
+        id: 'kling-v2-6-motion-control-std',
+        name: 'Kling 2.6 Motion Control (Std)',
+        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
+        badge: 'V2.6',
+        description: 'Kling 2.6 Standard - Motion Control: Transfer gerakan dari video ke gambar.',
+        inputs: ['image', 'video', 'prompt'],
+        outputType: 'video',
+        settings: { orientation: true, cfg: true },
+        endpoint: 'https://api.freepik.com/v1/ai/video/kling-v2-6-motion-control-std',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/image-to-video/kling-v2-6',
+        pollingType: 'path'
+    },
+    {
+        id: 'kling-v2-6-motion-control-pro',
+        name: 'Kling 2.6 Motion Control (Pro)',
+        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
+        badge: 'V2.6 PRO',
+        description: 'Kling 2.6 Pro - Motion Control: Kualitas lebih tinggi dan gerakan lebih presisi.',
+        inputs: ['image', 'video', 'prompt'],
+        outputType: 'video',
+        settings: { orientation: true, cfg: true },
+        endpoint: 'https://api.freepik.com/v1/ai/video/kling-v2-6-motion-control-pro',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/image-to-video/kling-v2-6',
+        pollingType: 'path'
+    },
+    {
         id: 'seedance-1-5-pro',
         name: 'Seedance 1.5 Pro',
         icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
@@ -84,32 +110,6 @@ const GENERATORS = [
         pollingType: 'path'
     },
     {
-        id: 'kling-v2-6-motion-control-std',
-        name: 'Kling 2.6 Motion Control (Std)',
-        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
-        badge: 'V2.6',
-        description: 'Kling 2.6 Standard - Motion Control: Transfer gerakan dari video ke gambar.',
-        inputs: ['image', 'video', 'prompt'],
-        outputType: 'video',
-        settings: { orientation: true, cfg: true },
-        endpoint: 'https://api.freepik.com/v1/ai/video/kling-v2-6-motion-control-std',
-        statusEndpoint: 'https://api.freepik.com/v1/ai/image-to-video/kling-v2-6',
-        pollingType: 'path'
-    },
-    {
-        id: 'kling-v2-6-motion-control-pro',
-        name: 'Kling 2.6 Motion Control (Pro)',
-        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
-        badge: 'V2.6 PRO',
-        description: 'Kling 2.6 Pro - Motion Control: Kualitas lebih tinggi dan gerakan lebih presisi.',
-        inputs: ['image', 'video', 'prompt'],
-        outputType: 'video',
-        settings: { orientation: true, cfg: true },
-        endpoint: 'https://api.freepik.com/v1/ai/video/kling-v2-6-motion-control-pro',
-        statusEndpoint: 'https://api.freepik.com/v1/ai/image-to-video/kling-v2-6',
-        pollingType: 'path'
-    },
-    {
         id: 'seedream-4-5-edit',
         name: 'SeeDream 4.5 Edit',
         icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=108634&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎨</span></div>',
@@ -120,6 +120,19 @@ const GENERATORS = [
         settings: { aspect_ratio: 'seedream', seed: true, safety_checker: true },
         endpoint: 'https://api.freepik.com/v1/ai/text-to-image/seedream-v4-5-edit',
         statusEndpoint: 'https://api.freepik.com/v1/ai/text-to-image/seedream-v4-5-edit',
+        pollingType: 'path'
+    },
+    {
+        id: 'elevenlabs-turbo-v2-5',
+        name: 'Voice Over',
+        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=113637&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎙️</span></div>',
+        badge: 'NEW',
+        description: 'Voice Over - High-quality AI voice generation using ElevenLabs Turbo v2.5.',
+        inputs: ['prompt'],
+        outputType: 'audio',
+        settings: { voice: true, stability: true, similarity_boost: true, speed: true, use_speaker_boost: true },
+        endpoint: 'https://api.freepik.com/v1/ai/voiceover/elevenlabs-turbo-v2-5',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/voiceover/elevenlabs-turbo-v2-5',
         pollingType: 'path'
     }
 ];
@@ -144,7 +157,12 @@ let state = {
         guidance_scale: 7.5,
         steps: 25,
         seed: '',
-        style: 'Realistic'
+        style: 'Realistic',
+        voice: '21m00Tcm4TlvDq8ikWAM',
+        stability: 0.5,
+        similarity_boost: 0.2,
+        speed: 1,
+        use_speaker_boost: true
     },
     activeTasks: [],
     completedResults: [],
@@ -311,8 +329,8 @@ function renderHeader() {
         <header>
             <div class="header-left">
                 <div class="logo">
-                    <img src="https://img.icons8.com/?size=160&id=67587&format=png" style="width: 24px; height: 24px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">
-                    <i data-lucide="zap" class="emoji-fallback" style="display:none;"></i>
+                    <img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 24px; height: 24px; filter: drop-shadow(0 0 2px rgba(93, 95, 239, 0.5));" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">
+                    <i data-lucide="sparkles" class="emoji-fallback" style="display:none;"></i>
                 </div>
                 <div class="brand-name">ND STUDIO PRO</div>
             </div>
@@ -555,13 +573,17 @@ function renderPromptSection() {
         placeholder = "Describe your image (e.g. cinematic portrait, ultra realistic, 4k, soft lighting)";
     } else if (activeGen.id === 'seedance-1-5-pro') {
         placeholder = "Describe your video (e.g. cinematic scene, person talking, realistic motion)";
+    } else if (activeGen.id === 'elevenlabs-turbo-v2-5') {
+        placeholder = "Enter text for voice over (supports multiple languages)";
     }
+
+    const maxChars = activeGen.id === 'elevenlabs-turbo-v2-5' ? 40000 : 2500;
 
     return `
         <div class="prompt-section">
             <textarea class="prompt-textarea" placeholder="${placeholder}" 
-                      oninput="updatePrompt(this.value)">${state.currentPrompt}</textarea>
-            <div class="prompt-counter">${state.currentPrompt.length}/2500</div>
+                      oninput="updatePrompt(this.value)" maxlength="${maxChars}">${state.currentPrompt}</textarea>
+            <div class="prompt-counter">${state.currentPrompt.length}/${maxChars}</div>
         </div>
     `;
 }
@@ -750,6 +772,85 @@ function renderSettings(gen) {
                 </div>
             ` : ''}
 
+            ${gen.settings.voice ? `
+                <div class="setting-item">
+                    <div class="setting-label"><span>Voice Selector</span></div>
+                    <select class="setting-select" onchange="if(this.value === 'custom'){ document.getElementById('custom-voice-container').style.display = 'block'; } else { document.getElementById('custom-voice-container').style.display = 'none'; updateSetting('voice', this.value); }">
+                        <option value="21m00Tcm4TlvDq8ikWAM" ${state.settings.voice === '21m00Tcm4TlvDq8ikWAM' ? 'selected' : ''}>Adam (Male)</option>
+                        <option value="EXAVITQu4vr4xnSDxMaL" ${state.settings.voice === 'EXAVITQu4vr4xnSDxMaL' ? 'selected' : ''}>Rachel (Female)</option>
+                        <option value="aEO01A4wXgrby6St4D4o" ${state.settings.voice === 'aEO01A4wXgrby6St4D4o' ? 'selected' : ''}>Bella (Female)</option>
+                        <option value="TxGEqnHW47ic3KoP1L9U" ${state.settings.voice === 'TxGEqnHW47ic3KoP1L9U' ? 'selected' : ''}>Josh (Male)</option>
+                        <option value="custom" ${!['21m00Tcm4TlvDq8ikWAM', 'EXAVITQu4vr4xnSDxMaL', 'aEO01A4wXgrby6St4D4o', 'TxGEqnHW47ic3KoP1L9U'].includes(state.settings.voice) ? 'selected' : ''}>Custom Voice ID...</option>
+                    </select>
+                </div>
+                <div id="custom-voice-container" class="setting-item" style="display: ${!['21m00Tcm4TlvDq8ikWAM', 'EXAVITQu4vr4xnSDxMaL', 'aEO01A4wXgrby6St4D4o', 'TxGEqnHW47ic3KoP1L9U'].includes(state.settings.voice) ? 'block' : 'none'}; margin-top: -8px;">
+                    <input type="text" class="setting-input" placeholder="Masukkan Voice ID ElevenLabs..." value="${state.settings.voice}" onchange="updateSetting('voice', this.value)">
+                </div>
+            ` : ''}
+
+            ${gen.settings.stability ? `
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span>Stability</span>
+                            <div class="setting-info-tooltip">
+                                <i data-lucide="help-circle"></i>
+                                <span class="tooltip-text">Mengatur seberapa stabil suara yang dihasilkan. Nilai tinggi membuat suara lebih konsisten, nilai rendah memberikan lebih banyak variasi emosi.</span>
+                            </div>
+                        </div>
+                        <span class="setting-value">${state.settings.stability}</span>
+                    </div>
+                    <input type="range" class="setting-slider" min="0" max="1" step="0.05" value="${state.settings.stability}" 
+                           oninput="updateSetting('stability', parseFloat(this.value)); this.previousElementSibling.querySelector('.setting-value').innerText = this.value">
+                </div>
+            ` : ''}
+
+            ${gen.settings.similarity_boost ? `
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span>Similarity Boost</span>
+                            <div class="setting-info-tooltip">
+                                <i data-lucide="help-circle"></i>
+                                <span class="tooltip-text">Meningkatkan kemiripan dengan suara asli. Nilai tinggi memperkuat karakteristik unik suara, namun nilai terlalu tinggi bisa menyebabkan artefak audio.</span>
+                            </div>
+                        </div>
+                        <span class="setting-value">${state.settings.similarity_boost}</span>
+                    </div>
+                    <input type="range" class="setting-slider" min="0" max="1" step="0.05" value="${state.settings.similarity_boost}" 
+                           oninput="updateSetting('similarity_boost', parseFloat(this.value)); this.previousElementSibling.querySelector('.setting-value').innerText = this.value">
+                </div>
+            ` : ''}
+
+            ${gen.settings.speed ? `
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <span>Speed</span>
+                        <span class="setting-value">${state.settings.speed}</span>
+                    </div>
+                    <input type="range" class="setting-slider" min="0.7" max="1.2" step="0.05" value="${state.settings.speed}" 
+                           oninput="updateSetting('speed', parseFloat(this.value)); this.previousElementSibling.querySelector('.setting-value').innerText = this.value">
+                </div>
+            ` : ''}
+
+            ${gen.settings.use_speaker_boost ? `
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span>Speaker Boost</span>
+                            <div class="setting-info-tooltip">
+                                <i data-lucide="help-circle"></i>
+                                <span class="tooltip-text">Meningkatkan kejelasan dan kehadiran suara pembicara agar terdengar lebih profesional dan tajam.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <select class="setting-select" onchange="updateSetting('use_speaker_boost', this.value === 'true')">
+                        <option value="true" ${state.settings.use_speaker_boost !== false ? 'selected' : ''}>Enabled</option>
+                        <option value="false" ${state.settings.use_speaker_boost === false ? 'selected' : ''}>Disabled</option>
+                    </select>
+                </div>
+            ` : ''}
+
             ${gen.settings.negative_prompt ? `
                 <div class="setting-item full-width">
                     <div class="setting-label"><span>Negative Prompt</span></div>
@@ -767,7 +868,9 @@ function renderGenerateButton(gen) {
     const isCooldown = Date.now() < (state.cooldownUntil || 0);
     const disabledAttr = (isUploading || isCooldown) ? 'disabled' : '';
     
-    let btnText = `🚀 Generate ${gen.outputType.charAt(0).toUpperCase() + gen.outputType.slice(1)}`;
+    let btnType = gen.outputType.charAt(0).toUpperCase() + gen.outputType.slice(1);
+    if (gen.id === 'elevenlabs-turbo-v2-5') btnType = 'Voice';
+    let btnText = `🚀 Generate ${btnType}`;
     if (isUploading) btnText = '⏳ Uploading...';
     else if (isCooldown) btnText = '⏳ Cooldown...';
 
@@ -884,6 +987,10 @@ function renderResults() {
                             <div class="result-media-wrapper">
                                 ${res.type === 'video' ? `
                                     <video src="${res.url}" class="result-media" controls playsinline></video>
+                                ` : res.type === 'audio' ? `
+                                    <div class="audio-result-container" style="width: 100%; padding: 20px; background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                                        <audio src="${res.url}" controls style="width: 100%;"></audio>
+                                    </div>
                                 ` : `
                                     <img src="${res.url}" class="result-media">
                                 `}
@@ -1163,7 +1270,7 @@ async function generate() {
         }
 
         let finalPrompt = state.currentPrompt || "";
-        if (finalPrompt) {
+        if (finalPrompt && activeGen.id !== 'elevenlabs-turbo-v2-5') {
             try {
                 if (btn) btn.innerHTML = '🔤 Translating...';
                 const translateRes = await fetch('/api/translate', {
@@ -1269,6 +1376,18 @@ async function generate() {
             if (imageInput) {
                 body.image = ensureHttps(imageInput);
             }
+        } else if (activeGen.id === 'elevenlabs-turbo-v2-5') {
+            if (!finalPrompt) {
+                throw new Error("Wajib masukkan teks untuk Voice Over.");
+            }
+            body = {
+                text: finalPrompt,
+                voice_id: state.settings.voice || '21m00Tcm4TlvDq8ikWAM',
+                stability: state.settings.stability !== undefined ? state.settings.stability : 0.5,
+                similarity_boost: state.settings.similarity_boost !== undefined ? state.settings.similarity_boost : 0.2,
+                speed: state.settings.speed !== undefined ? state.settings.speed : 1,
+                use_speaker_boost: state.settings.use_speaker_boost !== undefined ? state.settings.use_speaker_boost : true
+            };
         }
 
         console.log("Generating with body:", body);
@@ -1405,7 +1524,8 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
         { base: 'https://api.freepik.com/v1/ai/text-to-image/seedream-v4-5-edit', type: 'path' },
         { base: 'https://api.freepik.com/v1/ai/video/seedance-1-5-pro-720p', type: 'path' },
         { base: 'https://api.freepik.com/v1/ai/video/status', type: 'query' },
-        { base: 'https://api.freepik.com/v1/ai/image-to-video/kling-v2-6', type: 'path' }
+        { base: 'https://api.freepik.com/v1/ai/image-to-video/kling-v2-6', type: 'path' },
+        { base: 'https://api.freepik.com/v1/ai/voiceover/elevenlabs-turbo-v2-5', type: 'path' }
     ];
     
     if (fallbackIndex >= fallbacks.length) {
@@ -1517,15 +1637,18 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
             // 1. Direct check in common paths
             const output = taskData.output || taskData;
             videoUrl = 
+                output.audio_url || 
                 output.video_url || 
                 output.url || 
                 (output.video && output.video.url) ||
-                (output.result && (output.result.url || (output.result.video && output.result.video.url))) ||
+                (output.audio && output.audio.url) ||
+                (output.result && (output.result.url || (output.result.video && output.result.video.url) || (output.result.audio && output.result.audio.url))) ||
                 (output.generated && Array.isArray(output.generated) && output.generated[0]) ||
                 (output.items && output.items[0] && output.items[0].url) ||
                 (output.data && output.data.url) ||
                 (taskData.result && taskData.result.url) ||
-                (taskData.video && taskData.video.url);
+                (taskData.video && taskData.video.url) ||
+                (taskData.audio && taskData.audio.url);
 
             // 2. Recursive search fallback if still not found
             if (!videoUrl) {
@@ -1535,7 +1658,7 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
                     // If it's a string, check if it's a URL
                     if (typeof obj === 'string') {
                         const isUrl = obj.startsWith('http') || obj.startsWith('//');
-                        const isMedia = obj.includes('.mp4') || obj.includes('.mov') || obj.includes('.webm') || obj.includes('.jpg') || obj.includes('.png') || obj.includes('.webp') || obj.includes('video') || obj.includes('image') || obj.includes('freepik');
+                        const isMedia = obj.includes('.mp4') || obj.includes('.mov') || obj.includes('.webm') || obj.includes('.jpg') || obj.includes('.png') || obj.includes('.webp') || obj.includes('.mp3') || obj.includes('.wav') || obj.includes('video') || obj.includes('image') || obj.includes('audio') || obj.includes('freepik');
                         if (isUrl && isMedia) return obj;
                         return null;
                     }
@@ -1682,6 +1805,12 @@ function setActiveGenerator(id) {
         state.settings.steps = 25;
         state.settings.style = 'Realistic';
         state.settings.seed = '';
+    } else if (id === 'elevenlabs-turbo-v2-5') {
+        state.settings.voice = '21m00Tcm4TlvDq8ikWAM';
+        state.settings.stability = 0.5;
+        state.settings.similarity_boost = 0.2;
+        state.settings.speed = 1;
+        state.settings.use_speaker_boost = true;
     } else {
         state.settings.orientation = 'video';
         state.settings.cfg_scale = 0.5;
@@ -1840,9 +1969,13 @@ function removeFile(e, type) {
 function updatePrompt(val) {
     state.currentPrompt = val;
     state.generatorPrompts[state.activeGenerator] = val;
+    
+    const activeGen = GENERATORS.find(g => g.id === state.activeGenerator) || GENERATORS[0];
+    const maxChars = activeGen.id === 'elevenlabs-turbo-v2-5' ? 40000 : 2500;
+    
     // Update counter directly for performance, but state is updated
     const counter = document.querySelector('.prompt-counter');
-    if (counter) counter.innerText = `${val.length}/2500`;
+    if (counter) counter.innerText = `${val.length}/${maxChars}`;
 }
 
 function updateCfgValue(val) {
@@ -1926,9 +2059,13 @@ function editPrompt(prompt) {
     const promptInput = document.querySelector('.prompt-textarea');
     if (promptInput) {
         promptInput.value = prompt;
+        
+        const activeGen = GENERATORS.find(g => g.id === state.activeGenerator) || GENERATORS[0];
+        const maxChars = activeGen.id === 'elevenlabs-turbo-v2-5' ? 40000 : 2500;
+        
         // Update counter directly
         const counter = document.querySelector('.prompt-counter');
-        if (counter) counter.innerText = `${prompt.length}/2500`;
+        if (counter) counter.innerText = `${prompt.length}/${maxChars}`;
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
