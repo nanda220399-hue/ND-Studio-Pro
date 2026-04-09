@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ND Studio Pro - Generator</title>
+    <link rel="stylesheet" href="/src/style.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Content will be rendered here by app.js -->
+    </div>
+
+    <!-- Modal Disclaimer -->
+    <div id="modal-disclaimer" class="modal hidden">
+        <div class="modal-content">
+            <h3>Syarat & Ketentuan Penggunaan</h3>
+            <div class="modal-body">
+                <ol>
+                    <li><strong>API Key:</strong> Pengguna wajib memasukkan API Key yang valid untuk menggunakan layanan.</li>
+                    <li><strong>Penggunaan Wajar:</strong> Dilarang melakukan spamming atau eksploitasi sistem.</li>
+                    <li><strong>Biaya & Kredit:</strong> Setiap generasi akan memotong kuota/kredit sesuai model yang dipilih.</li>
+                    <li><strong>Tanggung Jawab:</strong> ND Studio Pro tidak bertanggung jawab atas konten yang dihasilkan pengguna.</li>
+                </ol>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-agree" class="btn-primary">✅ Saya Setuju</button>
+                <button id="btn-close-modal" class="btn-secondary">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-container"></div>
+
+    <script src="/src/app.js"></script>
+</body>
+</html>
