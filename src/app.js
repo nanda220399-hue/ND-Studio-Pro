@@ -175,6 +175,20 @@ let state = {
     globalError: null
 };
 
+async function fetchWithProxy(url, options = {}) {
+    try {
+        // Try direct fetch first
+        const response = await fetch(url, options);
+        // If it's a CORS error, it will throw an exception before returning
+        return response;
+    } catch (e) {
+        console.warn(`Direct fetch to ${url} failed (likely CORS), trying CORS proxy...`, e);
+        // Fallback to a public CORS proxy
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+        return fetch(proxyUrl, options);
+    }
+}
+
 function getUploadState() {
     if (!state.generatorUploads[state.activeGenerator]) {
         state.generatorUploads[state.activeGenerator] = {
@@ -1081,11 +1095,14 @@ async function syncTasks() {
     }
 
     try {
-        const url = new URL('/api/freepik/list', window.location.origin);
-        url.searchParams.append('endpoint', listEndpoint);
-        url.searchParams.append('apiKey', state.apiKey.trim());
-
-        const response = await fetch(url);
+        const response = await fetchWithProxy(listEndpoint, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'x-api-key': state.apiKey.trim(),
+                'x-freepik-api-key': state.apiKey.trim()
+            }
+        });
         const data = await response.json();
 
         if (!response.ok) {
@@ -1289,16 +1306,16 @@ async function generate() {
         if (finalPrompt && activeGen.id !== 'elevenlabs-turbo-v2-5') {
             try {
                 if (btn) btn.innerHTML = '🔤 Translating...';
-                const translateRes = await fetch('/api/translate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: finalPrompt })
-                });
+                const translateUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(finalPrompt)}`;
+                const translateRes = await fetch(translateUrl);
                 if (translateRes.ok) {
-                    const translateData = await translateRes.json();
-                    if (translateData.translatedText && translateData.translatedText !== finalPrompt) {
-                        console.log(`Translated prompt: "${finalPrompt}" -> "${translateData.translatedText}"`);
-                        finalPrompt = translateData.translatedText;
+                    const data = await translateRes.json();
+                    if (data && data[0]) {
+                        const translated = data[0].map(item => item[0]).join('');
+                        if (translated && translated !== finalPrompt) {
+                            console.log(`Translated prompt: "${finalPrompt}" -> "${translated}"`);
+                            finalPrompt = translated;
+                        }
                     }
                 }
                 if (btn) btn.innerHTML = '⏳ Processing...';
@@ -1409,16 +1426,15 @@ async function generate() {
         console.log("Generating with body:", body);
         const currentKey = state.apiKey.trim();
         
-        const response = await fetch('/api/freepik/generate', {
+        const response = await fetchWithProxy(activeGen.endpoint, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'x-api-key': currentKey,
+                'x-freepik-api-key': currentKey
             },
-            body: JSON.stringify({
-                endpoint: activeGen.endpoint,
-                apiKey: currentKey,
-                body: body
-            })
+            body: JSON.stringify(body)
         });
 
         const data = await response.json();
@@ -1558,16 +1574,22 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
     
     let url;
     if (fallback.type === 'list') {
-        url = `/api/freepik/list?endpoint=${encodeURIComponent(statusBase)}&apiKey=${encodeURIComponent(currentKey)}`;
+        url = statusBase;
     } else {
-        url = `/api/freepik/status/${taskId}?endpoint=${encodeURIComponent(statusBase)}&apiKey=${encodeURIComponent(currentKey)}${fallback.type === 'query' ? '&useQuery=true' : ''}`;
+        const baseUrl = statusBase.endsWith('/') ? statusBase.slice(0, -1) : statusBase;
+        url = `${baseUrl}/${taskId}`;
+        if (fallback.type === 'query') {
+            url = `${baseUrl}?task_id=${taskId}`;
+        }
     }
     
     try {
-        const response = await fetch(url, {
+        const response = await fetchWithProxy(url, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json'
+                'Accept': 'application/json',
+                'x-api-key': currentKey,
+                'x-freepik-api-key': currentKey
             }
         });
 
@@ -1925,43 +1947,30 @@ async function handleFileChange(type, input) {
         updateUploadDOM();
 
         try {
-            const response = await fetch('/api/upload', {
+            // Upload to free anonymous hosting (file.io)
+            // This is 100% free and doesn't use your Firebase quota
+            console.log(`Uploading to free public storage: ${file.name}...`);
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const response = await fetch('https://file.io', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    file: base64Result,
-                    name: file.name,
-                    type: file.type
-                })
+                body: formData
             });
-
-            const contentType = response.headers.get("content-type");
-            let data;
             
-            if (contentType && contentType.includes("application/json")) {
-                data = await response.json();
+            if (!response.ok) throw new Error("Gagal mengunggah ke server publik.");
+            
+            const data = await response.json();
+            if (data.success && data.link) {
+                console.log(`File uploaded successfully: ${data.link}`);
+                uploadState.urls[type] = data.link;
             } else {
-                const text = await response.text();
-                if (text.includes("Cookie check") || text.includes("Action required")) {
-                    state.showSetup = true;
-                    renderContent();
-                    throw new Error("Akses diblokir browser. Silakan klik tombol kuning '🔓 Klik untuk Authenticate' di bawah Logo ND STUDIO PRO.");
-                }
-                console.error("Non-JSON response from server:", text);
-                throw new Error("Server mengembalikan respon yang tidak valid (bukan JSON).");
+                throw new Error(data.message || "Gagal mendapatkan link publik.");
             }
-
-            if (!response.ok) throw new Error(data.message || "Gagal mengupload file.");
-
-            const publicUrl = data.url;
-            console.log(`File uploaded successfully. Public URL: ${publicUrl}`);
-            
-            uploadState.urls[type] = publicUrl;
         } catch (error) {
             console.error("Upload error:", error);
-            showToast(error.message || "Gagal mengupload file. Silakan coba lagi.", "error");
+            showToast("Gagal mengupload file ke server publik. Silakan coba lagi.", "error");
             uploadState.files[type] = null;
         } finally {
             uploadState.uploading[type] = false;
