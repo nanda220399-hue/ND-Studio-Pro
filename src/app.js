@@ -132,6 +132,7 @@ let state = {
     uploadedUrls: { image: '', video: '' },
     uploading: { image: false, video: false },
     generatorUploads: {}, // Per-generator upload state
+    generatorPrompts: {}, // Per-generator prompt state
     currentPrompt: '',
     settings: {
         orientation: 'video',
@@ -611,7 +612,7 @@ function renderSettings(gen) {
                             <option value="16:9" ${state.settings.aspect_ratio === '16:9' ? 'selected' : ''}>16:9 (Landscape)</option>
                         ` : gen.settings.aspect_ratio === 'seedance' ? `
                             <option value="widescreen_16_9" ${state.settings.aspect_ratio === 'widescreen_16_9' ? 'selected' : ''}>16:9 (Widescreen)</option>
-                            <option value="portrait_9_16" ${state.settings.aspect_ratio === 'portrait_9_16' ? 'selected' : ''}>9:16 (Portrait)</option>
+                            <option value="social_story_9_16" ${state.settings.aspect_ratio === 'social_story_9_16' ? 'selected' : ''}>9:16 (Portrait)</option>
                             <option value="square_1_1" ${state.settings.aspect_ratio === 'square_1_1' ? 'selected' : ''}>1:1 (Square)</option>
                         ` : `
                             <option value="16:9" ${state.settings.aspect_ratio === '16:9' ? 'selected' : ''}>16:9 (Landscape)</option>
@@ -891,9 +892,6 @@ function renderResults() {
                                         <i data-lucide="download"></i>
                                     </button>
                                     ${res.type === 'image' ? `
-                                    <button class="btn-overlay-action btn-animate" onclick="animateImage('${res.url}')" title="Animate to Video">
-                                        <i data-lucide="play-circle"></i>
-                                    </button>
                                     <button class="btn-overlay-action btn-seedream" onclick="editWithSeedream('${res.url}')" title="Edit with SeeDream">
                                         <i data-lucide="image-plus"></i>
                                     </button>
@@ -1158,16 +1156,32 @@ async function generate() {
             if (!state.currentPrompt) {
                 throw new Error("Wajib masukkan Prompt untuk SeeDream 4.5 Edit.");
             }
-            // Check for Indonesian prompt (simple heuristic)
-            const indonesianWords = ['gambar', 'buatkan', 'tolong', 'sebuah', 'dengan', 'dan', 'yang', 'di', 'ke', 'dari'];
-            const promptWords = state.currentPrompt.toLowerCase().split(' ');
-            const hasIndonesian = promptWords.some(w => indonesianWords.includes(w));
-            if (hasIndonesian) {
-                showToast("⚠️ Peringatan: Gunakan bahasa Inggris untuk hasil prompt yang lebih baik.", "info");
-            }
         } else if (activeGen.id === 'seedance-1-5-pro') {
             if (!state.currentPrompt && !imageInput) {
                 throw new Error("Wajib masukkan Prompt atau Image untuk Seedance 1.5 Pro.");
+            }
+        }
+
+        let finalPrompt = state.currentPrompt || "";
+        if (finalPrompt) {
+            try {
+                if (btn) btn.innerHTML = '🔤 Translating...';
+                const translateRes = await fetch('/api/translate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: finalPrompt })
+                });
+                if (translateRes.ok) {
+                    const translateData = await translateRes.json();
+                    if (translateData.translatedText && translateData.translatedText !== finalPrompt) {
+                        console.log(`Translated prompt: "${finalPrompt}" -> "${translateData.translatedText}"`);
+                        finalPrompt = translateData.translatedText;
+                    }
+                }
+                if (btn) btn.innerHTML = '⏳ Processing...';
+            } catch (e) {
+                console.error("Translation failed, using original prompt", e);
+                if (btn) btn.innerHTML = '⏳ Processing...';
             }
         }
 
@@ -1176,7 +1190,7 @@ async function generate() {
             body = {
                 image_url: ensureHttps(imageInput),
                 video_url: ensureHttps(videoInput),
-                prompt: state.currentPrompt || "", 
+                prompt: finalPrompt, 
                 character_orientation: state.settings.orientation,
                 cfg_scale: state.settings.cfg_scale
             };
@@ -1191,7 +1205,7 @@ async function generate() {
             }
 
             body = {
-                prompt: state.currentPrompt || "",
+                prompt: finalPrompt,
                 start_image_url: ensureHttps(imageInput) || undefined,
                 end_image_url: ensureHttps(videoInput) || undefined,
                 aspect_ratio: ar,
@@ -1207,32 +1221,49 @@ async function generate() {
             if (videoInput) referenceImages.push(ensureHttps(videoInput));
 
             body = {
-                prompt: state.currentPrompt || "",
+                prompt: finalPrompt,
                 reference_images: referenceImages,
                 aspect_ratio: state.settings.aspect_ratio || "square_1_1",
-                seed: state.settings.seed || Math.floor(Math.random() * 4294967295),
+                seed: state.settings.seed !== '' && state.settings.seed !== undefined ? parseInt(state.settings.seed) : Math.floor(Math.random() * 4294967295),
                 enable_safety_checker: state.settings.safety_checker !== undefined ? state.settings.safety_checker : true
             };
         } else if (activeGen.id === 'flux-2-pro') {
-            let prompt = state.currentPrompt || "";
+            let prompt = finalPrompt;
             if (state.settings.style && state.settings.style !== 'Realistic') {
                 prompt = `${state.settings.style} style, ${prompt}`;
             }
+            
+            let width = 1024;
+            let height = 1024;
+            const ar = state.settings.aspect_ratio || "16:9";
+            
+            if (ar === '16:9') {
+                width = 1440;
+                height = 810;
+            } else if (ar === '9:16') {
+                width = 810;
+                height = 1440;
+            } else if (ar === '1:1') {
+                width = 1024;
+                height = 1024;
+            }
+            
             body = {
                 prompt: prompt,
-                aspect_ratio: state.settings.aspect_ratio || "16:9",
+                width: width,
+                height: height,
                 cfg_scale: state.settings.cfg_scale !== undefined ? state.settings.cfg_scale : 0.5,
                 steps: state.settings.steps || 25,
-                seed: state.settings.seed || Math.floor(Math.random() * 4294967295)
+                seed: state.settings.seed !== '' && state.settings.seed !== undefined ? parseInt(state.settings.seed) : Math.floor(Math.random() * 4294967295)
             };
         } else if (activeGen.id === 'seedance-1-5-pro') {
             body = {
-                prompt: state.currentPrompt || "",
+                prompt: finalPrompt,
                 duration: parseInt(state.settings.duration) || 5,
                 generate_audio: state.settings.generate_audio !== undefined ? state.settings.generate_audio : true,
                 camera_fixed: state.settings.camera_fixed !== undefined ? state.settings.camera_fixed : false,
                 aspect_ratio: state.settings.aspect_ratio || "widescreen_16_9",
-                seed: state.settings.seed || -1
+                seed: state.settings.seed !== '' && state.settings.seed !== undefined ? parseInt(state.settings.seed) : -1
             };
             
             if (imageInput) {
@@ -1624,7 +1655,14 @@ function updateUrl(type, val) {
 function setActiveGenerator(id) {
     if (state.activeGenerator === id) return;
     console.log("Model select:", id);
+    
+    // Save current prompt to the old generator before switching
+    state.generatorPrompts[state.activeGenerator] = state.currentPrompt;
+    
     state.activeGenerator = id;
+    
+    // Restore prompt for the new generator
+    state.currentPrompt = state.generatorPrompts[id] || '';
 
     // Reset settings to defaults for the new generator
     if (id === 'kling-v3-std') {
@@ -1637,6 +1675,12 @@ function setActiveGenerator(id) {
         state.settings.duration = '5';
         state.settings.generate_audio = true;
         state.settings.camera_fixed = false;
+        state.settings.seed = '';
+    } else if (id === 'flux-2-pro') {
+        state.settings.aspect_ratio = '16:9';
+        state.settings.cfg_scale = 0.5;
+        state.settings.steps = 25;
+        state.settings.style = 'Realistic';
         state.settings.seed = '';
     } else {
         state.settings.orientation = 'video';
@@ -1674,6 +1718,12 @@ function setActiveGenerator(id) {
         settingsSection.outerHTML = renderSettings(activeGen);
     }
 
+    // Update Prompt Section
+    const promptSection = document.querySelector('.prompt-section');
+    if (promptSection) {
+        promptSection.outerHTML = renderPromptSection();
+    }
+
     // Update Generate Button
     const genBtn = document.querySelector('.generate-container');
     if (genBtn) {
@@ -1689,6 +1739,17 @@ function setActiveGenerator(id) {
 
 function triggerUpload(type) {
     document.getElementById(`file-input-${type}`).click();
+}
+
+function updateUploadDOM() {
+    const uploadSection = document.querySelector('.upload-section-wrapper');
+    if (uploadSection) {
+        const activeGen = GENERATORS.find(g => g.id === state.activeGenerator) || GENERATORS[0];
+        uploadSection.innerHTML = renderUploadSection(activeGen);
+        if (window.lucide) window.lucide.createIcons();
+    } else {
+        renderContent();
+    }
 }
 
 async function handleFileChange(type, input) {
@@ -1709,17 +1770,6 @@ async function handleFileChange(type, input) {
     const uploadState = getUploadState();
     uploadState.uploading[type] = true;
     
-    const updateUploadDOM = () => {
-        const uploadSection = document.querySelector('.upload-section-wrapper');
-        if (uploadSection) {
-            const activeGen = GENERATORS.find(g => g.id === state.activeGenerator) || GENERATORS[0];
-            uploadSection.innerHTML = renderUploadSection(activeGen);
-            if (window.lucide) window.lucide.createIcons();
-        } else {
-            renderContent();
-        }
-    };
-
     updateUploadDOM();
 
     // 1. Show local preview immediately and upload
@@ -1784,19 +1834,12 @@ function removeFile(e, type) {
     uploadState.urls[type] = '';
     uploadState.uploading[type] = false;
     
-    // Update only the upload section
-    const uploadSection = document.querySelector('.upload-section-wrapper');
-    if (uploadSection) {
-        const activeGen = GENERATORS.find(g => g.id === state.activeGenerator) || GENERATORS[0];
-        uploadSection.innerHTML = renderUploadSection(activeGen);
-        if (window.lucide) window.lucide.createIcons();
-    } else {
-        renderContent();
-    }
+    updateUploadDOM();
 }
 
 function updatePrompt(val) {
     state.currentPrompt = val;
+    state.generatorPrompts[state.activeGenerator] = val;
     // Update counter directly for performance, but state is updated
     const counter = document.querySelector('.prompt-counter');
     if (counter) counter.innerText = `${val.length}/2500`;
@@ -1866,17 +1909,6 @@ function deleteResult(index) {
     updateTasksAndResultsDOM();
 }
 
-function animateImage(url) {
-    state.activeGenerator = 'kling-v3-std';
-    const uploadState = getUploadState();
-    uploadState.urls.image = url;
-    uploadState.files.image = null;
-    updateUploadDOM();
-    renderContent();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    showToast("Gambar siap dianimasikan dengan Kling 3.", "success");
-}
-
 function editWithSeedream(url) {
     state.activeGenerator = 'seedream-4-5-edit';
     const uploadState = getUploadState();
@@ -1890,10 +1922,13 @@ function editWithSeedream(url) {
 
 function editPrompt(prompt) {
     state.currentPrompt = prompt;
-    const promptInput = document.querySelector('.prompt-input');
+    state.generatorPrompts[state.activeGenerator] = prompt;
+    const promptInput = document.querySelector('.prompt-textarea');
     if (promptInput) {
         promptInput.value = prompt;
-        updatePromptCounter(prompt);
+        // Update counter directly
+        const counter = document.querySelector('.prompt-counter');
+        if (counter) counter.innerText = `${prompt.length}/2500`;
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -1901,6 +1936,7 @@ function editPrompt(prompt) {
 function regeneratePrompt(prompt, generatorId) {
     state.currentPrompt = prompt;
     state.activeGenerator = generatorId;
+    state.generatorPrompts[generatorId] = prompt;
     renderContent();
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setTimeout(() => {

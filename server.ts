@@ -229,6 +229,32 @@ async function startServer() {
     }
   });
 
+  // Endpoint to translate prompt to English using free Google Translate API
+  app.post("/api/translate", async (req, res) => {
+    try {
+      const { text } = req.body;
+      if (!text) {
+        return res.status(400).json({ error: "No text provided" });
+      }
+
+      // Use free Google Translate endpoint (no API key required)
+      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`;
+      const response = await axios.get(url);
+      
+      // The response format is: [[["translated text","original text",null,null,1]],null,"id",null,null,null,1,[]]
+      let translatedText = text;
+      if (response.data && response.data[0]) {
+        translatedText = response.data[0].map((item: any) => item[0]).join('');
+      }
+
+      res.json({ translatedText });
+    } catch (error: any) {
+      console.error("Translation error:", error.message);
+      // Fallback to original text if translation fails
+      res.json({ translatedText: req.body.text });
+    }
+  });
+
   // Proxy for Freepik API to avoid CORS issues
   app.post("/api/freepik/generate", async (req, res) => {
     const { endpoint, apiKey, body } = req.body;
@@ -240,6 +266,7 @@ async function startServer() {
 
     const cleanKey = apiKey.trim();
     console.log(`Proxying POST to ${endpoint}. Key length: ${cleanKey.length}`);
+    console.log(`Proxy POST Body:`, JSON.stringify(body, null, 2));
     
     try {
       const response = await fetch(endpoint, {
@@ -269,6 +296,7 @@ async function startServer() {
         console.error(`Freepik API Error (${response.status}) POST to ${endpoint}:`, JSON.stringify(data, null, 2));
       } else {
         console.log(`Freepik API Success POST to ${endpoint}`);
+        console.log(`Freepik API Response Data:`, JSON.stringify(data, null, 2));
       }
       
       res.status(response.status).json(data);
