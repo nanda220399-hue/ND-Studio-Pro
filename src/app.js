@@ -1947,30 +1947,62 @@ async function handleFileChange(type, input) {
         updateUploadDOM();
 
         try {
-            // Upload to free anonymous hosting (file.io)
-            // This is 100% free and doesn't use your Firebase quota
-            console.log(`Uploading to free public storage: ${file.name}...`);
+            // Multi-provider upload for better reliability
+            console.log(`Uploading ${file.name} to public storage...`);
             
-            const formData = new FormData();
-            formData.append('file', file);
-            
-            const response = await fetch('https://file.io', {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (!response.ok) throw new Error("Gagal mengunggah ke server publik.");
-            
-            const data = await response.json();
-            if (data.success && data.link) {
-                console.log(`File uploaded successfully: ${data.link}`);
-                uploadState.urls[type] = data.link;
+            let publicUrl = null;
+            let lastError = null;
+
+            // Provider 1: Uguu.se (Very reliable for CORS)
+            try {
+                const formData = new FormData();
+                formData.append('files[]', file);
+                const res = await fetch('https://uguu.se/upload.php', { method: 'POST', body: formData });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.files && data.files[0]) {
+                        publicUrl = data.files[0].url;
+                    }
+                }
+            } catch (e) { lastError = e; }
+
+            // Provider 2: Tmpfiles.org (Fallback)
+            if (!publicUrl) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    const res = await fetch('https://tmpfiles.org/api/v1/upload', { method: 'POST', body: formData });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.status === 'success' && data.data && data.data.url) {
+                            publicUrl = data.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+                        }
+                    }
+                } catch (e) { lastError = e; }
+            }
+
+            // Provider 3: File.io (Final Fallback)
+            if (!publicUrl) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    const res = await fetch('https://file.io', { method: 'POST', body: formData });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.success) publicUrl = data.link;
+                    }
+                } catch (e) { lastError = e; }
+            }
+
+            if (publicUrl) {
+                console.log(`File uploaded successfully: ${publicUrl}`);
+                uploadState.urls[type] = publicUrl;
             } else {
-                throw new Error(data.message || "Gagal mendapatkan link publik.");
+                throw lastError || new Error("Semua server upload gagal merespon.");
             }
         } catch (error) {
             console.error("Upload error:", error);
-            showToast("Gagal mengupload file ke server publik. Silakan coba lagi.", "error");
+            showToast("Gagal mengupload file. Koneksi internet mungkin memblokir server upload. Silakan coba lagi.", "error");
             uploadState.files[type] = null;
         } finally {
             uploadState.uploading[type] = false;
@@ -2180,6 +2212,7 @@ window.addEventListener('DOMContentLoaded', () => {
     window.acceptDisclaimer = acceptDisclaimer;
     window.setActiveGenerator = setActiveGenerator;
     window.triggerUpload = triggerUpload;
+    window.handleFileChange = handleFileChange;
     window.removeFile = removeFile;
     window.toggleUrlInput = toggleUrlInput;
     window.generate = generate;
