@@ -4,6 +4,7 @@
  */
 
 // --- CONFIG & GENERATORS ---
+const ACCESS_CODE = "NDSTUDIO";
 const GENERATORS = [
     {
         id: 'kling-v2-6-motion-control-std',
@@ -172,21 +173,47 @@ let state = {
     queueLimit: 10,
     toasts: [],
     showSetup: false,
-    globalError: null
+    globalError: null,
+    isAuthorized: localStorage.getItem('nd_authorized') === 'true'
 };
 
 async function fetchWithProxy(url, options = {}) {
-    try {
-        // Try direct fetch first
-        const response = await fetch(url, options);
-        // If it's a CORS error, it will throw an exception before returning
-        return response;
-    } catch (e) {
-        console.warn(`Direct fetch to ${url} failed (likely CORS), trying CORS proxy...`, e);
-        // Fallback to a public CORS proxy
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-        return fetch(proxyUrl, options);
+    const proxies = [
+        // Path 1: Direct (Might work if Freepik updates CORS)
+        { type: 'direct', url: url },
+        // Path 2: ThingProxy (Good for POST with headers)
+        { type: 'thingproxy', url: `https://thingproxy.freeboard.io/fetch/${url}` },
+        // Path 3: CorsProxy.io
+        { type: 'corsproxy', url: `https://corsproxy.io/?${encodeURIComponent(url)}` },
+        // Path 4: Cloudflare Worker Proxy (Generic fallback)
+        { type: 'worker', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}` }
+    ];
+
+    let lastError = null;
+
+    for (const proxy of proxies) {
+        try {
+            console.log(`Trying ${proxy.type} fetch to: ${url}`);
+            
+            // For allorigins, we can only do GET reliably
+            if (proxy.type === 'worker' && options.method === 'POST') continue;
+
+            const response = await fetch(proxy.url, options);
+            
+            // If we get a valid response (even if it's an API error like 400/401), return it
+            // We only want to retry on network errors or 5xx errors
+            if (response.ok || (response.status >= 400 && response.status < 500)) {
+                return response;
+            }
+            
+            lastError = new Error(`Proxy ${proxy.type} returned status ${response.status}`);
+        } catch (e) {
+            console.warn(`${proxy.type} fetch failed:`, e.message);
+            lastError = e;
+        }
     }
+
+    throw lastError || new Error("Gagal menghubungi server API. Silakan coba gunakan VPN atau ganti koneksi internet.");
 }
 
 function getUploadState() {
@@ -253,6 +280,19 @@ function renderContent() {
             return;
         }
 
+        // If not authorized, show access code page
+        if (!state.isAuthorized) {
+            app.innerHTML = `
+                ${renderHeader()}
+                <main>
+                    ${renderAccessCodePage()}
+                </main>
+                ${renderFooter()}
+            `;
+            if (window.lucide) lucide.createIcons();
+            return;
+        }
+
         // If no API key or showSetup is true, show setup page
         if (!state.apiKey || state.showSetup) {
             app.innerHTML = `
@@ -301,6 +341,71 @@ function renderContent() {
 }
 
 // --- UI COMPONENTS ---
+
+function renderAccessCodePage() {
+    return `
+        <div class="setup-page" style="max-width: 400px; margin: 40px auto; animation: fadeIn 0.5s ease-out;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <div style="width: 80px; height: 80px; background: #f3f0ff; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #5d5fef; box-shadow: 0 8px 16px rgba(93, 95, 239, 0.1);">
+                    <i data-lucide="lock" style="width: 40px; height: 40px;"></i>
+                </div>
+                <h2 style="font-size: 24px; font-weight: 800; color: #1a1b1e; margin-bottom: 8px;">Akses Terbatas</h2>
+                <p style="color: #909296; font-size: 14px;">Silakan masukkan kode akses untuk melanjutkan ke ND STUDIO PRO.</p>
+            </div>
+
+            <div class="setup-card" style="background: white; padding: 32px; border-radius: 24px; border: 1px solid #e9ecef; box-shadow: 0 12px 24px rgba(0,0,0,0.05);">
+                <div class="input-group" style="margin-bottom: 24px;">
+                    <label style="display: block; font-size: 13px; font-weight: 600; color: #495057; margin-bottom: 8px;">Kode Akses</label>
+                    <div style="position: relative;">
+                        <i data-lucide="key" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: #adb5bd;"></i>
+                        <input type="password" id="access-code-input" placeholder="Masukkan kode..." style="width: 100%; padding: 14px 14px 14px 44px; border: 2px solid #e9ecef; border-radius: 12px; font-size: 15px; transition: all 0.2s; outline: none;" onkeypress="if(event.key === 'Enter') checkAccessCode()">
+                    </div>
+                </div>
+
+                <button onclick="checkAccessCode()" class="btn-generate" style="width: 100%; padding: 16px; border-radius: 14px; font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; border: none; background: linear-gradient(135deg, #5d5fef 0%, #3f41c2 100%); color: white; box-shadow: 0 8px 20px rgba(93, 95, 239, 0.3); transition: all 0.3s;">
+                    <i data-lucide="unlock"></i>
+                    Buka Akses
+                </button>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #adb5bd;">
+                &copy; 2026 ND STUDIO PRO. All rights reserved.
+            </div>
+        </div>
+        <style>
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-10px); }
+                75% { transform: translateX(10px); }
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        </style>
+    `;
+}
+
+function checkAccessCode() {
+    const input = document.getElementById('access-code-input');
+    if (!input) return;
+    
+    const code = input.value.trim();
+    if (code === ACCESS_CODE) {
+        state.isAuthorized = true;
+        localStorage.setItem('nd_authorized', 'true');
+        showToast("✅ Akses diberikan! Selamat datang.", "success");
+        renderContent();
+    } else {
+        showToast("❌ Kode akses salah. Silakan coba lagi.", "error");
+        input.style.borderColor = "#fa5252";
+        input.style.animation = "shake 0.4s";
+        setTimeout(() => {
+            input.style.borderColor = "#e9ecef";
+            input.style.animation = "";
+        }, 4000);
+    }
+}
 
 function renderGlobalError() {
     if (!state.globalError) return '';
@@ -1437,7 +1542,15 @@ async function generate() {
             body: JSON.stringify(body)
         });
 
-        const data = await response.json();
+        let data;
+        try {
+            data = await response.json();
+        } catch (e) {
+            const text = await response.text();
+            console.error("Failed to parse JSON response:", text);
+            throw new Error("Server mengembalikan respon yang tidak valid. Silakan coba lagi.");
+        }
+
         if (!response.ok) {
             console.error("Full API Error Data:", data);
             
@@ -2225,6 +2338,7 @@ window.addEventListener('DOMContentLoaded', () => {
     window.deleteResult = deleteResult;
     window.clearGlobalError = clearGlobalError;
     window.updateSetting = updateSetting;
+    window.checkAccessCode = checkAccessCode;
 
     init();
 });
