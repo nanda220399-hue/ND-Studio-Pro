@@ -1,10 +1,114 @@
+import { auth, db, googleProvider } from './firebase.js';
+import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { doc, getDoc, setDoc, onSnapshot, collection, updateDoc, query, where, serverTimestamp, getDocFromServer } from 'firebase/firestore';
+
 /**
  * ND Studio Pro - Core Logic (Fixed Functionality)
  * Vanilla JS State-Driven Architecture
  */
 
+// --- STATE MANAGEMENT ---
+let state = {
+    apiKey: '',
+    activeGenerator: 'kling-v3-std',
+    uploadedFiles: { image: null, video: null },
+    uploadedUrls: { image: '', video: '' },
+    uploading: { image: false, video: false },
+    generatorUploads: {}, // Per-generator upload state
+    generatorPrompts: {}, // Per-generator prompt state
+    currentPrompt: '',
+    settings: {
+        orientation: 'video',
+        cfg_scale: 0.5,
+        aspect_ratio: '16:9',
+        duration: '5',
+        negative_prompt: 'blur, distort, and low quality',
+        strength: 0.5,
+        guidance_scale: 7.5,
+        steps: 25,
+        seed: '',
+        style: 'Realistic',
+        voice: '21m00Tcm4TlvDq8ikWAM',
+        stability: 0.5,
+        similarity_boost: 0.2,
+        speed: 1,
+        use_speaker_boost: true
+    },
+    activeTasks: [],
+    completedResults: [],
+    generationHistory: [], // Tracks timestamps of generated tasks for queue limit
+    cooldownUntil: 0, // Tracks when the user can generate again
+    taskLimit: 10,
+    queueLimit: 10,
+    toasts: [],
+    showSetup: false,
+    globalError: null,
+    currentUser: null,
+    userDoc: null,
+    isAuthLoading: true,
+    allUsers: [], // For admin dashboard
+    isAdmin: false,
+    showAdminDashboard: false
+};
+
+// --- FIRESTORE ERROR HANDLING ---
+
+const OperationType = {
+    CREATE: 'create',
+    UPDATE: 'update',
+    DELETE: 'delete',
+    LIST: 'list',
+    GET: 'get',
+    WRITE: 'write',
+};
+
+function handleFirestoreError(error, operationType, path) {
+    const errInfo = {
+        error: error instanceof Error ? error.message : String(error),
+        authInfo: {
+            userId: auth.currentUser?.uid,
+            email: auth.currentUser?.email,
+            emailVerified: auth.currentUser?.emailVerified,
+            isAnonymous: auth.currentUser?.isAnonymous,
+            tenantId: auth.currentUser?.tenantId,
+            providerInfo: auth.currentUser?.providerData.map(provider => ({
+                providerId: provider.providerId,
+                displayName: provider.displayName,
+                email: provider.email,
+                photoUrl: provider.photoURL
+            })) || []
+        },
+        operationType,
+        path
+    };
+    console.error('Firestore Error: ', JSON.stringify(errInfo));
+    
+    if (errInfo.error.includes('the client is offline')) {
+        showToast("❌ Koneksi Database Gagal. Silakan hubungi Admin.", "error");
+    } else if (errInfo.error.includes('insufficient permissions')) {
+        showToast("❌ Akses Ditolak. Anda tidak memiliki izin.", "error");
+    } else {
+        showToast("❌ Terjadi kesalahan database.", "error");
+    }
+    
+    throw new Error(JSON.stringify(errInfo));
+}
+
+async function testFirestoreConnection() {
+    try {
+        // Test connection to a dummy path
+        await getDocFromServer(doc(db, 'test', 'connection'));
+        console.log("Firestore connection test successful.");
+    } catch (error) {
+        if (error instanceof Error && error.message.includes('the client is offline')) {
+            console.error("CRITICAL: Firestore configuration is incorrect or client is offline.");
+            state.globalError = "Koneksi database gagal. Silakan hubungi Admin untuk perbaikan konfigurasi.";
+            renderContent();
+        }
+    }
+}
+
 // --- CONFIG & GENERATORS ---
-const ACCESS_CODE = "NDSTUDIO";
 const GENERATORS = [
     {
         id: 'kling-v2-6-motion-control-std',
@@ -138,44 +242,144 @@ const GENERATORS = [
     }
 ];
 
-// --- STATE MANAGEMENT ---
-let state = {
-    apiKey: localStorage.getItem('nd_api_key') || '',
-    activeGenerator: 'kling-v3-std',
-    uploadedFiles: { image: null, video: null },
-    uploadedUrls: { image: '', video: '' },
-    uploading: { image: false, video: false },
-    generatorUploads: {}, // Per-generator upload state
-    generatorPrompts: {}, // Per-generator prompt state
-    currentPrompt: '',
-    settings: {
-        orientation: 'video',
-        cfg_scale: 0.5,
-        aspect_ratio: '16:9',
-        duration: '5',
-        negative_prompt: 'blur, distort, and low quality',
-        strength: 0.5,
-        guidance_scale: 7.5,
-        steps: 25,
-        seed: '',
-        style: 'Realistic',
-        voice: '21m00Tcm4TlvDq8ikWAM',
-        stability: 0.5,
-        similarity_boost: 0.2,
-        speed: 1,
-        use_speaker_boost: true
-    },
-    activeTasks: [],
-    completedResults: [],
-    generationHistory: [], // Tracks timestamps of generated tasks for queue limit
-    cooldownUntil: 0, // Tracks when the user can generate again
-    taskLimit: 10,
-    queueLimit: 10,
-    toasts: [],
-    showSetup: false,
-    globalError: null,
-    isAuthorized: localStorage.getItem('nd_authorized') === 'true'
-};
+
+// --- AUTH FUNCTIONS ---
+
+function initAuth() {
+    onAuthStateChanged(auth, async (user) => {
+        state.currentUser = user;
+        state.isAuthLoading = false;
+        
+        if (user) {
+            // Check if user is admin based on email
+            state.isAdmin = user.email === "nanda220399@gmail.com";
+            
+            // Get or create user document
+            const userRef = doc(db, 'users', user.uid);
+            let userSnap;
+            try {
+                userSnap = await getDoc(userRef);
+            } catch (error) {
+                handleFirestoreError(error, OperationType.GET, 'users/' + user.uid);
+            }
+            
+            if (!userSnap.exists()) {
+                const newUser = {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL,
+                    isApproved: state.isAdmin, // Admin is auto-approved
+                    role: state.isAdmin ? 'admin' : 'user',
+                    apiKey: '',
+                    createdAt: serverTimestamp()
+                };
+                try {
+                    await setDoc(userRef, newUser);
+                } catch (error) {
+                    handleFirestoreError(error, OperationType.CREATE, 'users/' + user.uid);
+                }
+                state.userDoc = newUser;
+            } else {
+                state.userDoc = userSnap.data();
+                // If user is admin but role is not set, update it
+                if (state.isAdmin && (state.userDoc.role !== 'admin' || !state.userDoc.isApproved)) {
+                    try {
+                        await updateDoc(userRef, { role: 'admin', isApproved: true });
+                    } catch (error) {
+                        handleFirestoreError(error, OperationType.UPDATE, 'users/' + user.uid);
+                    }
+                }
+            }
+
+            // Listen for changes to user document (e.g. approval)
+            onSnapshot(userRef, (doc) => {
+                if (doc.exists()) {
+                    state.userDoc = doc.data();
+                    state.apiKey = state.userDoc.apiKey || '';
+                    renderContent();
+                }
+            }, (error) => {
+                handleFirestoreError(error, OperationType.GET, 'users/' + user.uid);
+            });
+
+            // If admin, listen for all users
+            if (state.isAdmin) {
+                onSnapshot(collection(db, 'users'), (snapshot) => {
+                    state.allUsers = snapshot.docs.map(doc => doc.data());
+                    renderContent();
+                }, (error) => {
+                    handleFirestoreError(error, OperationType.LIST, 'users');
+                });
+            }
+        } else {
+            state.userDoc = null;
+            state.isAdmin = false;
+        }
+        
+        renderContent();
+    });
+}
+
+async function login() {
+    try {
+        await signInWithPopup(auth, googleProvider);
+        showToast("✅ Berhasil login!", "success");
+    } catch (error) {
+        console.error("Login Error:", error);
+        showToast("❌ Gagal login: " + error.message, "error");
+    }
+}
+
+async function logout() {
+    try {
+        await signOut(auth);
+        showToast("👋 Berhasil logout!", "info");
+    } catch (error) {
+        console.error("Logout Error:", error);
+    }
+}
+
+async function approveUser(uid) {
+    if (!state.isAdmin) return;
+    try {
+        await updateDoc(doc(db, 'users', uid), { isApproved: true });
+        showToast("✅ Pengguna disetujui!", "success");
+    } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, 'users/' + uid);
+    }
+}
+
+async function rejectUser(uid) {
+    if (!state.isAdmin) return;
+    try {
+        await updateDoc(doc(db, 'users', uid), { isApproved: false });
+        showToast("⚠️ Akses pengguna dicabut.", "warning");
+    } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, 'users/' + uid);
+    }
+}
+
+async function saveApiKey() {
+    if (!state.currentUser) return;
+    const input = document.getElementById('api-key-input');
+    const key = input ? input.value.trim() : '';
+    
+    try {
+        await updateDoc(doc(db, 'users', state.currentUser.uid), { apiKey: key });
+        state.apiKey = key;
+        state.showSetup = false;
+        
+        if (key) {
+            showToast("✅ API Key tersimpan aman!", "success");
+        } else {
+            showToast("ℹ️ API Key telah dihapus.", "info");
+        }
+        renderContent();
+    } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, 'users/' + state.currentUser.uid);
+    }
+}
 
 async function fetchWithProxy(url, options = {}) {
     const proxies = [
@@ -230,6 +434,7 @@ function getUploadState() {
 // --- INITIALIZATION ---
 function init() {
     console.log("ND Studio Pro: Initializing...");
+    testFirestoreConnection();
     renderContent();
     
     // Start real-time progress simulation
@@ -280,12 +485,24 @@ function renderContent() {
             return;
         }
 
-        // If not authorized, show access code page
-        if (!state.isAuthorized) {
+        // 1. Loading State
+        if (state.isAuthLoading) {
+            app.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 20px; background: #f8f9fa;">
+                    <div class="spinner" style="width: 40px; height: 40px; border: 4px solid #e9ecef; border-top: 4px solid #5d5fef; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    <p style="color: #909296; font-size: 14px; font-weight: 500;">Menghubungkan ke ND STUDIO...</p>
+                    <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+                </div>
+            `;
+            return;
+        }
+
+        // 2. Login Page
+        if (!state.currentUser) {
             app.innerHTML = `
                 ${renderHeader()}
                 <main>
-                    ${renderAccessCodePage()}
+                    ${renderLoginPage()}
                 </main>
                 ${renderFooter()}
             `;
@@ -293,7 +510,33 @@ function renderContent() {
             return;
         }
 
-        // If no API key or showSetup is true, show setup page
+        // 3. Pending Approval Page
+        if (!state.userDoc?.isApproved) {
+            app.innerHTML = `
+                ${renderHeader()}
+                <main>
+                    ${renderPendingPage()}
+                </main>
+                ${renderFooter()}
+            `;
+            if (window.lucide) lucide.createIcons();
+            return;
+        }
+
+        // 4. Admin Dashboard
+        if (state.isAdmin && state.showAdminDashboard) {
+            app.innerHTML = `
+                ${renderHeader()}
+                <main>
+                    ${renderAdminDashboard()}
+                </main>
+                ${renderFooter()}
+            `;
+            if (window.lucide) lucide.createIcons();
+            return;
+        }
+
+        // 5. Setup Page (API Key)
         if (!state.apiKey || state.showSetup) {
             app.innerHTML = `
                 ${renderHeader()}
@@ -342,69 +585,139 @@ function renderContent() {
 
 // --- UI COMPONENTS ---
 
-function renderAccessCodePage() {
+function renderLoginPage() {
     return `
-        <div class="setup-page" style="max-width: 400px; margin: 40px auto; animation: fadeIn 0.5s ease-out;">
+        <div class="setup-page" style="max-width: 450px; margin: 40px auto; animation: fadeIn 0.5s ease-out;">
             <div style="text-align: center; margin-bottom: 30px;">
-                <div style="width: 80px; height: 80px; background: #f3f0ff; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #5d5fef; box-shadow: 0 8px 16px rgba(93, 95, 239, 0.1);">
-                    <i data-lucide="lock" style="width: 40px; height: 40px;"></i>
+                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #5d5fef 0%, #3f41c2 100%); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; box-shadow: 0 8px 16px rgba(93, 95, 239, 0.2);">
+                    <i data-lucide="user-check" style="width: 40px; height: 40px;"></i>
                 </div>
-                <h2 style="font-size: 24px; font-weight: 800; color: #1a1b1e; margin-bottom: 8px;">Akses Terbatas</h2>
-                <p style="color: #909296; font-size: 14px;">Silakan masukkan kode akses untuk melanjutkan ke ND STUDIO PRO.</p>
+                <h2 style="font-size: 28px; font-weight: 800; color: #1a1b1e; margin-bottom: 8px; letter-spacing: -0.5px;">Selamat Datang</h2>
+                <p style="color: #909296; font-size: 15px; line-height: 1.6;">Masuk dengan akun Google Anda untuk mengakses ND STUDIO PRO.</p>
             </div>
 
-            <div class="setup-card" style="background: white; padding: 32px; border-radius: 24px; border: 1px solid #e9ecef; box-shadow: 0 12px 24px rgba(0,0,0,0.05);">
-                <div class="input-group" style="margin-bottom: 24px;">
-                    <label style="display: block; font-size: 13px; font-weight: 600; color: #495057; margin-bottom: 8px;">Kode Akses</label>
-                    <div style="position: relative;">
-                        <i data-lucide="key" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: #adb5bd;"></i>
-                        <input type="password" id="access-code-input" placeholder="Masukkan kode..." style="width: 100%; padding: 14px 14px 14px 44px; border: 2px solid #e9ecef; border-radius: 12px; font-size: 15px; transition: all 0.2s; outline: none;" onkeypress="if(event.key === 'Enter') checkAccessCode()">
-                    </div>
-                </div>
-
-                <button onclick="checkAccessCode()" class="btn-generate" style="width: 100%; padding: 16px; border-radius: 14px; font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; border: none; background: linear-gradient(135deg, #5d5fef 0%, #3f41c2 100%); color: white; box-shadow: 0 8px 20px rgba(93, 95, 239, 0.3); transition: all 0.3s;">
-                    <i data-lucide="unlock"></i>
-                    Buka Akses
+            <div class="setup-card" style="background: white; padding: 40px; border-radius: 28px; border: 1px solid #e9ecef; box-shadow: 0 20px 40px rgba(0,0,0,0.06); text-align: center;">
+                <button onclick="login()" style="width: 100%; padding: 16px; border-radius: 16px; font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; border: 2px solid #e9ecef; background: white; color: #495057; transition: all 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width: 24px; height: 24px;">
+                    Masuk dengan Google
                 </button>
-            </div>
-            
-            <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #adb5bd;">
-                &copy; 2026 ND STUDIO PRO. All rights reserved.
+                
+                <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #f1f3f5;">
+                    <p style="font-size: 12px; color: #adb5bd; line-height: 1.5;">
+                        Dengan masuk, Anda menyetujui Syarat & Ketentuan kami. Akun Anda akan diverifikasi oleh Admin sebelum dapat digunakan.
+                    </p>
+                </div>
             </div>
         </div>
-        <style>
-            @keyframes shake {
-                0%, 100% { transform: translateX(0); }
-                25% { transform: translateX(-10px); }
-                75% { transform: translateX(10px); }
-            }
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(20px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-        </style>
     `;
 }
 
-function checkAccessCode() {
-    const input = document.getElementById('access-code-input');
-    if (!input) return;
+function renderPendingPage() {
+    return `
+        <div class="setup-page" style="max-width: 500px; margin: 40px auto; animation: fadeIn 0.5s ease-out;">
+            <div class="setup-card" style="background: white; padding: 48px; border-radius: 32px; border: 1px solid #e9ecef; box-shadow: 0 20px 40px rgba(0,0,0,0.08); text-align: center;">
+                <div style="width: 100px; height: 100px; background: #fff9db; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; color: #fab005; animation: pulse 2s infinite;">
+                    <i data-lucide="clock" style="width: 50px; height: 50px;"></i>
+                </div>
+                <h2 style="font-size: 26px; font-weight: 800; color: #1a1b1e; margin-bottom: 12px;">Menunggu Persetujuan</h2>
+                <p style="color: #495057; font-size: 16px; line-height: 1.6; margin-bottom: 32px;">
+                    Halo <strong>${state.currentUser.displayName}</strong>, akun Anda telah terdaftar. <br>
+                    Silakan hubungi Admin untuk mengaktifkan akses Anda ke ND STUDIO PRO.
+                </p>
+                
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 16px; margin-bottom: 32px; text-align: left;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                        <i data-lucide="mail" style="width: 18px; height: 18px; color: #5d5fef;"></i>
+                        <span style="font-size: 14px; color: #495057;">${state.currentUser.email}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <i data-lucide="shield-alert" style="width: 18px; height: 18px; color: #fab005;"></i>
+                        <span style="font-size: 14px; font-weight: 600; color: #fab005;">Status: Pending</span>
+                    </div>
+                </div>
+
+                <button onclick="logout()" style="width: 100%; padding: 14px; border-radius: 12px; font-weight: 600; font-size: 14px; cursor: pointer; border: 1px solid #e9ecef; background: white; color: #fa5252; transition: all 0.2s;">
+                    <i data-lucide="log-out" style="width: 16px; height: 16px; display: inline-block; vertical-align: middle; margin-right: 6px;"></i>
+                    Keluar Akun
+                </button>
+            </div>
+            <style>
+                @keyframes pulse {
+                    0% { transform: scale(1); opacity: 1; }
+                    50% { transform: scale(1.05); opacity: 0.8; }
+                    100% { transform: scale(1); opacity: 1; }
+                }
+            </style>
+        </div>
+    `;
+}
+
+function renderAdminDashboard() {
+    const pendingUsers = state.allUsers.filter(u => !u.isApproved);
+    const approvedUsers = state.allUsers.filter(u => u.isApproved && u.role !== 'admin');
     
-    const code = input.value.trim();
-    if (code === ACCESS_CODE) {
-        state.isAuthorized = true;
-        localStorage.setItem('nd_authorized', 'true');
-        showToast("✅ Akses diberikan! Selamat datang.", "success");
-        renderContent();
-    } else {
-        showToast("❌ Kode akses salah. Silakan coba lagi.", "error");
-        input.style.borderColor = "#fa5252";
-        input.style.animation = "shake 0.4s";
-        setTimeout(() => {
-            input.style.borderColor = "#e9ecef";
-            input.style.animation = "";
-        }, 4000);
-    }
+    return `
+        <div class="admin-dashboard" style="max-width: 900px; margin: 20px auto; padding: 0 20px; animation: fadeIn 0.4s ease-out;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <div>
+                    <h1 style="font-size: 28px; font-weight: 800; color: #1a1b1e;">Admin Dashboard</h1>
+                    <p style="color: #909296; font-size: 14px;">Kelola akses pengguna ND STUDIO PRO.</p>
+                </div>
+                <button onclick="state.showAdminDashboard = false; renderContent();" style="padding: 10px 20px; border-radius: 12px; background: #f1f3f5; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i>
+                    Kembali ke App
+                </button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
+                <!-- Section: Pending Approval -->
+                <div class="setup-card" style="background: white; padding: 24px; border-radius: 24px; border: 1px solid #e9ecef; box-shadow: 0 8px 24px rgba(0,0,0,0.04);">
+                    <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 18px; color: #fab005;">
+                        <i data-lucide="user-plus"></i>
+                        Menunggu Persetujuan (${pendingUsers.length})
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                        ${pendingUsers.length === 0 ? '<p style="text-align: center; color: #adb5bd; font-size: 14px; padding: 20px;">Tidak ada permintaan baru.</p>' : ''}
+                        ${pendingUsers.map(user => `
+                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #fff9db; border-radius: 16px; border: 1px solid #ffec99;">
+                                <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + user.displayName}" style="width: 40px; height: 40px; border-radius: 12px;">
+                                <div style="flex-grow: 1; overflow: hidden;">
+                                    <div style="font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.displayName}</div>
+                                    <div style="font-size: 12px; color: #856404; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.email}</div>
+                                </div>
+                                <button onclick="approveUser('${user.uid}')" style="background: #40c057; color: white; border: none; padding: 8px; border-radius: 8px; cursor: pointer;">
+                                    <i data-lucide="check" style="width: 18px; height: 18px;"></i>
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Section: Approved Users -->
+                <div class="setup-card" style="background: white; padding: 24px; border-radius: 24px; border: 1px solid #e9ecef; box-shadow: 0 8px 24px rgba(0,0,0,0.04);">
+                    <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 18px; color: #5d5fef;">
+                        <i data-lucide="users"></i>
+                        Pengguna Aktif (${approvedUsers.length})
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                        ${approvedUsers.length === 0 ? '<p style="text-align: center; color: #adb5bd; font-size: 14px; padding: 20px;">Belum ada pengguna aktif.</p>' : ''}
+                        ${approvedUsers.map(user => `
+                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f8f9fa; border-radius: 16px; border: 1px solid #e9ecef;">
+                                <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + user.displayName}" style="width: 40px; height: 40px; border-radius: 12px;">
+                                <div style="flex-grow: 1; overflow: hidden;">
+                                    <div style="font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.displayName}</div>
+                                    <div style="font-size: 12px; color: #495057; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.email}</div>
+                                </div>
+                                <button onclick="rejectUser('${user.uid}')" style="background: #fa5252; color: white; border: none; padding: 8px; border-radius: 8px; cursor: pointer;">
+                                    <i data-lucide="user-minus" style="width: 18px; height: 18px;"></i>
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 function renderGlobalError() {
@@ -464,21 +777,39 @@ function renderHeader() {
         <header>
             <div class="header-left">
                 <div class="logo">
-                    <img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 24px; height: 24px; filter: drop-shadow(0 0 2px rgba(93, 95, 239, 0.5));" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">
+                    <img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 24px; height: 24px; filter: drop-shadow(0 0 2px rgba(93, 95, 239, 0.5));" referrerPolicy="no-referrer" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
                     <i data-lucide="sparkles" class="emoji-fallback" style="display:none;"></i>
                 </div>
                 <div class="brand-name">ND STUDIO PRO</div>
             </div>
             <div class="header-actions">
-                <button class="api-settings-btn ${state.apiKey ? 'active' : ''}" onclick="handleStatusClick()">
-                    <div class="api-settings-icon">
-                        <i data-lucide="key"></i>
+                ${state.isAdmin ? `
+                    <button class="btn-icon-action ${state.showAdminDashboard ? 'active' : ''}" onclick="state.showAdminDashboard = !state.showAdminDashboard; renderContent();" title="Admin Dashboard" style="background: #fff9db; color: #fab005; border-color: #ffec99;">
+                        <i data-lucide="shield-check"></i>
+                    </button>
+                ` : ''}
+                
+                ${state.currentUser && state.userDoc?.isApproved ? `
+                    <button class="api-settings-btn ${state.apiKey ? 'active' : ''}" onclick="handleStatusClick()">
+                        <div class="api-settings-icon">
+                            <i data-lucide="key"></i>
+                        </div>
+                        <div class="api-settings-text">
+                            <span class="api-label">API SETTINGS</span>
+                            <span class="api-status">${state.apiKey ? 'CONNECTED' : 'NOT CONNECTED'}</span>
+                        </div>
+                    </button>
+                ` : ''}
+
+                ${state.currentUser ? `
+                    <div class="user-profile-mini" style="display: flex; align-items: center; gap: 6px; padding: 4px; padding-right: 8px; background: #f8f9fa; border-radius: 20px; border: 1px solid #e9ecef;">
+                        <img src="${state.currentUser.photoURL}" style="width: 28px; height: 28px; border-radius: 50%;">
+                        <button onclick="logout()" title="Logout" style="display: flex; align-items: center; justify-content: center; padding: 4px; border: none; background: transparent; color: #fa5252; cursor: pointer; border-radius: 50%; transition: background 0.2s;" onmouseover="this.style.background='#ffe3e3'" onmouseout="this.style.background='transparent'">
+                            <i data-lucide="log-out" style="width: 16px; height: 16px;"></i>
+                        </button>
                     </div>
-                    <div class="api-settings-text">
-                        <span class="api-label">API SETTINGS</span>
-                        <span class="api-status">${state.apiKey ? 'CONNECTED' : 'NOT CONNECTED'}</span>
-                    </div>
-                </button>
+                ` : ''}
+
                 <button class="btn-icon-action" onclick="toggleModal('modal-disclaimer', true)" title="Info">
                     <i data-lucide="info"></i>
                 </button>
@@ -545,7 +876,7 @@ function renderSetupPage() {
                     <div class="step-number">3</div>
                     <div class="step-title-group">
                         <div class="step-title">Paste API Key</div>
-                        <div class="step-desc">Disimpan lokal di perangkat ini</div>
+                        <div class="step-desc">Tersimpan aman</div>
                     </div>
                 </div>
                 <div class="api-input-group">
@@ -742,7 +1073,7 @@ function renderSettings(gen) {
                 <div class="setting-item">
                     <div class="setting-label"><span>Style Preset</span></div>
                     <div class="style-grid">
-                        ${['Realistic', 'Cinematic', 'Anime', 'Portrait', 'Product', 'Fantasy'].map(style => `
+                        ${['Realistic', 'Cinematic', 'Anime', 'Portrait', 'Product', 'Fantasy', 'None'].map(style => `
                             <button class="style-btn ${state.settings.style === style ? 'active' : ''}" 
                                     onclick="updateSetting('style', '${style}')">${style}</button>
                         `).join('')}
@@ -1001,17 +1332,20 @@ function renderGenerateButton(gen) {
     const uploadState = getUploadState();
     const isUploading = uploadState.uploading.image || uploadState.uploading.video;
     const isCooldown = Date.now() < (state.cooldownUntil || 0);
-    const disabledAttr = (isUploading || isCooldown) ? 'disabled' : '';
+    const noApiKey = !state.apiKey;
+    const disabledAttr = (isUploading || isCooldown || noApiKey) ? 'disabled' : '';
     
     let btnType = gen.outputType.charAt(0).toUpperCase() + gen.outputType.slice(1);
     if (gen.id === 'elevenlabs-turbo-v2-5') btnType = 'Voice';
     let btnText = `🚀 Generate ${btnType}`;
-    if (isUploading) btnText = '⏳ Uploading...';
+    
+    if (noApiKey) btnText = '🔑 Masukkan API Key';
+    else if (isUploading) btnText = '⏳ Uploading...';
     else if (isCooldown) btnText = '⏳ Cooldown...';
 
     return `
         <div class="generate-container">
-            <button class="btn-generate" onclick="generate()" ${disabledAttr}>
+            <button class="btn-generate ${noApiKey ? 'btn-warning' : ''}" onclick="${noApiKey ? 'handleStatusClick()' : 'generate()'}" ${noApiKey ? '' : disabledAttr}>
                 ${btnText}
             </button>
         </div>
@@ -1200,14 +1534,11 @@ async function syncTasks() {
     }
 
     try {
-        const response = await fetchWithProxy(listEndpoint, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'x-api-key': state.apiKey.trim(),
-                'x-freepik-api-key': state.apiKey.trim()
-            }
-        });
+        const url = new URL('/api/freepik/list', window.location.origin);
+        url.searchParams.append('endpoint', listEndpoint);
+        url.searchParams.append('apiKey', state.apiKey.trim());
+
+        const response = await fetch(url);
         const data = await response.json();
 
         if (!response.ok) {
@@ -1411,16 +1742,16 @@ async function generate() {
         if (finalPrompt && activeGen.id !== 'elevenlabs-turbo-v2-5') {
             try {
                 if (btn) btn.innerHTML = '🔤 Translating...';
-                const translateUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(finalPrompt)}`;
-                const translateRes = await fetch(translateUrl);
+                const translateRes = await fetch('/api/translate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: finalPrompt })
+                });
                 if (translateRes.ok) {
-                    const data = await translateRes.json();
-                    if (data && data[0]) {
-                        const translated = data[0].map(item => item[0]).join('');
-                        if (translated && translated !== finalPrompt) {
-                            console.log(`Translated prompt: "${finalPrompt}" -> "${translated}"`);
-                            finalPrompt = translated;
-                        }
+                    const translateData = await translateRes.json();
+                    if (translateData.translatedText && translateData.translatedText !== finalPrompt) {
+                        console.log(`Translated prompt: "${finalPrompt}" -> "${translateData.translatedText}"`);
+                        finalPrompt = translateData.translatedText;
                     }
                 }
                 if (btn) btn.innerHTML = '⏳ Processing...';
@@ -1474,7 +1805,13 @@ async function generate() {
             };
         } else if (activeGen.id === 'flux-2-pro') {
             let prompt = finalPrompt;
-            if (state.settings.style && state.settings.style !== 'Realistic') {
+            let negativePrompt = state.settings.negative_prompt || "";
+            
+            if (state.settings.style === 'Realistic') {
+                // Enhance realistic style to avoid "poster" look
+                prompt = `photorealistic raw photo of ${prompt}, high detail, 8k, highly detailed skin texture, natural lighting, masterwork`;
+                negativePrompt = (negativePrompt ? negativePrompt + ", " : "") + "poster, text, typography, watermark, logo, distorted, cartoon, anime, illustration, painting";
+            } else if (state.settings.style && state.settings.style !== 'None') {
                 prompt = `${state.settings.style} style, ${prompt}`;
             }
             
@@ -1495,6 +1832,7 @@ async function generate() {
             
             body = {
                 prompt: prompt,
+                negative_prompt: negativePrompt,
                 width: width,
                 height: height,
                 cfg_scale: state.settings.cfg_scale !== undefined ? state.settings.cfg_scale : 0.5,
@@ -1512,7 +1850,10 @@ async function generate() {
             };
             
             if (imageInput) {
-                body.image = ensureHttps(imageInput);
+                // Seedance 1.5 Pro on Freepik usually expects 'image_url', but 'image' is sometimes used
+                const imgUrl = ensureHttps(imageInput);
+                body.image_url = imgUrl;
+                body.image = imgUrl; 
             }
         } else if (activeGen.id === 'elevenlabs-turbo-v2-5') {
             if (!finalPrompt) {
@@ -1531,15 +1872,16 @@ async function generate() {
         console.log("Generating with body:", body);
         const currentKey = state.apiKey.trim();
         
-        const response = await fetchWithProxy(activeGen.endpoint, {
+        const response = await fetch('/api/freepik/generate', {
             method: 'POST',
             headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'x-api-key': currentKey,
-                'x-freepik-api-key': currentKey
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify(body)
+            body: JSON.stringify({
+                endpoint: activeGen.endpoint,
+                apiKey: currentKey,
+                body: body
+            })
         });
 
         let data;
@@ -1685,24 +2027,13 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
     const fallback = fallbacks[fallbackIndex];
     const statusBase = fallback.base;
     
-    let url;
-    if (fallback.type === 'list') {
-        url = statusBase;
-    } else {
-        const baseUrl = statusBase.endsWith('/') ? statusBase.slice(0, -1) : statusBase;
-        url = `${baseUrl}/${taskId}`;
-        if (fallback.type === 'query') {
-            url = `${baseUrl}?task_id=${taskId}`;
-        }
-    }
+    let url = `/api/freepik/status/${taskId}?endpoint=${encodeURIComponent(statusBase)}&apiKey=${encodeURIComponent(currentKey)}${fallback.type === 'query' ? '&useQuery=true' : ''}`;
     
     try {
-        const response = await fetchWithProxy(url, {
+        const response = await fetch(url, {
             method: 'GET',
             headers: {
-                'Accept': 'application/json',
-                'x-api-key': currentKey,
-                'x-freepik-api-key': currentKey
+                'Content-Type': 'application/json'
             }
         });
 
@@ -2060,62 +2391,43 @@ async function handleFileChange(type, input) {
         updateUploadDOM();
 
         try {
-            // Multi-provider upload for better reliability
-            console.log(`Uploading ${file.name} to public storage...`);
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    file: base64Result,
+                    name: file.name,
+                    type: file.type
+                })
+            });
+
+            const contentType = response.headers.get("content-type");
+            let data;
             
-            let publicUrl = null;
-            let lastError = null;
-
-            // Provider 1: Uguu.se (Very reliable for CORS)
-            try {
-                const formData = new FormData();
-                formData.append('files[]', file);
-                const res = await fetch('https://uguu.se/upload.php', { method: 'POST', body: formData });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.success && data.files && data.files[0]) {
-                        publicUrl = data.files[0].url;
-                    }
-                }
-            } catch (e) { lastError = e; }
-
-            // Provider 2: Tmpfiles.org (Fallback)
-            if (!publicUrl) {
-                try {
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    const res = await fetch('https://tmpfiles.org/api/v1/upload', { method: 'POST', body: formData });
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.status === 'success' && data.data && data.data.url) {
-                            publicUrl = data.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
-                        }
-                    }
-                } catch (e) { lastError = e; }
-            }
-
-            // Provider 3: File.io (Final Fallback)
-            if (!publicUrl) {
-                try {
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    const res = await fetch('https://file.io', { method: 'POST', body: formData });
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.success) publicUrl = data.link;
-                    }
-                } catch (e) { lastError = e; }
-            }
-
-            if (publicUrl) {
-                console.log(`File uploaded successfully: ${publicUrl}`);
-                uploadState.urls[type] = publicUrl;
+            if (contentType && contentType.includes("application/json")) {
+                data = await response.json();
             } else {
-                throw lastError || new Error("Semua server upload gagal merespon.");
+                const text = await response.text();
+                if (text.includes("Cookie check") || text.includes("Action required")) {
+                    state.showSetup = true;
+                    renderContent();
+                    throw new Error("Akses diblokir browser. Silakan klik tombol kuning '🔓 Klik untuk Authenticate' di bawah Logo ND STUDIO PRO.");
+                }
+                console.error("Non-JSON response from server:", text);
+                throw new Error("Server mengembalikan respon yang tidak valid (bukan JSON).");
             }
+
+            if (!response.ok) throw new Error(data.message || "Gagal mengupload file.");
+
+            const publicUrl = data.url;
+            console.log(`File uploaded successfully. Public URL: ${publicUrl}`);
+            
+            uploadState.urls[type] = publicUrl;
         } catch (error) {
             console.error("Upload error:", error);
-            showToast("Gagal mengupload file. Koneksi internet mungkin memblokir server upload. Silakan coba lagi.", "error");
+            showToast(error.message || "Gagal mengupload file. Silakan coba lagi.", "error");
             uploadState.files[type] = null;
         } finally {
             uploadState.uploading[type] = false;
@@ -2252,43 +2564,10 @@ function regeneratePrompt(prompt, generatorId) {
 }
 
 function handleStatusClick() {
-    if (!state.apiKey) {
-        showToast("Silakan masukkan API Key di halaman setup", "info");
-        return;
-    }
-
     state.showSetup = !state.showSetup;
     renderContent();
 }
 
-function saveApiKey() {
-    const input = document.getElementById('api-key-input');
-    if (!input) return;
-
-    const key = input.value.trim();
-    
-    if (!key) {
-        if (state.apiKey) {
-            // If they clear the input and save, they want to delete the key
-            state.apiKey = '';
-            localStorage.removeItem('nd_api_key');
-            showToast("API Key dihapus", "info");
-            state.showSetup = false;
-            renderContent();
-            return;
-        }
-        showToast("Masukkan API Key Freepik Anda", "error");
-        return;
-    }
-
-    console.log("Saving API Key. Length:", key.length);
-    localStorage.setItem('nd_api_key', key);
-    state.apiKey = key;
-    state.showSetup = false;
-    
-    showToast("API Key berhasil disimpan!", "success");
-    renderContent();
-}
 
 function resetApiKey() {
     // Redundant, handled by handleStatusClick
@@ -2319,6 +2598,10 @@ function acceptDisclaimer() {
 // Run App
 window.addEventListener('DOMContentLoaded', () => {
     // Expose functions to window for HTML onclick handlers
+    window.login = login;
+    window.logout = logout;
+    window.approveUser = approveUser;
+    window.rejectUser = rejectUser;
     window.saveApiKey = saveApiKey;
     window.handleStatusClick = handleStatusClick;
     window.toggleModal = toggleModal;
@@ -2338,7 +2621,14 @@ window.addEventListener('DOMContentLoaded', () => {
     window.deleteResult = deleteResult;
     window.clearGlobalError = clearGlobalError;
     window.updateSetting = updateSetting;
-    window.checkAccessCode = checkAccessCode;
+    window.updatePrompt = updatePrompt;
+    window.updateCfgValue = updateCfgValue;
+    window.updateStepsValue = updateStepsValue;
+    window.updateStrengthValue = updateStrengthValue;
+    window.updateGuidanceValue = updateGuidanceValue;
+    window.state = state;
+    window.renderContent = renderContent;
 
     init();
+    initAuth();
 });

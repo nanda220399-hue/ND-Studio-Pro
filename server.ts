@@ -423,6 +423,28 @@ async function startServer() {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 
+  // Periodic cleanup: Delete files in uploads folder older than 1 hour
+  setInterval(() => {
+    console.log("Running scheduled cleanup of uploads directory...");
+    fs.readdir(uploadsDir, (err, files) => {
+      if (err) return console.error("Cleanup error:", err);
+      
+      const now = Date.now();
+      files.forEach(file => {
+        const filePath = path.join(uploadsDir, file);
+        fs.stat(filePath, (err, stats) => {
+          if (err) return;
+          // Delete if older than 1 hour (3600000 ms)
+          if (now - stats.mtimeMs > 3600000) {
+            fs.unlink(filePath, (err) => {
+              if (!err) console.log(`Deleted old file: ${file}`);
+            });
+          }
+        });
+      });
+    });
+  }, 30 * 60 * 1000); // Run every 30 minutes
+
   // Global error handler
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error("Global Error Handler:", err);

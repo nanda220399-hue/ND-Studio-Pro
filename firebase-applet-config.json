@@ -1,8 +1,10 @@
 {
+  "projectId": "nd-studio-3ff81",
+  "appId": "1:788696610459:web:fe2f33cde4b754f8f5383e",
   "apiKey": "AIzaSyC8n-FbVfdRCPlLQqQ8ax9GHoAQEBGqQY0",
   "authDomain": "nd-studio-3ff81.firebaseapp.com",
-  "projectId": "nd-studio-3ff81",
-  "storageBucket": "nd-studio-3ff81.appspot.com",
+  "firestoreDatabaseId": "ai-studio-79204e50-f6c0-48e1-b6d5-447a85208a76",
+  "storageBucket": "nd-studio-3ff81.firebasestorage.app",
   "messagingSenderId": "788696610459",
-  "appId": "1:788696610459:web:12e896626da62faff5383e"
+  "measurementId": ""
 }

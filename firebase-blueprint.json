@@ -1,0 +1,26 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and authorization status",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "description": "User email address" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "photoURL": { "type": "string", "description": "User profile picture URL" },
+        "isApproved": { "type": "boolean", "description": "Whether the user is approved by admin" },
+        "role": { "type": "string", "enum": ["admin", "user"], "description": "User role" },
+        "apiKey": { "type": "string", "description": "User's personal Freepik API Key" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account creation timestamp" }
+      },
+      "required": ["uid", "email", "isApproved", "role"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Collection of user profiles and their approval status"
+    }
+  }
+}

@@ -83,14 +83,15 @@ header {
 
 .brand-name {
     font-family: var(--font-premium);
-    font-weight: 700;
-    font-size: 20px;
+    font-weight: 800;
+    font-size: 18px;
     color: #1a1a1a;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
     text-transform: uppercase;
     background: linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    white-space: nowrap;
 }
 
 /* API Settings Button (Upgraded) */
@@ -1076,9 +1077,14 @@ header {
     transition: opacity 0.3s;
 }
 
-.btn-generate:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+.btn-generate.btn-warning {
+    background: linear-gradient(135deg, #fab005, #f08c00);
+    box-shadow: 0 4px 12px rgba(250, 176, 5, 0.3);
+}
+
+.btn-generate.btn-warning:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(250, 176, 5, 0.4);
 }
 
 .cooldown-container {
@@ -1264,6 +1270,47 @@ header {
 
 /* For mobile, always show actions since hover doesn't work well */
 @media (max-width: 768px) {
+    header {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+    .brand-name {
+        font-size: 16px;
+    }
+    .api-settings-text {
+        display: none;
+    }
+    .api-settings-btn {
+        padding: 0;
+        gap: 0;
+        border-radius: 50%;
+        border: none;
+        background: transparent;
+    }
+    .api-settings-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+    }
+    .header-actions {
+        gap: 4px;
+    }
+    .btn-icon-action {
+        width: 32px;
+        height: 32px;
+    }
+    .btn-icon-action i {
+        width: 16px;
+        height: 16px;
+    }
+    .logo {
+        width: 32px;
+        height: 32px;
+    }
+    .logo img {
+        width: 20px;
+        height: 20px;
+    }
     .result-overlay-actions {
         opacity: 1;
     }
