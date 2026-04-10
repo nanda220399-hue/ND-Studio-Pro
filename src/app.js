@@ -32,7 +32,8 @@ let state = {
         stability: 0.5,
         similarity_boost: 0.2,
         speed: 1,
-        use_speaker_boost: true
+        use_speaker_boost: true,
+        music_duration: '30'
     },
     activeTasks: [],
     completedResults: [],
@@ -48,7 +49,13 @@ let state = {
     isAuthLoading: true,
     allUsers: [], // For admin dashboard
     isAdmin: false,
-    showAdminDashboard: false
+    showAdminDashboard: false,
+    musicSelections: {
+        genre: '',
+        mood: '',
+        instruments: [],
+        tempo: ''
+    }
 };
 
 // --- FIRESTORE ERROR HANDLING ---
@@ -238,6 +245,19 @@ const GENERATORS = [
         settings: { voice: true, stability: true, similarity_boost: true, speed: true, use_speaker_boost: true },
         endpoint: 'https://api.freepik.com/v1/ai/voiceover/elevenlabs-turbo-v2-5',
         statusEndpoint: 'https://api.freepik.com/v1/ai/voiceover/elevenlabs-turbo-v2-5',
+        pollingType: 'path'
+    },
+    {
+        id: 'music-generation',
+        name: 'Music Generation',
+        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=113637&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎵</span></div>',
+        badge: 'NEW',
+        description: 'Music Generation - Create high-quality AI music from text prompts.',
+        inputs: ['prompt'],
+        outputType: 'audio',
+        settings: { music_duration: true },
+        endpoint: 'https://api.freepik.com/v1/ai/music-generation',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/music-generation',
         pollingType: 'path'
     }
 ];
@@ -528,6 +548,7 @@ function renderContent() {
             app.innerHTML = `
                 ${renderHeader()}
                 <main>
+                    ${renderUsageStats()}
                     ${renderAdminDashboard()}
                 </main>
                 ${renderFooter()}
@@ -542,6 +563,7 @@ function renderContent() {
                 ${renderHeader()}
                 <main>
                     ${renderGlobalError()}
+                    ${renderUsageStats()}
                     ${renderSetupPage()}
                 </main>
                 ${renderFooter()}
@@ -724,6 +746,7 @@ function renderGlobalError() {
     if (!state.globalError) return '';
     
     const isLimit = state.globalError.includes('Limit') || state.globalError.includes('Kuota') || state.globalError.includes('429');
+    const isRateLimit = state.globalError.includes('Too Many Requests') || state.globalError.includes('429');
     
     return `
         <div class="global-error-alert" style="background: ${isLimit ? '#fff9db' : '#fff5f5'}; border: 2px solid ${isLimit ? '#fab005' : '#ffc9c9'}; color: ${isLimit ? '#856404' : '#fa5252'}; padding: 16px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 12px; animation: slideDown 0.3s ease-out; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
@@ -732,6 +755,11 @@ function renderGlobalError() {
                 <strong style="display: block; margin-bottom: 4px; font-size: 14px;">${isLimit ? '⚠️ API Rate Limit / Quota' : '❌ Error Terjadi'}</strong>
                 ${state.globalError}
                 ${isLimit ? `<div style="margin-top: 8px; font-size: 11px; opacity: 0.8;">Tips: Tunggu 1-2 menit atau gunakan API Key Freepik lainnya di menu Setup.</div>` : ''}
+                ${isRateLimit ? `
+                    <button onclick="clearGlobalError(); generate();" style="margin-top: 10px; background: #856404; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i> Coba Lagi Sekarang
+                    </button>
+                ` : ''}
             </div>
             <button onclick="clearGlobalError()" style="background: ${isLimit ? '#fab005' : '#fa5252'}; border: none; color: white; cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: opacity 0.2s;">
                 <i data-lucide="x" style="width: 16px; height: 16px;"></i>
@@ -1041,9 +1069,83 @@ function renderPromptSection() {
         placeholder = "Describe your video (e.g. cinematic scene, person talking, realistic motion)";
     } else if (activeGen.id === 'elevenlabs-turbo-v2-5') {
         placeholder = "Enter text for voice over (supports multiple languages)";
+    } else if (activeGen.id === 'music-generation') {
+        placeholder = "Describe your music... (e.g. upbeat electronic track with synth and fast tempo)";
     }
 
     const maxChars = activeGen.id === 'elevenlabs-turbo-v2-5' ? 40000 : 2500;
+
+    if (activeGen.id === 'music-generation') {
+        const genres = ['Cinematic', 'EDM', 'Lofi', 'Jazz', 'Rock', 'Classical'];
+        const moods = ['Happy', 'Sad', 'Chill', 'Dark', 'Epic', 'Romantic'];
+        const instruments = ['Piano', 'Guitar', 'Drums', 'Violin', 'Synth', 'Bass'];
+        const tempos = ['Slow', 'Medium', 'Fast'];
+        const suggestions = [
+            { text: "epic cinematic trailer music", label: "Epic Cinematic" },
+            { text: "lofi chill beat for studying", label: "Lofi Chill" },
+            { text: "happy upbeat edm festival track", label: "Happy EDM" },
+            { text: "sad emotional piano solo", label: "Sad Piano" }
+        ];
+
+        return `
+            <div class="prompt-section music-pro-section">
+                <div class="music-selectors">
+                    <div class="music-selector-group">
+                        <label>Genre</label>
+                        <select class="music-select" onchange="updateMusicSelection('genre', this.value)">
+                            <option value="">Select Genre</option>
+                            ${genres.map(g => `<option value="${g}" ${state.musicSelections.genre === g ? 'selected' : ''}>${g}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="music-selector-group">
+                        <label>Mood</label>
+                        <select class="music-select" onchange="updateMusicSelection('mood', this.value)">
+                            <option value="">Select Mood</option>
+                            ${moods.map(m => `<option value="${m}" ${state.musicSelections.mood === m ? 'selected' : ''}>${m}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="music-selector-group">
+                        <label>Tempo</label>
+                        <select class="music-select" onchange="updateMusicSelection('tempo', this.value)">
+                            <option value="">Select Tempo</option>
+                            ${tempos.map(t => `<option value="${t}" ${state.musicSelections.tempo === t ? 'selected' : ''}>${t}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="music-selector-group full-width">
+                    <label>Instruments</label>
+                    <div class="instrument-chips">
+                        ${instruments.map(inst => `
+                            <div class="instrument-chip ${state.musicSelections.instruments.includes(inst) ? 'active' : ''}" 
+                                 onclick="toggleMusicInstrument('${inst}')">
+                                ${inst}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="music-suggestions">
+                    ${suggestions.map(s => `
+                        <button class="music-suggestion-btn" onclick="setMusicSuggestion('${s.text}')">
+                            ${s.label}
+                        </button>
+                    `).join('')}
+                </div>
+
+                <div style="position: relative;">
+                    <textarea class="prompt-textarea" placeholder="${placeholder}" 
+                              oninput="updatePrompt(this.value)" maxlength="${maxChars}">${state.currentPrompt}</textarea>
+                    <div class="prompt-counter">${state.currentPrompt.length}/${maxChars}</div>
+                </div>
+
+                <div class="music-prompt-preview">
+                    <div class="preview-label">Generated Prompt Preview:</div>
+                    <div class="music-prompt-preview-text">${buildMusicPrompt()}</div>
+                </div>
+            </div>
+        `;
+    }
 
     return `
         <div class="prompt-section">
@@ -1107,6 +1209,18 @@ function renderSettings(gen) {
                             <option value="9:16" ${state.settings.aspect_ratio === '9:16' ? 'selected' : ''}>9:16 (Portrait)</option>
                             <option value="1:1" ${state.settings.aspect_ratio === '1:1' ? 'selected' : ''}>1:1 (Square)</option>
                         `}
+                    </select>
+                </div>
+            ` : ''}
+
+            ${gen.settings.music_duration ? `
+                <div class="setting-item">
+                    <div class="setting-label"><span>Music Duration</span></div>
+                    <select class="setting-select" onchange="updateSetting('music_duration', this.value)">
+                        <option value="30" ${state.settings.music_duration == 30 ? 'selected' : ''}>30 Seconds</option>
+                        <option value="60" ${state.settings.music_duration == 60 ? 'selected' : ''}>60 Seconds</option>
+                        <option value="120" ${state.settings.music_duration == 120 ? 'selected' : ''}>120 Seconds</option>
+                        <option value="240" ${state.settings.music_duration == 240 ? 'selected' : ''}>240 Seconds</option>
                     </select>
                 </div>
             ` : ''}
@@ -1333,15 +1447,23 @@ function renderGenerateButton(gen) {
     const isUploading = uploadState.uploading.image || uploadState.uploading.video;
     const isCooldown = Date.now() < (state.cooldownUntil || 0);
     const noApiKey = !state.apiKey;
-    const disabledAttr = (isUploading || isCooldown || noApiKey) ? 'disabled' : '';
+    
+    let isMusicEmpty = false;
+    if (gen.id === 'music-generation') {
+        isMusicEmpty = isMusicSelectionEmpty();
+    }
+
+    const disabledAttr = (isUploading || isCooldown || noApiKey || isMusicEmpty) ? 'disabled' : '';
     
     let btnType = gen.outputType.charAt(0).toUpperCase() + gen.outputType.slice(1);
     if (gen.id === 'elevenlabs-turbo-v2-5') btnType = 'Voice';
+    if (gen.id === 'music-generation') btnType = 'Music';
     let btnText = `🚀 Generate ${btnType}`;
     
     if (noApiKey) btnText = '🔑 Masukkan API Key';
     else if (isUploading) btnText = '⏳ Uploading...';
     else if (isCooldown) btnText = '⏳ Cooldown...';
+    else if (isMusicEmpty) btnText = '✨ Pilih Opsi Musik';
 
     return `
         <div class="generate-container">
@@ -1867,6 +1989,15 @@ async function generate() {
                 speed: state.settings.speed !== undefined ? state.settings.speed : 1,
                 use_speaker_boost: state.settings.use_speaker_boost !== undefined ? state.settings.use_speaker_boost : true
             };
+        } else if (activeGen.id === 'music-generation') {
+            const musicPrompt = buildMusicPrompt();
+            if (isMusicSelectionEmpty()) {
+                throw new Error("Wajib masukkan deskripsi musik atau pilih opsi.");
+            }
+            body = {
+                prompt: musicPrompt,
+                music_length_seconds: parseInt(state.settings.music_duration) || 30
+            };
         }
 
         console.log("Generating with body:", body);
@@ -2012,7 +2143,8 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
         { base: 'https://api.freepik.com/v1/ai/video/seedance-1-5-pro-720p', type: 'path' },
         { base: 'https://api.freepik.com/v1/ai/video/status', type: 'query' },
         { base: 'https://api.freepik.com/v1/ai/image-to-video/kling-v2-6', type: 'path' },
-        { base: 'https://api.freepik.com/v1/ai/voiceover/elevenlabs-turbo-v2-5', type: 'path' }
+        { base: 'https://api.freepik.com/v1/ai/voiceover/elevenlabs-turbo-v2-5', type: 'path' },
+        { base: 'https://api.freepik.com/v1/ai/music-generation', type: 'path' }
     ];
     
     if (fallbackIndex >= fallbacks.length) {
@@ -2458,6 +2590,130 @@ function updatePrompt(val) {
     // Update counter directly for performance, but state is updated
     const counter = document.querySelector('.prompt-counter');
     if (counter) counter.innerText = `${val.length}/${maxChars}`;
+
+    // For music generation, update preview and button state
+    if (state.activeGenerator === 'music-generation') {
+        const preview = document.querySelector('.music-prompt-preview-text');
+        if (preview) {
+            preview.innerText = buildMusicPrompt();
+        }
+        
+        // Update button state
+        const btn = document.querySelector('.btn-generate');
+        if (btn && !state.apiKey) {
+            // keep warning state
+        } else if (btn) {
+            const isEmpty = isMusicSelectionEmpty();
+            btn.disabled = isEmpty || Date.now() < (state.cooldownUntil || 0);
+        }
+    }
+}
+
+function updateMusicSelection(key, val) {
+    state.musicSelections[key] = val;
+    updateMusicUI();
+}
+
+function toggleMusicInstrument(instrument) {
+    const idx = state.musicSelections.instruments.indexOf(instrument);
+    if (idx === -1) {
+        state.musicSelections.instruments.push(instrument);
+    } else {
+        state.musicSelections.instruments.splice(idx, 1);
+    }
+    updateMusicUI();
+}
+
+function setMusicSuggestion(suggestion) {
+    state.currentPrompt = suggestion;
+    state.generatorPrompts['music-generation'] = suggestion;
+    
+    // Update textarea directly
+    const textarea = document.querySelector('.prompt-textarea');
+    if (textarea) {
+        textarea.value = suggestion;
+        // Trigger counter update
+        const activeGen = GENERATORS.find(g => g.id === state.activeGenerator) || GENERATORS[0];
+        const maxChars = activeGen.id === 'elevenlabs-turbo-v2-5' ? 40000 : 2500;
+        const counter = document.querySelector('.prompt-counter');
+        if (counter) counter.innerText = `${suggestion.length}/${maxChars}`;
+    }
+    
+    updateMusicUI();
+}
+
+function updateMusicUI() {
+    // 1. Update Preview Text
+    const preview = document.querySelector('.music-prompt-preview-text');
+    if (preview) {
+        preview.innerText = buildMusicPrompt();
+    }
+
+    // 2. Update Instrument Chips
+    const chips = document.querySelectorAll('.instrument-chip');
+    chips.forEach(chip => {
+        const inst = chip.innerText.trim();
+        if (state.musicSelections.instruments.includes(inst)) {
+            chip.classList.add('active');
+        } else {
+            chip.classList.remove('active');
+        }
+    });
+
+    // 3. Update Generate Button
+    const btn = document.querySelector('.btn-generate');
+    if (btn) {
+        const noApiKey = !state.apiKey;
+        if (noApiKey) {
+            // Keep warning state if no API key
+            return;
+        }
+
+        const isEmpty = isMusicSelectionEmpty();
+        const uploadState = getUploadState();
+        const isUploading = uploadState.uploading.image || uploadState.uploading.video;
+        const isCooldown = Date.now() < (state.cooldownUntil || 0);
+
+        btn.disabled = isEmpty || isUploading || isCooldown;
+        
+        if (isEmpty) {
+            btn.innerText = '✨ Pilih Opsi Musik';
+        } else {
+            btn.innerText = '🚀 Generate Music';
+        }
+    }
+}
+
+function isMusicSelectionEmpty() {
+    const { genre, mood, instruments, tempo } = state.musicSelections;
+    return !genre && !mood && instruments.length === 0 && !tempo && !state.currentPrompt.trim();
+}
+
+function buildMusicPrompt() {
+    const { genre, mood, instruments, tempo } = state.musicSelections;
+    const userText = state.currentPrompt.trim();
+    
+    let parts = [];
+    if (genre) parts.push(genre);
+    if (mood) parts.push(mood);
+    
+    if (genre || mood) {
+        parts.push("music");
+    }
+    
+    if (instruments.length > 0) {
+        parts.push(`with ${instruments.join(', ')}`);
+    }
+    
+    if (tempo) {
+        parts.push(`${tempo} tempo`);
+    }
+    
+    if (userText) {
+        parts.push(userText);
+    }
+    
+    return parts.join(', ') || "Select options above or describe your music...";
 }
 
 function updateCfgValue(val) {
@@ -2622,6 +2878,9 @@ window.addEventListener('DOMContentLoaded', () => {
     window.clearGlobalError = clearGlobalError;
     window.updateSetting = updateSetting;
     window.updatePrompt = updatePrompt;
+    window.updateMusicSelection = updateMusicSelection;
+    window.toggleMusicInstrument = toggleMusicInstrument;
+    window.setMusicSuggestion = setMusicSuggestion;
     window.updateCfgValue = updateCfgValue;
     window.updateStepsValue = updateStepsValue;
     window.updateStrengthValue = updateStrengthValue;

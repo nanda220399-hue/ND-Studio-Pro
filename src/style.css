@@ -918,6 +918,173 @@ header {
     color: var(--text-muted);
 }
 
+/* Prompt Helper */
+.prompt-helper {
+    margin-top: 12px;
+    padding: 12px;
+    background: #f8f9ff;
+    border: 1px dashed #dbe4ff;
+    border-radius: 12px;
+}
+
+.prompt-helper-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #5d5fef;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.prompt-helper-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.prompt-helper-item {
+    font-size: 11px;
+    color: #495057;
+    line-height: 1.4;
+}
+
+.prompt-helper-item strong {
+    color: #212529;
+}
+
+/* Music Pro Section */
+.music-pro-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: #ffffff;
+    padding: 24px;
+    border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f3f5;
+}
+
+.music-selectors {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.music-selector-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.music-selector-group label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #495057;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.music-select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    background: #f8f9fa;
+    font-size: 13px;
+    font-weight: 600;
+    color: #212529;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.music-select:focus {
+    outline: none;
+    border-color: #5d5fef;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(93, 95, 239, 0.1);
+}
+
+.instrument-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.instrument-chip {
+    padding: 8px 16px;
+    background: #f1f3f5;
+    border: 1px solid #e9ecef;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.instrument-chip:hover {
+    background: #e9ecef;
+    transform: translateY(-1px);
+}
+
+.instrument-chip.active {
+    background: #5d5fef;
+    color: white;
+    border-color: #5d5fef;
+    box-shadow: 0 4px 12px rgba(93, 95, 239, 0.2);
+}
+
+.music-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+    background: #f8f9ff;
+    border-radius: 16px;
+    border: 1px solid #eef2ff;
+}
+
+.music-suggestion-btn {
+    padding: 6px 12px;
+    background: white;
+    border: 1px solid #dbe4ff;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #5d5fef;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.music-suggestion-btn:hover {
+    background: #5d5fef;
+    color: white;
+    border-color: #5d5fef;
+}
+
+.music-prompt-preview {
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 16px;
+    border: 1px solid #e9ecef;
+}
+
+.preview-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #adb5bd;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.music-prompt-preview-text {
+    font-size: 13px;
+    color: #495057;
+    line-height: 1.5;
+    font-style: italic;
+    word-break: break-word;
+}
+
 /* Settings Section */
 .settings-section {
     margin: 0 16px 16px;
