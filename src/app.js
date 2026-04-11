@@ -21,7 +21,9 @@ let state = {
         orientation: 'video',
         cfg_scale: 0.5,
         aspect_ratio: '16:9',
+        resolution: '360p',
         duration: '5',
+        motion: 5,
         negative_prompt: 'blur, distort, and low quality',
         strength: 0.5,
         guidance_scale: 7.5,
@@ -144,6 +146,45 @@ const GENERATORS = [
         pollingType: 'path'
     },
     {
+        id: 'kling-v3-motion-control-std',
+        name: 'Kling 3 Motion Control (Std)',
+        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
+        badge: 'V3 MC',
+        description: 'Kling 3 Standard - Motion control video: Transfer motion from a reference video to a character image.',
+        inputs: ['image', 'video', 'prompt'],
+        outputType: 'video',
+        settings: { orientation: true, cfg: true },
+        endpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-std',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-std',
+        pollingType: 'path'
+    },
+    {
+        id: 'kling-v3-motion-control-pro',
+        name: 'Kling 3 Motion Control (Pro)',
+        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
+        badge: 'V3 MC PRO',
+        description: 'Kling 3 Pro - Motion control video: Transfer motion from a reference video to a character image.',
+        inputs: ['image', 'video', 'prompt'],
+        outputType: 'video',
+        settings: { orientation: true, cfg: true },
+        endpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-pro',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-pro',
+        pollingType: 'path'
+    },
+    {
+        id: 'pixverse-v5',
+        name: 'Pixverse V5',
+        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
+        badge: 'V5',
+        description: 'Pixverse V5 - Image to Video: High-quality video generation with advanced motion control.',
+        inputs: ['image', 'prompt'],
+        outputType: 'video',
+        settings: { resolution: true, duration: 'pixverse', negative_prompt: true, seed: true },
+        endpoint: 'https://api.freepik.com/v1/ai/image-to-video/pixverse-v5',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/image-to-video/pixverse-v5',
+        pollingType: 'path'
+    },
+    {
         id: 'seedance-1-5-pro',
         name: 'Seedance 1.5 Pro',
         icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
@@ -183,6 +224,19 @@ const GENERATORS = [
         pollingType: 'path'
     },
     {
+        id: 'kling-v3-omni-pro',
+        name: 'Kling 3 Omni Pro',
+        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
+        badge: 'OMNI PRO',
+        description: 'Kling 3 Omni Pro - Generate video from text or image with advanced multi-modal capabilities.',
+        inputs: ['image', 'video', 'prompt'],
+        outputType: 'video',
+        settings: { aspect_ratio: true, duration: true, generate_audio: true },
+        endpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-omni-pro',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-omni',
+        pollingType: 'path'
+    },
+    {
         id: 'kling-v3-pro',
         name: 'Kling 3 Pro',
         icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
@@ -196,42 +250,29 @@ const GENERATORS = [
         pollingType: 'path'
     },
     {
-        id: 'kling-v3-motion-control-std',
-        name: 'Kling 3 Motion Control (Std)',
-        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
-        badge: 'V3 MC',
-        description: 'Kling 3 Standard - Motion control video: Transfer motion from a reference video to a character image.',
-        inputs: ['image', 'video', 'prompt'],
-        outputType: 'video',
-        settings: { orientation: true, cfg: true },
-        endpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-std',
-        statusEndpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-std',
-        pollingType: 'path'
-    },
-    {
-        id: 'kling-v3-motion-control-pro',
-        name: 'Kling 3 Motion Control (Pro)',
-        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
-        badge: 'V3 MC PRO',
-        description: 'Kling 3 Pro - Motion control video: Transfer motion from a reference video to a character image.',
-        inputs: ['image', 'video', 'prompt'],
-        outputType: 'video',
-        settings: { orientation: true, cfg: true },
-        endpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-pro',
-        statusEndpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-pro',
-        pollingType: 'path'
-    },
-    {
         id: 'seedream-4-5-edit',
         name: 'SeeDream 4.5 Edit',
         icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=108634&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎨</span></div>',
         badge: 'V4.5',
-        description: 'SeeDream 4.5 Edit - Text to Image with Reference: Preserve subject details and style while editing.',
+        description: 'SeeDream 4.5 Edit: High-fidelity Text-to-Image generation with reference images. Preserves subject details and style while editing.',
         inputs: ['image', 'video', 'prompt'],
         outputType: 'image',
         settings: { aspect_ratio: 'seedream', seed: true, safety_checker: true },
         endpoint: 'https://api.freepik.com/v1/ai/text-to-image/seedream-v4-5-edit',
         statusEndpoint: 'https://api.freepik.com/v1/ai/text-to-image/seedream-v4-5-edit',
+        pollingType: 'path'
+    },
+    {
+        id: 'runway',
+        name: 'Runway',
+        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=108634&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🖼️</span></div>',
+        badge: 'NEW',
+        description: 'Runway - High-quality text-to-image generation.',
+        inputs: ['prompt'],
+        outputType: 'image',
+        settings: { aspect_ratio: 'runway', seed: true },
+        endpoint: 'https://api.freepik.com/v1/ai/text-to-image/runway',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/text-to-image/runway',
         pollingType: 'path'
     },
     {
@@ -804,9 +845,8 @@ function renderHeader() {
     return `
         <header>
             <div class="header-left">
-                <div class="logo">
-                    <img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 24px; height: 24px; filter: drop-shadow(0 0 2px rgba(93, 95, 239, 0.5));" referrerPolicy="no-referrer" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
-                    <i data-lucide="sparkles" class="emoji-fallback" style="display:none;"></i>
+                <div class="logo" style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: linear-gradient(135deg, #5d5fef, #8b5cf6); border-radius: 8px; color: white; font-weight: 800; font-size: 16px; font-family: 'Inter', sans-serif; box-shadow: 0 2px 4px rgba(93, 95, 239, 0.3);">
+                    N
                 </div>
                 <div class="brand-name">ND STUDIO PRO</div>
             </div>
@@ -865,12 +905,13 @@ function renderSetupPage() {
     return `
         <div class="setup-page">
             <div class="setup-hero">
-                <div class="setup-logo-large">
-                    <img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 48px; height: 48px; filter: drop-shadow(0 0 4px rgba(93, 95, 239, 0.5));" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'">
-                    <i data-lucide="sparkles" class="emoji-fallback" style="display:none; width: 48px; height: 48px;"></i>
+                <div class="setup-logo-large" style="background: transparent; box-shadow: none;">
+                    <div style="display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: linear-gradient(135deg, #5d5fef, #8b5cf6); border-radius: 16px; color: white; font-weight: 800; font-size: 36px; font-family: 'Inter', sans-serif; box-shadow: 0 8px 16px rgba(93, 95, 239, 0.3); margin: 0 auto;">
+                        N
+                    </div>
                 </div>
-                <h1>Selamat Datang di ND STUDIO PRO</h1>
-                <p>AI Video Generator dengan 20+ model AI</p>
+                <h1 style="font-size: 24px; line-height: 1.3; margin-top: 16px;">Selamat Datang di<br><span style="color: #5d5fef; font-weight: 900;">ND STUDIO PRO</span></h1>
+                <p>AI Video Generator dengan 10+ model AI</p>
             </div>
 
             <div class="step-card">
@@ -912,29 +953,6 @@ function renderSetupPage() {
                     <button class="btn-save-api" onclick="saveApiKey()">Simpan</button>
                 </div>
             </div>
-
-            <div class="info-box" style="background: #fff9db; border: 2px solid #fab005; padding: 16px;">
-                <div class="info-title" style="color: #856404; font-weight: 800; font-size: 14px;">
-                    <i data-lucide="shield-alert"></i> PENTING: Perbaikan Akses Browser
-                </div>
-                <p style="font-size: 12px; margin: 8px 0 12px; color: #856404; line-height: 1.4;">
-                    Browser memblokir akses upload karena kebijakan keamanan iframe. Klik tombol di bawah untuk membuka jalur akses aman:
-                </p>
-                <button class="btn-step-action" onclick="window.open('/api/upload', '_blank')" style="background: #fab005; border: none; color: white; box-shadow: 0 4px 12px rgba(250, 176, 5, 0.3); font-size: 14px; padding: 12px; width: 100%; animation: pulse 2s infinite;">
-                    🔓 Klik untuk Authenticate
-                </button>
-                <p style="font-size: 10px; margin-top: 8px; color: #856404; text-align: center;">
-                    (Hanya perlu dilakukan satu kali per sesi)
-                </p>
-            </div>
-            
-            <style>
-                @keyframes pulse {
-                    0% { transform: scale(1); }
-                    50% { transform: scale(1.02); }
-                    100% { transform: scale(1); }
-                }
-            </style>
 
             ${state.apiKey ? `
                 <div class="info-box success" style="background: #e7fcf3; border: 1px solid #b7f2d7; color: #0d6832; padding: 12px; border-radius: 12px; font-size: 12px; margin-top: 12px; display: flex; align-items: center; gap: 8px;">
@@ -979,8 +997,9 @@ function renderUploadSection(gen) {
     const showUrlInput = state.showUrlInput || false;
     const isKling3Std = gen.id === 'kling-v3-std';
     const isKling3Pro = gen.id === 'kling-v3-pro';
+    const isKling3OmniPro = gen.id === 'kling-v3-omni-pro';
     const isSeeDream45 = gen.id === 'seedream-4-5-edit';
-    const hasTwoInputs = gen.inputs.includes('video') || (isKling3Std && gen.inputs.includes('image')) || (isSeeDream45 && gen.inputs.includes('video'));
+    const hasTwoInputs = gen.inputs.includes('video') || (isKling3Std && gen.inputs.includes('image')) || (isSeeDream45 && gen.inputs.includes('video')) || (isKling3OmniPro && gen.inputs.includes('video'));
 
     const uploadState = getUploadState();
 
@@ -1007,7 +1026,7 @@ function renderUploadSection(gen) {
                     ` : `
                         <div class="upload-placeholder">
                             <i data-lucide="image"></i>
-                            <span>${gen.id === 'kling-v3-std' ? 'Start Image<br>(Awal)' : (gen.id === 'kling-v3-pro' ? 'Upload Gambar' : (gen.id === 'seedream-4-5-edit' ? 'Reference Image 1' : (gen.id === 'seedance-1-5-pro' ? 'Upload Image<br>(Optional)' : 'Gambar<br>Karakter')))}</span>
+                            <span>${gen.id === 'kling-v3-std' || gen.id === 'kling-v3-omni-pro' ? 'Start Image<br>(Awal)' : (gen.id === 'kling-v3-pro' ? 'Upload Gambar' : (gen.id === 'seedream-4-5-edit' ? 'Reference Image 1' : (gen.id === 'seedance-1-5-pro' ? 'Upload Image<br>(Optional)' : 'Gambar<br>Karakter')))}</span>
                         </div>
                     `}
                 </div>
@@ -1022,7 +1041,7 @@ function renderUploadSection(gen) {
                             <span>Uploading...</span>
                         </div>
                     ` : uploadState.files.video ? `
-                        ${(isKling3Std || gen.id === 'seedream-4-5-edit') ? `<img src="${uploadState.files.video}" class="upload-preview">` : `<video src="${uploadState.files.video}" class="upload-preview" muted autoplay loop playsinline></video>`}
+                        ${(isKling3Std || isKling3OmniPro || gen.id === 'seedream-4-5-edit') ? `<img src="${uploadState.files.video}" class="upload-preview">` : `<video src="${uploadState.files.video}" class="upload-preview" muted autoplay loop playsinline></video>`}
                         <button class="btn-remove" onclick="removeFile(event, 'video')"><i data-lucide="x"></i></button>
                     ` : uploadState.urls.video ? `
                         <div class="upload-placeholder">
@@ -1033,8 +1052,8 @@ function renderUploadSection(gen) {
                         </div>
                     ` : `
                         <div class="upload-placeholder">
-                            <i data-lucide="${(isKling3Std || gen.id === 'seedream-4-5-edit') ? 'image' : 'video'}"></i>
-                            <span>${isKling3Std ? 'End Image<br>(Akhir)' : (gen.id === 'seedream-4-5-edit' ? 'Reference Image 2' : 'Video<br>Referensi')}</span>
+                            <i data-lucide="${(isKling3Std || isKling3OmniPro || gen.id === 'seedream-4-5-edit') ? 'image' : 'video'}"></i>
+                            <span>${(isKling3Std || isKling3OmniPro) ? 'End Image<br>(Akhir)' : (gen.id === 'seedream-4-5-edit' ? 'Reference Image 2' : 'Video<br>Referensi')}</span>
                         </div>
                     `}
                 </div>
@@ -1056,7 +1075,7 @@ function renderUploadSection(gen) {
             ` : ''}
         </div>
         <input type="file" id="file-input-image" hidden accept="image/*" onchange="handleFileChange('image', this)">
-        <input type="file" id="file-input-video" hidden accept="${(isKling3Std || isSeeDream45) ? 'image/*' : 'video/*'}" onchange="handleFileChange('video', this)">
+        <input type="file" id="file-input-video" hidden accept="${(isKling3Std || isKling3OmniPro || isSeeDream45) ? 'image/*' : 'video/*'}" onchange="handleFileChange('video', this)">
     `;
 }
 
@@ -1183,6 +1202,18 @@ function renderSettings(gen) {
                 </div>
             ` : ''}
 
+            ${gen.settings.resolution ? `
+                <div class="setting-item">
+                    <div class="setting-label"><span>Resolution</span></div>
+                    <select class="setting-select" onchange="updateSetting('resolution', this.value)">
+                        <option value="360p" ${state.settings.resolution === '360p' ? 'selected' : ''}>360p</option>
+                        <option value="540p" ${state.settings.resolution === '540p' ? 'selected' : ''}>540p</option>
+                        <option value="720p" ${state.settings.resolution === '720p' ? 'selected' : ''}>720p</option>
+                        <option value="1080p" ${state.settings.resolution === '1080p' ? 'selected' : ''}>1080p</option>
+                    </select>
+                </div>
+            ` : ''}
+
             ${gen.settings.aspect_ratio ? `
                 <div class="setting-item">
                     <div class="setting-label"><span>Aspect Ratio</span></div>
@@ -1204,12 +1235,35 @@ function renderSettings(gen) {
                             <option value="widescreen_16_9" ${state.settings.aspect_ratio === 'widescreen_16_9' ? 'selected' : ''}>16:9 (Widescreen)</option>
                             <option value="social_story_9_16" ${state.settings.aspect_ratio === 'social_story_9_16' ? 'selected' : ''}>9:16 (Portrait)</option>
                             <option value="square_1_1" ${state.settings.aspect_ratio === 'square_1_1' ? 'selected' : ''}>1:1 (Square)</option>
+                        ` : gen.settings.aspect_ratio === 'pixverse' ? `
+                            <option value="16:9" ${state.settings.aspect_ratio === '16:9' ? 'selected' : ''}>16:9 (Landscape)</option>
+                            <option value="9:16" ${state.settings.aspect_ratio === '9:16' ? 'selected' : ''}>9:16 (Portrait)</option>
+                            <option value="1:1" ${state.settings.aspect_ratio === '1:1' ? 'selected' : ''}>1:1 (Square)</option>
+                            <option value="4:3" ${state.settings.aspect_ratio === '4:3' ? 'selected' : ''}>4:3 (Classic)</option>
+                            <option value="3:4" ${state.settings.aspect_ratio === '3:4' ? 'selected' : ''}>3:4 (Portrait)</option>
+                        ` : gen.settings.aspect_ratio === 'runway' ? `
+                            <option value="1920:1080" ${state.settings.aspect_ratio === '1920:1080' ? 'selected' : ''}>16:9 (Landscape)</option>
+                            <option value="1080:1920" ${state.settings.aspect_ratio === '1080:1920' ? 'selected' : ''}>9:16 (Portrait)</option>
+                            <option value="1024:1024" ${state.settings.aspect_ratio === '1024:1024' ? 'selected' : ''}>1:1 (Square)</option>
+                            <option value="1280:720" ${state.settings.aspect_ratio === '1280:720' ? 'selected' : ''}>HD Landscape (1280x720)</option>
+                            <option value="720:1280" ${state.settings.aspect_ratio === '720:1280' ? 'selected' : ''}>HD Portrait (720x1280)</option>
                         ` : `
                             <option value="16:9" ${state.settings.aspect_ratio === '16:9' ? 'selected' : ''}>16:9 (Landscape)</option>
                             <option value="9:16" ${state.settings.aspect_ratio === '9:16' ? 'selected' : ''}>9:16 (Portrait)</option>
                             <option value="1:1" ${state.settings.aspect_ratio === '1:1' ? 'selected' : ''}>1:1 (Square)</option>
                         `}
                     </select>
+                </div>
+            ` : ''}
+
+            ${gen.settings.motion ? `
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <span>Motion Intensity</span>
+                        <span class="setting-value" id="motion-val">${state.settings.motion}</span>
+                    </div>
+                    <input type="range" class="setting-slider" min="1" max="10" step="1" value="${state.settings.motion}" 
+                           oninput="updateSetting('motion', parseInt(this.value)); document.getElementById('motion-val').innerText = this.value">
                 </div>
             ` : ''}
 
@@ -1229,7 +1283,9 @@ function renderSettings(gen) {
                 <div class="setting-item">
                     <div class="setting-label"><span>Duration (Seconds)</span></div>
                     <select class="setting-select" onchange="updateSetting('duration', this.value)">
-                        ${gen.settings.duration === 'seedance' ? [3,5,10].map(d => `
+                        ${gen.settings.duration === 'seedance' ? [5,10,12].map(d => `
+                            <option value="${d}" ${state.settings.duration == d ? 'selected' : ''}>${d}s</option>
+                        `).join('') : gen.settings.duration === 'pixverse' ? [5,10].map(d => `
                             <option value="${d}" ${state.settings.duration == d ? 'selected' : ''}>${d}s</option>
                         `).join('') : [3,4,5,6,7,8,9,10,11,12,13,14,15].map(d => `
                             <option value="${d}" ${state.settings.duration == d ? 'selected' : ''}>${d}s</option>
@@ -1427,6 +1483,18 @@ function renderSettings(gen) {
                     <select class="setting-select" onchange="updateSetting('use_speaker_boost', this.value === 'true')">
                         <option value="true" ${state.settings.use_speaker_boost !== false ? 'selected' : ''}>Enabled</option>
                         <option value="false" ${state.settings.use_speaker_boost === false ? 'selected' : ''}>Disabled</option>
+                    </select>
+                </div>
+            ` : ''}
+
+            ${gen.settings.style ? `
+                <div class="setting-item">
+                    <div class="setting-label"><span>Style</span></div>
+                    <select class="setting-select" onchange="updateSetting('style', this.value)">
+                        <option value="None" ${state.settings.style === 'None' ? 'selected' : ''}>None</option>
+                        <option value="Anime" ${state.settings.style === 'Anime' ? 'selected' : ''}>Anime</option>
+                        <option value="Realistic" ${state.settings.style === 'Realistic' ? 'selected' : ''}>Realistic</option>
+                        <option value="3D" ${state.settings.style === '3D' ? 'selected' : ''}>3D Render</option>
                     </select>
                 </div>
             ` : ''}
@@ -1629,13 +1697,19 @@ async function syncTasks() {
     let listType = activeGen.pollingType;
     
     // Kling 3 specific list endpoint fallback
-    if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro' || activeGen.id === 'kling-v3-motion-control-std' || activeGen.id === 'kling-v3-motion-control-pro') {
+    if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro' || activeGen.id === 'kling-v3-motion-control-std' || activeGen.id === 'kling-v3-motion-control-pro' || activeGen.id === 'kling-v3-omni-pro') {
         listEndpoint = (activeGen.id === 'kling-v3-motion-control-std' || activeGen.id === 'kling-v3-motion-control-pro')
             ? activeGen.endpoint
-            : 'https://api.freepik.com/v1/ai/video/kling-v3';
+            : (activeGen.id === 'kling-v3-omni-pro' ? 'https://api.freepik.com/v1/ai/video/kling-v3-omni' : 'https://api.freepik.com/v1/ai/video/kling-v3');
         listType = 'list';
     } else if (activeGen.id === 'seedream-4-5-edit') {
-        listEndpoint = 'https://api.freepik.com/v1/ai/image-to-image/tasks';
+        listEndpoint = 'https://api.freepik.com/v1/ai/text-to-image/seedream-v4-5-edit';
+        listType = 'list';
+    } else if (activeGen.id === 'pixverse-v5') {
+        listEndpoint = 'https://api.freepik.com/v1/ai/image-to-video/pixverse-v5';
+        listType = 'list';
+    } else if (activeGen.id === 'runway') {
+        listEndpoint = 'https://api.freepik.com/v1/ai/text-to-image/runway';
         listType = 'list';
     }
 
@@ -1700,12 +1774,16 @@ async function syncTasks() {
             if (isDone) {
                 if (!state.completedResults.find(r => r.id === taskId)) {
                     const output = task.output || task;
+                    const taskData = task.data || task;
+                    
                     let videoUrl = 
+                        (taskData.generated && Array.isArray(taskData.generated) && taskData.generated[0]) ||
+                        (output.generated && Array.isArray(output.generated) && output.generated[0]) ||
                         output.video_url || 
                         output.url || 
-                        (output.video && output.video.url) ||
-                        (output.result && (output.result.url || (output.result.video && output.result.video.url))) ||
-                        (output.generated && Array.isArray(output.generated) && output.generated[0]) ||
+                        output.image_url ||
+                        (output.image && output.image.url) ||
+                        (output.result && (output.result.url || (output.result.video && output.result.video.url) || (output.result.image && output.result.image.url))) ||
                         (output.generated && typeof output.generated === 'string' ? output.generated : null);
                     
                     // Exhaustive search fallback for sync
@@ -1714,13 +1792,13 @@ async function syncTasks() {
                             if (!obj) return null;
                             if (typeof obj === 'string') {
                                 if ((obj.startsWith('http') || obj.startsWith('//')) && 
-                                    (obj.includes('.mp4') || obj.includes('.mov') || obj.includes('.webm') || obj.includes('video') || obj.includes('freepik'))) {
+                                    (obj.includes('.mp4') || obj.includes('.mov') || obj.includes('.webm') || obj.includes('.jpg') || obj.includes('.png') || obj.includes('.webp') || obj.includes('video') || obj.includes('image') || obj.includes('freepik'))) {
                                     return obj;
                                 }
                                 return null;
                             }
                             if (typeof obj !== 'object') return null;
-                            const priorityKeys = ['url', 'video_url', 'download_url', 'uri', 'link', 'src', 'video'];
+                            const priorityKeys = ['url', 'image_url', 'video_url', 'download_url', 'uri', 'link', 'src', 'video', 'image'];
                             for (const key of priorityKeys) {
                                 if (typeof obj[key] === 'string' && (obj[key].startsWith('http') || obj[key].startsWith('//'))) {
                                     return obj[key];
@@ -1816,25 +1894,31 @@ async function generate() {
         }
 
         // Priority: Use the public URL if available (required for Kling), fallback to base64 only if necessary (e.g. SeeDream)
-        const imageInput = uploadState.urls.image || uploadState.files.image;
-        const videoInput = uploadState.urls.video || uploadState.files.video;
+        let imageInput = uploadState.urls.image || uploadState.files.image;
+        let videoInput = uploadState.urls.video || uploadState.files.video;
 
         const activeGen = GENERATORS.find(g => g.id === state.activeGenerator) || GENERATORS[0];
         if (!activeGen) throw new Error("Model generator tidak ditemukan.");
 
+        // Force base64 for SeeDream to avoid URL accessibility issues
+        if (activeGen.id === 'seedream-4-5-edit') {
+            imageInput = uploadState.files.image || uploadState.urls.image;
+            videoInput = uploadState.files.video || uploadState.urls.video;
+        }
+
         // Kling models strictly require public HTTPS URLs
-        const isKling = activeGen.id.toLowerCase().includes('kling');
-        if (isKling) {
-            console.log(`[DEBUG] Kling Input URLs:`, {
+        const needsPublicUrl = activeGen.id.toLowerCase().includes('kling') || activeGen.id === 'seedance-1-5-pro' || activeGen.id === 'pixverse-v5';
+        if (needsPublicUrl) {
+            console.log(`[DEBUG] ${activeGen.name} Input URLs:`, {
                 image: imageInput,
                 video: videoInput
             });
             
             if (imageInput && imageInput.startsWith('data:')) {
-                throw new Error("Gagal mengunggah gambar ke server publik. Freepik memerlukan URL publik (HTTPS). Silakan coba upload ulang atau masukkan URL manual.");
+                throw new Error(`Gagal mengunggah gambar ke server publik. ${activeGen.name} memerlukan URL publik (HTTPS). Silakan coba upload ulang atau masukkan URL manual.`);
             }
             if (videoInput && videoInput.startsWith('data:')) {
-                throw new Error("Gagal mengunggah video ke server publik. Freepik memerlukan URL publik (HTTPS). Silakan coba upload ulang atau masukkan URL manual.");
+                throw new Error(`Gagal mengunggah video ke server publik. ${activeGen.name} memerlukan URL publik (HTTPS). Silakan coba upload ulang atau masukkan URL manual.`);
             }
         }
 
@@ -1843,7 +1927,7 @@ async function generate() {
             if (!imageInput || !videoInput) {
                 throw new Error("Wajib upload Gambar Karakter & Video Referensi (atau masukkan URL)");
             }
-        } else if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro') {
+        } else if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro' || activeGen.id === 'kling-v3-omni-pro') {
             if (!state.currentPrompt && !imageInput) {
                 throw new Error("Wajib masukkan Prompt atau Start Image untuk Kling 3.");
             }
@@ -1858,12 +1942,15 @@ async function generate() {
             if (!state.currentPrompt && !imageInput) {
                 throw new Error("Wajib masukkan Prompt atau Image untuk Seedance 1.5 Pro.");
             }
+        } else if (activeGen.id === 'runway') {
+            if (!state.currentPrompt) {
+                throw new Error("Wajib masukkan Prompt untuk Runway.");
+            }
         }
 
         let finalPrompt = state.currentPrompt || "";
         if (finalPrompt && activeGen.id !== 'elevenlabs-turbo-v2-5') {
             try {
-                if (btn) btn.innerHTML = '🔤 Translating...';
                 const translateRes = await fetch('/api/translate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1892,7 +1979,7 @@ async function generate() {
                 character_orientation: state.settings.orientation,
                 cfg_scale: state.settings.cfg_scale
             };
-        } else if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro') {
+        } else if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro' || activeGen.id === 'kling-v3-omni-pro') {
             let ar = state.settings.aspect_ratio;
             if (ar === 'square_1_1') ar = '1:1';
             else if (ar === 'widescreen_16_9') ar = '16:9';
@@ -1902,29 +1989,58 @@ async function generate() {
                 ar = '16:9';
             }
 
-            body = {
-                prompt: finalPrompt,
-                start_image_url: ensureHttps(imageInput) || undefined,
-                end_image_url: ensureHttps(videoInput) || undefined,
-                aspect_ratio: ar,
-                duration: state.settings.duration,
-                negative_prompt: state.settings.negative_prompt,
-                cfg_scale: state.settings.cfg_scale,
-                generate_audio: true
-            };
+            if (activeGen.id === 'kling-v3-omni-pro') {
+                body = {
+                    prompt: finalPrompt,
+                    start_image_url: ensureHttps(imageInput) || undefined,
+                    end_image_url: ensureHttps(videoInput) || undefined,
+                    aspect_ratio: ar,
+                    duration: state.settings.duration,
+                    generate_audio: state.settings.generate_audio !== undefined ? state.settings.generate_audio : true
+                };
+                // For image-to-video, if start_image_url is provided, image_url is also required by the API
+                if (body.start_image_url) {
+                    body.image_url = body.start_image_url;
+                }
+            } else {
+                body = {
+                    prompt: finalPrompt,
+                    start_image_url: ensureHttps(imageInput) || undefined,
+                    end_image_url: ensureHttps(videoInput) || undefined,
+                    aspect_ratio: ar,
+                    duration: state.settings.duration,
+                    negative_prompt: state.settings.negative_prompt,
+                    cfg_scale: state.settings.cfg_scale,
+                    generate_audio: true
+                };
+            }
         } else if (activeGen.id === 'seedream-4-5-edit') {
-            const referenceImages = [];
-            // Freepik SeeDream accepts Base64 directly, which is much more reliable than public URLs!
-            if (imageInput) referenceImages.push(ensureHttps(imageInput));
-            if (videoInput) referenceImages.push(ensureHttps(videoInput));
+            const img1 = (imageInput || "").toString().trim();
+            const img2 = (videoInput || "").toString().trim();
+            
+            // Match the curl example exactly: an array of valid URLs or base64
+            const referenceImages = [
+                img1 ? (img1.startsWith('http') ? ensureHttps(img1) : img1) : "",
+                img2 ? (img2.startsWith('http') ? ensureHttps(img2) : img2) : ""
+            ].filter(url => url !== "");
+            
+            // Ensure aspect_ratio is valid for SeeDream
+            let ar = state.settings.aspect_ratio || "square_1_1";
+            const validARs = ['square_1_1', 'widescreen_16_9', 'social_story_9_16', 'portrait_2_3', 'traditional_3_4', 'standard_3_2', 'classic_4_3', 'cinematic_21_9'];
+            if (!validARs.includes(ar)) {
+                ar = 'square_1_1';
+            }
 
             body = {
                 prompt: finalPrompt,
                 reference_images: referenceImages,
-                aspect_ratio: state.settings.aspect_ratio || "square_1_1",
-                seed: state.settings.seed !== '' && state.settings.seed !== undefined ? parseInt(state.settings.seed) : Math.floor(Math.random() * 4294967295),
+                aspect_ratio: ar,
                 enable_safety_checker: state.settings.safety_checker !== undefined ? state.settings.safety_checker : true
             };
+            
+            if (state.settings.seed !== '' && state.settings.seed !== undefined) {
+                body.seed = parseInt(state.settings.seed);
+            }
         } else if (activeGen.id === 'flux-2-pro') {
             let prompt = finalPrompt;
             let negativePrompt = state.settings.negative_prompt || "";
@@ -1959,6 +2075,18 @@ async function generate() {
                 height: height,
                 cfg_scale: state.settings.cfg_scale !== undefined ? state.settings.cfg_scale : 0.5,
                 steps: state.settings.steps || 25,
+                seed: state.settings.seed !== '' && state.settings.seed !== undefined ? parseInt(state.settings.seed) : Math.floor(Math.random() * 4294967295)
+            };
+        } else if (activeGen.id === 'pixverse-v5') {
+            if (!imageInput) {
+                throw new Error("Wajib upload Gambar untuk Pixverse V5.");
+            }
+            body = {
+                prompt: finalPrompt || "Cinematic video",
+                image_url: ensureHttps(imageInput),
+                negative_prompt: state.settings.negative_prompt || "",
+                resolution: state.settings.resolution || "360p",
+                duration: parseInt(state.settings.duration) || 5,
                 seed: state.settings.seed !== '' && state.settings.seed !== undefined ? parseInt(state.settings.seed) : Math.floor(Math.random() * 4294967295)
             };
         } else if (activeGen.id === 'seedance-1-5-pro') {
@@ -1998,6 +2126,14 @@ async function generate() {
                 prompt: musicPrompt,
                 music_length_seconds: parseInt(state.settings.music_duration) || 30
             };
+        } else if (activeGen.id === 'runway') {
+            body = {
+                prompt: finalPrompt,
+                ratio: state.settings.aspect_ratio || "1920:1080"
+            };
+            if (state.settings.seed !== '' && state.settings.seed !== undefined) {
+                body.seed = parseInt(state.settings.seed);
+            }
         }
 
         console.log("Generating with body:", body);
@@ -2143,6 +2279,7 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
         { base: 'https://api.freepik.com/v1/ai/video/seedance-1-5-pro-720p', type: 'path' },
         { base: 'https://api.freepik.com/v1/ai/video/status', type: 'query' },
         { base: 'https://api.freepik.com/v1/ai/image-to-video/kling-v2-6', type: 'path' },
+        { base: 'https://api.freepik.com/v1/ai/image-to-video/pixverse-v5', type: 'path' },
         { base: 'https://api.freepik.com/v1/ai/voiceover/elevenlabs-turbo-v2-5', type: 'path' },
         { base: 'https://api.freepik.com/v1/ai/music-generation', type: 'path' }
     ];
@@ -2204,7 +2341,7 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
             activeGen.statusEndpoint = statusBase;
         }
 
-        console.log("Polling Data:", data);
+        console.log("Polling Raw Response Data:", JSON.stringify(data, null, 2));
         
         // Normalize data structure (handle nested 'data' object)
         let taskData = null;
@@ -2250,17 +2387,23 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
             
             // 1. Direct check in common paths
             const output = taskData.output || taskData;
+            
+            // Prioritize 'generated' array for SeeDream and similar models
             videoUrl = 
-                output.audio_url || 
-                output.video_url || 
+                (taskData.generated && Array.isArray(taskData.generated) && (typeof taskData.generated[0] === 'string' ? taskData.generated[0] : taskData.generated[0].url)) ||
+                (output.generated && Array.isArray(output.generated) && (typeof output.generated[0] === 'string' ? output.generated[0] : output.generated[0].url)) ||
+                output.image_url || 
                 output.url || 
+                output.video_url || 
+                output.audio_url || 
+                (output.image && output.image.url) ||
                 (output.video && output.video.url) ||
                 (output.audio && output.audio.url) ||
-                (output.result && (output.result.url || (output.result.video && output.result.video.url) || (output.result.audio && output.result.audio.url))) ||
-                (output.generated && Array.isArray(output.generated) && output.generated[0]) ||
-                (output.items && output.items[0] && output.items[0].url) ||
-                (output.data && output.data.url) ||
+                (output.result && (output.result.url || (output.result.image && output.result.image.url) || (output.result.video && output.result.video.url) || (output.result.audio && output.result.audio.url))) ||
+                (output.items && output.items[0] && (typeof output.items[0] === 'string' ? output.items[0] : output.items[0].url)) ||
+                (output.data && (output.data.url || (Array.isArray(output.data) && output.data[0] && (typeof output.data[0] === 'string' ? output.data[0] : output.data[0].url)))) ||
                 (taskData.result && taskData.result.url) ||
+                (taskData.image && taskData.image.url) ||
                 (taskData.video && taskData.video.url) ||
                 (taskData.audio && taskData.audio.url);
 
@@ -2340,7 +2483,7 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
             state.activeTasks.splice(currentTaskIndex, 1);
             updateTasksAndResultsDOM();
         } else if (isFailed) {
-            console.error("Task failed. Full data:", taskData);
+            console.error("Task failed. Full task data from Freepik:", JSON.stringify(taskData, null, 2));
             let errMsg = taskData.error_message || taskData.reason || taskData.detail || taskData.error || taskData.message;
             
             if (!errMsg && taskData.status_detail) {
@@ -2348,7 +2491,11 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
             }
             
             if (!errMsg) {
-                errMsg = "Unknown Freepik error (Status: FAILED). Pastikan video referensi berdurasi 3-30 detik dan format didukung.";
+                if (activeGen.outputType === 'video') {
+                    errMsg = "Unknown Freepik error (Status: FAILED). Pastikan video referensi berdurasi 3-30 detik dan format didukung.";
+                } else {
+                    errMsg = "Unknown Freepik error (Status: FAILED). Silakan cek parameter input atau coba lagi nanti.";
+                }
             }
             
             showToast("Generation failed: " + errMsg, "error");
@@ -2412,6 +2559,15 @@ function setActiveGenerator(id) {
         state.settings.duration = '5';
         state.settings.generate_audio = true;
         state.settings.camera_fixed = false;
+        state.settings.seed = '';
+    } else if (id === 'seedream-4-5-edit') {
+        state.settings.aspect_ratio = 'square_1_1';
+        state.settings.safety_checker = true;
+        state.settings.seed = '';
+    } else if (id === 'pixverse-v5') {
+        state.settings.aspect_ratio = '16:9';
+        state.settings.resolution = '360p';
+        state.settings.duration = '5';
         state.settings.seed = '';
     } else if (id === 'flux-2-pro') {
         state.settings.aspect_ratio = '16:9';
