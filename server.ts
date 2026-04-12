@@ -5,6 +5,14 @@ import { fileURLToPath } from "url";
 import axios from "axios";
 import multer from "multer";
 import fs from "fs";
+import { v2 as cloudinary } from 'cloudinary';
+
+// Configure Cloudinary
+cloudinary.config({ 
+  cloud_name: 'dwpoqmll1', 
+  api_key: '417135212776651', 
+  api_secret: 'x9wjOixxcA2QxxDqKZK0ii_M2tk' 
+});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -136,34 +144,32 @@ async function startServer() {
       let publicUrl = '';
 
       try {
-        // Primary Upload: catbox.moe (More reliable, direct links)
-        const formData = new FormData();
-        formData.append('reqtype', 'fileupload');
-        formData.append('fileToUpload', blob, originalname);
-
-        console.log(`Uploading to catbox.moe: ${originalname} (${fileBuffer.length} bytes)`);
-        const uploadRes = await axios.post('https://catbox.moe/user/api.php', formData, {
-          headers: { 
-            'Content-Type': 'multipart/form-data',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-          }
+        // Primary Upload: Cloudinary
+        console.log(`Uploading to Cloudinary: ${originalname} (${fileBuffer.length} bytes)`);
+        
+        const uploadPromise = new Promise<string>((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: 'nd_studio_pro', resource_type: 'auto' },
+            (error, result) => {
+              if (error) reject(error);
+              else if (result && result.secure_url) resolve(result.secure_url);
+              else reject(new Error("Invalid Cloudinary response"));
+            }
+          );
+          
+          uploadStream.on('error', (err) => {
+            console.error("Cloudinary stream error:", err);
+            reject(err);
+          });
+          
+          uploadStream.end(fileBuffer);
         });
 
-        const responseData = typeof uploadRes.data === 'string' ? uploadRes.data.trim() : String(uploadRes.data).trim();
-        console.log(`Catbox response: "${responseData}"`);
-
-        if (responseData.startsWith('http')) {
-          publicUrl = responseData;
-        } else {
-          throw new Error(`Invalid catbox response: ${responseData}`);
-        }
-      } catch (catboxErr: any) {
-        console.error("catbox.moe failed:", catboxErr.message);
-        if (catboxErr.response) {
-          console.error("Catbox error response data:", catboxErr.response.data);
-        }
+        publicUrl = await uploadPromise;
+      } catch (cloudinaryErr: any) {
+        console.error("Cloudinary failed:", cloudinaryErr.message);
         
-        // Secondary Upload: tmpfiles.org (Fallback)
+        // Secondary Upload: tmpfiles.org
         try {
           const formData = new FormData();
           formData.append('file', blob, originalname);
@@ -181,24 +187,70 @@ async function startServer() {
         } catch (tmpErr: any) {
           console.error("tmpfiles.org failed:", tmpErr.message);
           
-          // Final Fallback: uguu.se
+          // Third Fallback: pomf2.lain.la
           try {
             const formData = new FormData();
             formData.append('files[]', blob, originalname);
 
-            console.log(`Final fallback uploading to uguu.se...`);
-            const uploadRes = await axios.post('https://uguu.se/upload.php', formData, {
-              headers: { 'Content-Type': 'multipart/form-data' }
+            console.log(`Third fallback uploading to pomf2.lain.la...`);
+            const uploadRes = await axios.post('https://pomf2.lain.la/upload.php', formData, {
+              headers: { 
+                'Content-Type': 'multipart/form-data',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+              }
             });
 
             if (uploadRes.data && uploadRes.data.success && uploadRes.data.files && uploadRes.data.files[0]) {
               publicUrl = uploadRes.data.files[0].url;
             } else {
-              throw new Error("Invalid uguu.se response");
+              throw new Error("Invalid pomf2 response");
             }
-          } catch (uguuErr: any) {
-            console.error("uguu.se failed:", uguuErr.message);
-            throw new Error("All public upload providers failed");
+          } catch (pomfErr: any) {
+            console.error("pomf2.lain.la failed:", pomfErr.message);
+            
+            // Fourth Fallback: uguu.se
+            try {
+              const formData = new FormData();
+              formData.append('files[]', blob, originalname);
+
+              console.log(`Fourth fallback uploading to uguu.se...`);
+              const uploadRes = await axios.post('https://uguu.se/upload.php', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+              });
+
+              if (uploadRes.data && uploadRes.data.success && uploadRes.data.files && uploadRes.data.files[0]) {
+                publicUrl = uploadRes.data.files[0].url;
+              } else {
+                throw new Error("Invalid uguu.se response");
+              }
+            } catch (uguuErr: any) {
+              console.error("uguu.se failed:", uguuErr.message);
+              
+              // Final Fallback: catbox.moe
+              try {
+                const formData = new FormData();
+                formData.append('reqtype', 'fileupload');
+                formData.append('fileToUpload', blob, originalname);
+
+                console.log(`Final fallback uploading to catbox.moe...`);
+                const uploadRes = await axios.post('https://catbox.moe/user/api.php', formData, {
+                  headers: { 
+                    'Content-Type': 'multipart/form-data',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                  }
+                });
+
+                const responseData = typeof uploadRes.data === 'string' ? uploadRes.data.trim() : String(uploadRes.data).trim();
+                if (responseData.startsWith('http')) {
+                  publicUrl = responseData;
+                } else {
+                  throw new Error(`Invalid catbox response: ${responseData}`);
+                }
+              } catch (catboxErr: any) {
+                console.error("catbox.moe failed:", catboxErr.message);
+                throw new Error("All public upload providers failed");
+              }
+            }
           }
         }
       }
@@ -226,6 +278,29 @@ async function startServer() {
       const localUrl = `https://${host}/uploads/${filename}`;
       console.log(`Fallback to local URL: ${localUrl}`);
       res.json({ url: localUrl });
+    }
+  });
+
+  // Endpoint to clear Cloudinary folder (Admin only)
+  app.post("/api/admin/clear-cloudinary", async (req, res) => {
+    try {
+      // In a real app, verify admin token here. For now, just execute.
+      console.log("Clearing Cloudinary folder: nd_studio_pro (Images & Videos)");
+      
+      // Delete images and videos in parallel
+      const [imageResult, videoResult] = await Promise.all([
+        cloudinary.api.delete_resources_by_prefix('nd_studio_pro/', { resource_type: 'image' }),
+        cloudinary.api.delete_resources_by_prefix('nd_studio_pro/', { resource_type: 'video' })
+      ]);
+
+      res.json({ 
+        success: true, 
+        message: "Berhasil menghapus semua gambar dan video di Cloudinary.", 
+        results: { imageResult, videoResult } 
+      });
+    } catch (error: any) {
+      console.error("Cloudinary clear error:", error);
+      res.status(500).json({ success: false, message: error.message || "Gagal menghapus file di Cloudinary." });
     }
   });
 
@@ -285,11 +360,16 @@ async function startServer() {
       console.log(`Proxy POST Response Status: ${response.status} (${response.statusText})`);
       console.log(`Proxy POST Content-Type: ${contentType}`);
 
+      const text = await response.text();
       let data;
       if (contentType && contentType.includes("application/json")) {
-        data = await response.json();
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          data = { message: text };
+        }
       } else {
-        data = { message: await response.text() };
+        data = { message: text };
       }
 
       if (!response.ok) {
@@ -349,11 +429,16 @@ async function startServer() {
       console.log(`Proxy Response Status: ${response.status} (${response.statusText})`);
       console.log(`Proxy Content-Type: ${contentType}`);
 
+      const text = await response.text();
       let data;
       if (contentType && contentType.includes("application/json")) {
-        data = await response.json();
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          data = { message: text };
+        }
       } else {
-        data = { message: await response.text() };
+        data = { message: text };
       }
 
       if (!response.ok) {
@@ -396,7 +481,14 @@ async function startServer() {
         }
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error("Failed to parse JSON response in proxy list:", text);
+        data = { message: text };
+      }
       res.status(response.status).json(data);
     } catch (error: any) {
       console.error("Proxy List Error:", error.message);

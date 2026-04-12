@@ -1,6 +1,6 @@
 import { auth, db, googleProvider } from './firebase.js';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot, collection, updateDoc, query, where, serverTimestamp, getDocFromServer } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, collection, updateDoc, deleteDoc, query, where, serverTimestamp, getDocFromServer } from 'firebase/firestore';
 
 /**
  * ND Studio Pro - Core Logic (Fixed Functionality)
@@ -30,7 +30,7 @@ let state = {
         steps: 25,
         seed: '',
         style: 'Realistic',
-        voice: '21m00Tcm4TlvDq8ikWAM',
+        voice: 'URAuwR59OqCASDVp35yi',
         stability: 0.5,
         similarity_boost: 0.2,
         speed: 1,
@@ -52,6 +52,7 @@ let state = {
     allUsers: [], // For admin dashboard
     isAdmin: false,
     showAdminDashboard: false,
+    showApiKey: false,
     musicSelections: {
         genre: '',
         mood: '',
@@ -122,7 +123,7 @@ const GENERATORS = [
     {
         id: 'kling-v2-6-motion-control-std',
         name: 'Kling 2.6 Motion Control (Std)',
-        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
+        icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
         badge: 'V2.6',
         description: 'Kling 2.6 Standard - Motion Control: Transfer gerakan dari video ke gambar.',
         inputs: ['image', 'video', 'prompt'],
@@ -135,7 +136,7 @@ const GENERATORS = [
     {
         id: 'kling-v2-6-motion-control-pro',
         name: 'Kling 2.6 Motion Control (Pro)',
-        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
+        icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
         badge: 'V2.6 PRO',
         description: 'Kling 2.6 Pro - Motion Control: Kualitas lebih tinggi dan gerakan lebih presisi.',
         inputs: ['image', 'video', 'prompt'],
@@ -148,7 +149,7 @@ const GENERATORS = [
     {
         id: 'kling-v3-motion-control-std',
         name: 'Kling 3 Motion Control (Std)',
-        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
+        icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
         badge: 'V3 MC',
         description: 'Kling 3 Standard - Motion control video: Transfer motion from a reference video to a character image.',
         inputs: ['image', 'video', 'prompt'],
@@ -161,7 +162,7 @@ const GENERATORS = [
     {
         id: 'kling-v3-motion-control-pro',
         name: 'Kling 3 Motion Control (Pro)',
-        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
+        icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
         badge: 'V3 MC PRO',
         description: 'Kling 3 Pro - Motion control video: Transfer motion from a reference video to a character image.',
         inputs: ['image', 'video', 'prompt'],
@@ -174,7 +175,7 @@ const GENERATORS = [
     {
         id: 'pixverse-v5',
         name: 'Pixverse V5',
-        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
+        icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
         badge: 'V5',
         description: 'Pixverse V5 - Image to Video: High-quality video generation with advanced motion control.',
         inputs: ['image', 'prompt'],
@@ -187,7 +188,7 @@ const GENERATORS = [
     {
         id: 'seedance-1-5-pro',
         name: 'Seedance 1.5 Pro',
-        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
+        icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
         badge: 'PRO',
         description: 'Seedance 1.5 Pro - High-quality AI video generation with audio and camera control.',
         inputs: ['image', 'prompt'],
@@ -200,7 +201,7 @@ const GENERATORS = [
     {
         id: 'flux-2-pro',
         name: 'Flux 2 Pro',
-        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=108634&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🖼️</span></div>',
+        icon: '<div class="tool-icon-container tool-icon-image"><i data-lucide="image" class="model-icon-lucide"></i></div>',
         badge: 'PRO',
         description: 'Flux 2 Pro - High-quality image generation with realistic, cinematic, and ultra-detailed styles.',
         inputs: ['prompt'],
@@ -211,9 +212,22 @@ const GENERATORS = [
         pollingType: 'path'
     },
     {
+        id: 'flux-2-turbo',
+        name: 'Flux 2 Turbo',
+        icon: '<div class="tool-icon-container tool-icon-image"><i data-lucide="image" class="model-icon-lucide"></i></div>',
+        badge: 'TURBO',
+        description: 'Flux 2 Turbo - Speed-optimized version of Flux 2 for fast, high-quality image generation.',
+        inputs: ['prompt'],
+        outputType: 'image',
+        settings: { aspect_ratio: 'flux', guidance_scale: true, seed: true, safety_checker: true },
+        endpoint: 'https://api.freepik.com/v1/ai/text-to-image/flux-2-turbo',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/text-to-image/flux-2-turbo',
+        pollingType: 'path'
+    },
+    {
         id: 'kling-v3-std',
         name: 'Kling 3 Standard',
-        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
+        icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
         badge: 'V3 STD',
         description: 'Kling 3 Standard - Generate video: AI video generation with text or image guidance.',
         inputs: ['image', 'prompt'],
@@ -226,7 +240,7 @@ const GENERATORS = [
     {
         id: 'kling-v3-omni-pro',
         name: 'Kling 3 Omni Pro',
-        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
+        icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
         badge: 'OMNI PRO',
         description: 'Kling 3 Omni Pro - Generate video from text or image with advanced multi-modal capabilities.',
         inputs: ['image', 'video', 'prompt'],
@@ -239,7 +253,7 @@ const GENERATORS = [
     {
         id: 'kling-v3-pro',
         name: 'Kling 3 Pro',
-        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=v899v4ZpX97D&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎬</span></div>',
+        icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
         badge: 'V3 PRO',
         description: 'Kling 3 Pro - High Quality: AI video generation with superior quality and longer duration.',
         inputs: ['image', 'prompt'],
@@ -252,7 +266,7 @@ const GENERATORS = [
     {
         id: 'seedream-4-5-edit',
         name: 'SeeDream 4.5 Edit',
-        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=108634&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎨</span></div>',
+        icon: '<div class="tool-icon-container tool-icon-image"><i data-lucide="image" class="model-icon-lucide"></i></div>',
         badge: 'V4.5',
         description: 'SeeDream 4.5 Edit: High-fidelity Text-to-Image generation with reference images. Preserves subject details and style while editing.',
         inputs: ['image', 'video', 'prompt'],
@@ -265,7 +279,7 @@ const GENERATORS = [
     {
         id: 'runway',
         name: 'Runway',
-        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=108634&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🖼️</span></div>',
+        icon: '<div class="tool-icon-container tool-icon-image"><i data-lucide="image" class="model-icon-lucide"></i></div>',
         badge: 'NEW',
         description: 'Runway - High-quality text-to-image generation.',
         inputs: ['prompt'],
@@ -278,7 +292,7 @@ const GENERATORS = [
     {
         id: 'elevenlabs-turbo-v2-5',
         name: 'Voice Over',
-        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=113637&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎙️</span></div>',
+        icon: '<div class="tool-icon-container tool-icon-audio"><i data-lucide="mic" class="model-icon-lucide"></i></div>',
         badge: 'NEW',
         description: 'Voice Over - High-quality AI voice generation using ElevenLabs Turbo v2.5.',
         inputs: ['prompt'],
@@ -291,7 +305,7 @@ const GENERATORS = [
     {
         id: 'music-generation',
         name: 'Music Generation',
-        icon: '<div class="icon-fallback-wrapper"><img src="https://img.icons8.com/?size=160&id=113637&format=png" style="width: 44px; height: 44px;" referrerPolicy="no-referrer" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\'"><span class="emoji-fallback" style="display:none;">🎵</span></div>',
+        icon: '<div class="tool-icon-container tool-icon-audio"><i data-lucide="music" class="model-icon-lucide"></i></div>',
         badge: 'NEW',
         description: 'Music Generation - Create high-quality AI music from text prompts.',
         inputs: ['prompt'],
@@ -421,6 +435,50 @@ async function rejectUser(uid) {
     }
 }
 
+async function deleteUserAccount(uid) {
+    if (!state.isAdmin) return;
+    try {
+        await deleteDoc(doc(db, 'users', uid));
+        showToast("🗑️ Akun pengguna berhasil dihapus.", "success");
+    } catch (error) {
+        handleFirestoreError(error, OperationType.DELETE, 'users/' + uid);
+    }
+}
+
+async function clearCloudinaryStorage() {
+    if (!state.isAdmin) return;
+    const btn = document.getElementById('btn-clear-cloudinary');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i data-lucide="loader" class="spin"></i> Menghapus...';
+        if (window.lucide) lucide.createIcons();
+    }
+    
+    try {
+        const response = await fetch('/api/admin/clear-cloudinary', { method: 'POST' });
+        const data = await response.json();
+        if (data.success) {
+            showToast("✅ Berhasil mengosongkan storage Cloudinary.", "success");
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        console.error("Clear Cloudinary error:", error);
+        showToast("❌ Gagal menghapus storage: " + error.message, "error");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i data-lucide="trash-2"></i> Kosongkan Storage Cloudinary';
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+}
+
+async function toggleApiKeyVisibility() {
+    state.showApiKey = !state.showApiKey;
+    renderContent();
+}
+
 async function saveApiKey() {
     if (!state.currentUser) return;
     const input = document.getElementById('api-key-input');
@@ -486,8 +544,13 @@ function getUploadState() {
         state.generatorUploads[state.activeGenerator] = {
             files: { image: null, video: null },
             urls: { image: '', video: '' },
-            uploading: { image: false, video: false }
+            uploading: { image: false, video: false },
+            autoUploaded: { image: false, video: false }
         };
+    }
+    // Ensure autoUploaded exists for older states
+    if (!state.generatorUploads[state.activeGenerator].autoUploaded) {
+        state.generatorUploads[state.activeGenerator].autoUploaded = { image: false, video: false };
     }
     return state.generatorUploads[state.activeGenerator];
 }
@@ -549,9 +612,9 @@ function renderContent() {
         // 1. Loading State
         if (state.isAuthLoading) {
             app.innerHTML = `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 20px; background: #f8f9fa;">
-                    <div class="spinner" style="width: 40px; height: 40px; border: 4px solid #e9ecef; border-top: 4px solid #5d5fef; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                    <p style="color: #909296; font-size: 14px; font-weight: 500;">Menghubungkan ke ND STUDIO...</p>
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 20px; background: #0a0a0a;">
+                    <div class="spinner" style="width: 40px; height: 40px; border: 4px solid rgba(212, 175, 55, 0.1); border-top: 4px solid var(--accent-gold); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    <p style="color: var(--text-muted); font-size: 14px; font-weight: 500;">Menghubungkan ke ND STUDIO...</p>
                     <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
                 </div>
             `;
@@ -652,21 +715,21 @@ function renderLoginPage() {
     return `
         <div class="setup-page" style="max-width: 450px; margin: 40px auto; animation: fadeIn 0.5s ease-out;">
             <div style="text-align: center; margin-bottom: 30px;">
-                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #5d5fef 0%, #3f41c2 100%); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; box-shadow: 0 8px 16px rgba(93, 95, 239, 0.2);">
+                <div style="width: 80px; height: 80px; background: var(--primary-gradient); border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #000; box-shadow: 0 8px 16px rgba(212, 175, 55, 0.2);">
                     <i data-lucide="user-check" style="width: 40px; height: 40px;"></i>
                 </div>
-                <h2 style="font-size: 28px; font-weight: 800; color: #1a1b1e; margin-bottom: 8px; letter-spacing: -0.5px;">Selamat Datang</h2>
-                <p style="color: #909296; font-size: 15px; line-height: 1.6;">Masuk dengan akun Google Anda untuk mengakses ND STUDIO PRO.</p>
+                <h2 style="font-size: 28px; font-weight: 800; color: var(--accent-gold); margin-bottom: 8px; letter-spacing: -0.5px; font-family: var(--font-premium);">Selamat Datang</h2>
+                <p style="color: var(--text-muted); font-size: 15px; line-height: 1.6;">Masuk dengan akun Google Anda untuk mengakses ND STUDIO PRO.</p>
             </div>
 
-            <div class="setup-card" style="background: white; padding: 40px; border-radius: 28px; border: 1px solid #e9ecef; box-shadow: 0 20px 40px rgba(0,0,0,0.06); text-align: center;">
-                <button onclick="login()" style="width: 100%; padding: 16px; border-radius: 16px; font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; border: 2px solid #e9ecef; background: white; color: #495057; transition: all 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+            <div class="setup-card" style="background: #151515; padding: 40px; border-radius: 28px; border: 1px solid var(--border-color); box-shadow: var(--shadow); text-align: center;">
+                <button onclick="login()" style="width: 100%; padding: 16px; border-radius: 16px; font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; border: 1px solid var(--border-color); background: #1a1a1a; color: var(--text-main); transition: all 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width: 24px; height: 24px;">
                     Masuk dengan Google
                 </button>
                 
-                <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #f1f3f5;">
-                    <p style="font-size: 12px; color: #adb5bd; line-height: 1.5;">
+                <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color);">
+                    <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
                         Dengan masuk, Anda menyetujui Syarat & Ketentuan kami. Akun Anda akan diverifikasi oleh Admin sebelum dapat digunakan.
                     </p>
                 </div>
@@ -678,28 +741,28 @@ function renderLoginPage() {
 function renderPendingPage() {
     return `
         <div class="setup-page" style="max-width: 500px; margin: 40px auto; animation: fadeIn 0.5s ease-out;">
-            <div class="setup-card" style="background: white; padding: 48px; border-radius: 32px; border: 1px solid #e9ecef; box-shadow: 0 20px 40px rgba(0,0,0,0.08); text-align: center;">
-                <div style="width: 100px; height: 100px; background: #fff9db; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; color: #fab005; animation: pulse 2s infinite;">
+            <div class="setup-card" style="background: #151515; padding: 48px; border-radius: 32px; border: 1px solid var(--border-color); box-shadow: var(--shadow); text-align: center;">
+                <div style="width: 100px; height: 100px; background: rgba(212, 175, 55, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; color: var(--accent-gold); animation: pulse 2s infinite;">
                     <i data-lucide="clock" style="width: 50px; height: 50px;"></i>
                 </div>
-                <h2 style="font-size: 26px; font-weight: 800; color: #1a1b1e; margin-bottom: 12px;">Menunggu Persetujuan</h2>
-                <p style="color: #495057; font-size: 16px; line-height: 1.6; margin-bottom: 32px;">
+                <h2 style="font-size: 26px; font-weight: 800; color: var(--accent-gold); margin-bottom: 12px; font-family: var(--font-premium);">Menunggu Persetujuan</h2>
+                <p style="color: var(--text-main); font-size: 16px; line-height: 1.6; margin-bottom: 32px;">
                     Halo <strong>${state.currentUser.displayName}</strong>, akun Anda telah terdaftar. <br>
                     Silakan hubungi Admin untuk mengaktifkan akses Anda ke ND STUDIO PRO.
                 </p>
                 
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 16px; margin-bottom: 32px; text-align: left;">
+                <div style="background: #1a1a1a; padding: 20px; border-radius: 16px; margin-bottom: 32px; text-align: left; border: 1px solid var(--border-color);">
                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-                        <i data-lucide="mail" style="width: 18px; height: 18px; color: #5d5fef;"></i>
-                        <span style="font-size: 14px; color: #495057;">${state.currentUser.email}</span>
+                        <i data-lucide="mail" style="width: 18px; height: 18px; color: var(--accent-gold);"></i>
+                        <span style="font-size: 14px; color: var(--text-main);">${state.currentUser.email}</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <i data-lucide="shield-alert" style="width: 18px; height: 18px; color: #fab005;"></i>
-                        <span style="font-size: 14px; font-weight: 600; color: #fab005;">Status: Pending</span>
+                        <i data-lucide="shield-alert" style="width: 18px; height: 18px; color: var(--accent-gold);"></i>
+                        <span style="font-size: 14px; font-weight: 600; color: var(--accent-gold);">Status: Pending</span>
                     </div>
                 </div>
 
-                <button onclick="logout()" style="width: 100%; padding: 14px; border-radius: 12px; font-weight: 600; font-size: 14px; cursor: pointer; border: 1px solid #e9ecef; background: white; color: #fa5252; transition: all 0.2s;">
+                <button onclick="logout()" style="width: 100%; padding: 14px; border-radius: 12px; font-weight: 600; font-size: 14px; cursor: pointer; border: 1px solid var(--border-color); background: #1a1a1a; color: #fa5252; transition: all 0.2s;">
                     <i data-lucide="log-out" style="width: 16px; height: 16px; display: inline-block; vertical-align: middle; margin-right: 6px;"></i>
                     Keluar Akun
                 </button>
@@ -723,10 +786,10 @@ function renderAdminDashboard() {
         <div class="admin-dashboard" style="max-width: 900px; margin: 20px auto; padding: 0 20px; animation: fadeIn 0.4s ease-out;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
                 <div>
-                    <h1 style="font-size: 28px; font-weight: 800; color: #1a1b1e;">Admin Dashboard</h1>
-                    <p style="color: #909296; font-size: 14px;">Kelola akses pengguna ND STUDIO PRO.</p>
+                    <h1 style="font-size: 28px; font-weight: 800; color: var(--accent-gold); font-family: var(--font-premium);">Admin Dashboard</h1>
+                    <p style="color: var(--text-muted); font-size: 14px;">Kelola akses pengguna ND STUDIO PRO.</p>
                 </div>
-                <button onclick="state.showAdminDashboard = false; renderContent();" style="padding: 10px 20px; border-radius: 12px; background: #f1f3f5; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                <button onclick="state.showAdminDashboard = false; renderContent();" style="padding: 10px 20px; border-radius: 12px; background: #1a1a1a; border: 1px solid var(--border-color); color: var(--text-main); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                     <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i>
                     Kembali ke App
                 </button>
@@ -734,49 +797,73 @@ function renderAdminDashboard() {
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
                 <!-- Section: Pending Approval -->
-                <div class="setup-card" style="background: white; padding: 24px; border-radius: 24px; border: 1px solid #e9ecef; box-shadow: 0 8px 24px rgba(0,0,0,0.04);">
-                    <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 18px; color: #fab005;">
+                <div class="setup-card" style="background: #151515; padding: 24px; border-radius: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow);">
+                    <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 18px; color: var(--accent-gold);">
                         <i data-lucide="user-plus"></i>
                         Menunggu Persetujuan (${pendingUsers.length})
                     </h3>
                     <div style="display: flex; flex-direction: column; gap: 16px;">
-                        ${pendingUsers.length === 0 ? '<p style="text-align: center; color: #adb5bd; font-size: 14px; padding: 20px;">Tidak ada permintaan baru.</p>' : ''}
+                        ${pendingUsers.length === 0 ? '<p style="text-align: center; color: var(--text-muted); font-size: 14px; padding: 20px;">Tidak ada permintaan baru.</p>' : ''}
                         ${pendingUsers.map(user => `
-                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #fff9db; border-radius: 16px; border: 1px solid #ffec99;">
-                                <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + user.displayName}" style="width: 40px; height: 40px; border-radius: 12px;">
+                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(212, 175, 55, 0.05); border-radius: 16px; border: 1px solid var(--border-color);">
+                                <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + user.displayName}" style="width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--border-color);">
                                 <div style="flex-grow: 1; overflow: hidden;">
-                                    <div style="font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.displayName}</div>
-                                    <div style="font-size: 12px; color: #856404; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.email}</div>
+                                    <div style="font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main);">${user.displayName}</div>
+                                    <div style="font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.email}</div>
                                 </div>
-                                <button onclick="approveUser('${user.uid}')" style="background: #40c057; color: white; border: none; padding: 8px; border-radius: 8px; cursor: pointer;">
-                                    <i data-lucide="check" style="width: 18px; height: 18px;"></i>
-                                </button>
+                                <div style="display: flex; gap: 8px;">
+                                    <button onclick="approveUser('${user.uid}')" style="background: var(--accent-green); color: white; border: none; padding: 8px; border-radius: 8px; cursor: pointer;" title="Setujui">
+                                        <i data-lucide="check" style="width: 18px; height: 18px;"></i>
+                                    </button>
+                                    <button onclick="deleteUserAccount('${user.uid}')" style="background: #fa5252; color: white; border: none; padding: 8px; border-radius: 8px; cursor: pointer;" title="Hapus Akun">
+                                        <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
+                                    </button>
+                                </div>
                             </div>
                         `).join('')}
                     </div>
                 </div>
 
                 <!-- Section: Approved Users -->
-                <div class="setup-card" style="background: white; padding: 24px; border-radius: 24px; border: 1px solid #e9ecef; box-shadow: 0 8px 24px rgba(0,0,0,0.04);">
-                    <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 18px; color: #5d5fef;">
+                <div class="setup-card" style="background: #151515; padding: 24px; border-radius: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow);">
+                    <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 18px; color: var(--accent-gold);">
                         <i data-lucide="users"></i>
                         Pengguna Aktif (${approvedUsers.length})
                     </h3>
                     <div style="display: flex; flex-direction: column; gap: 16px;">
-                        ${approvedUsers.length === 0 ? '<p style="text-align: center; color: #adb5bd; font-size: 14px; padding: 20px;">Belum ada pengguna aktif.</p>' : ''}
+                        ${approvedUsers.length === 0 ? '<p style="text-align: center; color: var(--text-muted); font-size: 14px; padding: 20px;">Belum ada pengguna aktif.</p>' : ''}
                         ${approvedUsers.map(user => `
-                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f8f9fa; border-radius: 16px; border: 1px solid #e9ecef;">
-                                <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + user.displayName}" style="width: 40px; height: 40px; border-radius: 12px;">
+                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #1a1a1a; border-radius: 16px; border: 1px solid var(--border-color);">
+                                <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + user.displayName}" style="width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--border-color);">
                                 <div style="flex-grow: 1; overflow: hidden;">
-                                    <div style="font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.displayName}</div>
-                                    <div style="font-size: 12px; color: #495057; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.email}</div>
+                                    <div style="font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main);">${user.displayName}</div>
+                                    <div style="font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.email}</div>
                                 </div>
-                                <button onclick="rejectUser('${user.uid}')" style="background: #fa5252; color: white; border: none; padding: 8px; border-radius: 8px; cursor: pointer;">
-                                    <i data-lucide="user-minus" style="width: 18px; height: 18px;"></i>
-                                </button>
+                                <div style="display: flex; gap: 8px;">
+                                    <button onclick="rejectUser('${user.uid}')" style="background: var(--accent-red); color: white; border: none; padding: 8px; border-radius: 8px; cursor: pointer;" title="Cabut Akses">
+                                        <i data-lucide="user-minus" style="width: 18px; height: 18px;"></i>
+                                    </button>
+                                    <button onclick="deleteUserAccount('${user.uid}')" style="background: #fa5252; color: white; border: none; padding: 8px; border-radius: 8px; cursor: pointer;" title="Hapus Akun">
+                                        <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
+                                    </button>
+                                </div>
                             </div>
                         `).join('')}
                     </div>
+                </div>
+                
+                <!-- Section: Storage Management -->
+                <div class="setup-card" style="background: #151515; padding: 24px; border-radius: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow); grid-column: 1 / -1;">
+                    <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 18px; color: var(--accent-gold);">
+                        <i data-lucide="hard-drive"></i>
+                        Manajemen Penyimpanan (Cloudinary)
+                    </h3>
+                    <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">
+                        Hapus semua gambar dan video referensi yang pernah diunggah oleh pengguna ke server Cloudinary untuk mengosongkan kuota penyimpanan. (File hasil generate AI dari Freepik tidak akan terhapus).
+                    </p>
+                    <button id="btn-clear-cloudinary" onclick="clearCloudinaryStorage()" style="background: #fa5252; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="trash-2"></i> Kosongkan Storage Cloudinary
+                    </button>
                 </div>
             </div>
         </div>
@@ -842,18 +929,27 @@ function renderUsageStats() {
 }
 
 function renderHeader() {
+    let pendingUsersCount = 0;
+    if (state.isAdmin && state.allUsers) {
+        pendingUsersCount = state.allUsers.filter(u => !u.isApproved && u.role !== 'admin').length;
+    }
+
     return `
         <header>
             <div class="header-left">
-                <div class="logo" style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: linear-gradient(135deg, #5d5fef, #8b5cf6); border-radius: 8px; color: white; font-weight: 800; font-size: 16px; font-family: 'Inter', sans-serif; box-shadow: 0 2px 4px rgba(93, 95, 239, 0.3);">
-                    N
+                <div class="premium-logo">
+                    <div class="logo-diamond"></div>
+                    <div class="logo-text">ND</div>
                 </div>
                 <div class="brand-name">ND STUDIO PRO</div>
             </div>
             <div class="header-actions">
                 ${state.isAdmin ? `
-                    <button class="btn-icon-action ${state.showAdminDashboard ? 'active' : ''}" onclick="state.showAdminDashboard = !state.showAdminDashboard; renderContent();" title="Admin Dashboard" style="background: #fff9db; color: #fab005; border-color: #ffec99;">
+                    <button class="btn-icon-action ${state.showAdminDashboard ? 'active' : ''}" onclick="state.showAdminDashboard = !state.showAdminDashboard; renderContent();" title="Admin Dashboard" style="background: #fff9db; color: #fab005; border-color: #ffec99; position: relative;">
                         <i data-lucide="shield-check"></i>
+                        ${pendingUsersCount > 0 ? `
+                            <span class="notification-badge">${pendingUsersCount}</span>
+                        ` : ''}
                     </button>
                 ` : ''}
                 
@@ -870,9 +966,9 @@ function renderHeader() {
                 ` : ''}
 
                 ${state.currentUser ? `
-                    <div class="user-profile-mini" style="display: flex; align-items: center; gap: 6px; padding: 4px; padding-right: 8px; background: #f8f9fa; border-radius: 20px; border: 1px solid #e9ecef;">
-                        <img src="${state.currentUser.photoURL}" style="width: 28px; height: 28px; border-radius: 50%;">
-                        <button onclick="logout()" title="Logout" style="display: flex; align-items: center; justify-content: center; padding: 4px; border: none; background: transparent; color: #fa5252; cursor: pointer; border-radius: 50%; transition: background 0.2s;" onmouseover="this.style.background='#ffe3e3'" onmouseout="this.style.background='transparent'">
+                    <div class="user-profile-mini" style="display: flex; align-items: center; gap: 6px; padding: 4px; padding-right: 8px; background: #1a1a1a; border-radius: 20px; border: 1px solid var(--border-color);">
+                        <img src="${state.currentUser.photoURL}" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border-color);">
+                        <button onclick="logout()" title="Logout" style="display: flex; align-items: center; justify-content: center; padding: 4px; border: none; background: transparent; color: #fa5252; cursor: pointer; border-radius: 50%; transition: background 0.2s;" onmouseover="this.style.background='rgba(250, 82, 82, 0.1)'" onmouseout="this.style.background='transparent'">
                             <i data-lucide="log-out" style="width: 16px; height: 16px;"></i>
                         </button>
                     </div>
@@ -895,6 +991,7 @@ function renderFooter() {
                     <span class="footer-dot">•</span>
                     <span class="footer-privacy">Local API Storage</span>
                 </div>
+                <div class="app-footer-copyright">©Nanda Studio Pro</div>
                 <div class="app-footer-powered">POWERED BY <a href="https://freepik.com" target="_blank" class="app-footer-link">FREEPIK API</a></div>
             </div>
         </footer>
@@ -906,11 +1003,12 @@ function renderSetupPage() {
         <div class="setup-page">
             <div class="setup-hero">
                 <div class="setup-logo-large" style="background: transparent; box-shadow: none;">
-                    <div style="display: flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: linear-gradient(135deg, #5d5fef, #8b5cf6); border-radius: 16px; color: white; font-weight: 800; font-size: 36px; font-family: 'Inter', sans-serif; box-shadow: 0 8px 16px rgba(93, 95, 239, 0.3); margin: 0 auto;">
-                        N
+                    <div class="premium-logo" style="width: 80px; height: 80px;">
+                        <div class="logo-diamond" style="width: 60px; height: 60px; box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);"></div>
+                        <div class="logo-text" style="font-size: 32px;">ND</div>
                     </div>
                 </div>
-                <h1 style="font-size: 24px; line-height: 1.3; margin-top: 16px;">Selamat Datang di<br><span style="color: #5d5fef; font-weight: 900;">ND STUDIO PRO</span></h1>
+                <h1 style="font-size: 24px; line-height: 1.3; margin-top: 16px;">Selamat Datang di<br><span style="color: var(--accent-gold); font-weight: 900; font-family: var(--font-premium);">ND STUDIO PRO</span></h1>
                 <p>AI Video Generator dengan 10+ model AI</p>
             </div>
 
@@ -949,7 +1047,12 @@ function renderSetupPage() {
                     </div>
                 </div>
                 <div class="api-input-group">
-                    <input type="text" id="api-key-input" class="api-input" placeholder="fpk-xxxxxxxxxxxxxxx" value="${state.apiKey}">
+                    <div class="api-input-wrapper">
+                        <input type="${state.showApiKey ? 'text' : 'password'}" id="api-key-input" class="api-input" placeholder="fpk-xxxxxxxxxxxxxxx" value="${state.apiKey}">
+                        <button class="btn-toggle-visibility" onclick="toggleApiKeyVisibility()" title="${state.showApiKey ? 'Sembunyikan' : 'Tampilkan'}">
+                            <i data-lucide="${state.showApiKey ? 'eye-off' : 'eye'}" style="width: 18px; height: 18px;"></i>
+                        </button>
+                    </div>
                     <button class="btn-save-api" onclick="saveApiKey()">Simpan</button>
                 </div>
             </div>
@@ -983,6 +1086,9 @@ function renderModelSelector() {
 function renderModelInfo(gen) {
     return `
         <div class="model-info-card">
+            <div class="model-info-icon-wrapper">
+                <div class="model-info-icon-inner">${gen.icon}</div>
+            </div>
             <div class="model-info-text">
                 <h4>${gen.name}</h4>
                 <p>${gen.description}</p>
@@ -1020,7 +1126,7 @@ function renderUploadSection(gen) {
                         <div class="upload-placeholder">
                             <i data-lucide="check-circle" style="color: #40c057;"></i>
                             <span style="font-size: 10px; color: #40c057; font-weight: 700;">URL TERPASANG</span>
-                            <span style="font-size: 9px; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; width: 80%; white-space: nowrap;">${uploadState.urls.image}</span>
+                            <span style="font-size: 9px; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; width: 80%; white-space: nowrap;">${uploadState.autoUploaded.image ? 'File siap digunakan' : uploadState.urls.image}</span>
                             <button class="btn-remove" onclick="removeFile(event, 'image')"><i data-lucide="x"></i></button>
                         </div>
                     ` : `
@@ -1047,7 +1153,7 @@ function renderUploadSection(gen) {
                         <div class="upload-placeholder">
                             <i data-lucide="check-circle" style="color: #40c057;"></i>
                             <span style="font-size: 10px; color: #40c057; font-weight: 700;">URL TERPASANG</span>
-                            <span style="font-size: 9px; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; width: 80%; white-space: nowrap;">${uploadState.urls.video}</span>
+                            <span style="font-size: 9px; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; width: 80%; white-space: nowrap;">${uploadState.autoUploaded.video ? 'File siap digunakan' : uploadState.urls.video}</span>
                             <button class="btn-remove" onclick="removeFile(event, 'video')"><i data-lucide="x"></i></button>
                         </div>
                     ` : `
@@ -1066,10 +1172,10 @@ function renderUploadSection(gen) {
             ${showUrlInput ? `
                 <div class="url-input-group">
                     <input type="text" class="url-input" placeholder="${isKling3Std ? 'https://... (Start Image URL)' : 'https://... (URL Gambar)'}" 
-                           value="${uploadState.urls.image}" oninput="updateUrl('image', this.value)">
+                           value="${uploadState.autoUploaded.image ? '' : uploadState.urls.image}" oninput="updateUrl('image', this.value)">
                     ${hasTwoInputs ? `
                         <input type="text" class="url-input" placeholder="${isKling3Std ? 'https://... (End Image URL)' : 'https://... (URL Video)'}" 
-                               value="${uploadState.urls.video}" oninput="updateUrl('video', this.value)">
+                               value="${uploadState.autoUploaded.video ? '' : uploadState.urls.video}" oninput="updateUrl('video', this.value)">
                     ` : ''}
                 </div>
             ` : ''}
@@ -1412,14 +1518,17 @@ function renderSettings(gen) {
                 <div class="setting-item">
                     <div class="setting-label"><span>Voice Selector</span></div>
                     <select class="setting-select" onchange="if(this.value === 'custom'){ document.getElementById('custom-voice-container').style.display = 'block'; } else { document.getElementById('custom-voice-container').style.display = 'none'; updateSetting('voice', this.value); }">
-                        <option value="21m00Tcm4TlvDq8ikWAM" ${state.settings.voice === '21m00Tcm4TlvDq8ikWAM' ? 'selected' : ''}>Adam (Male)</option>
-                        <option value="EXAVITQu4vr4xnSDxMaL" ${state.settings.voice === 'EXAVITQu4vr4xnSDxMaL' ? 'selected' : ''}>Rachel (Female)</option>
-                        <option value="aEO01A4wXgrby6St4D4o" ${state.settings.voice === 'aEO01A4wXgrby6St4D4o' ? 'selected' : ''}>Bella (Female)</option>
-                        <option value="TxGEqnHW47ic3KoP1L9U" ${state.settings.voice === 'TxGEqnHW47ic3KoP1L9U' ? 'selected' : ''}>Josh (Male)</option>
-                        <option value="custom" ${!['21m00Tcm4TlvDq8ikWAM', 'EXAVITQu4vr4xnSDxMaL', 'aEO01A4wXgrby6St4D4o', 'TxGEqnHW47ic3KoP1L9U'].includes(state.settings.voice) ? 'selected' : ''}>Custom Voice ID...</option>
+                        <option value="URAuwR59OqCASDVp35yi" ${state.settings.voice === 'URAuwR59OqCASDVp35yi' ? 'selected' : ''}>Ibnu (Calm & Clear Entertainment)</option>
+                        <option value="ZF5uWKM2iVvSId3tBCYt" ${state.settings.voice === 'ZF5uWKM2iVvSId3tBCYt' ? 'selected' : ''}>Lyly (Calm, Clear & Witty Educational)</option>
+                        <option value="LxiqOV1uxBCgYTeitAHf" ${state.settings.voice === 'LxiqOV1uxBCgYTeitAHf' ? 'selected' : ''}>Bowo (Intimidating Character)</option>
+                        <option value="MSsKJV9ZON0v7tZR6NlP" ${state.settings.voice === 'MSsKJV9ZON0v7tZR6NlP' ? 'selected' : ''}>Solana (Expresif Social media)</option>
+                        <option value="TIXYCOMzK2Vw9OZovSLs" ${state.settings.voice === 'TIXYCOMzK2Vw9OZovSLs' ? 'selected' : ''}>Janu (Calm Narration)</option>
+                        <option value="ffTJE9l3Kt2ipEM32UOc" ${state.settings.voice === 'ffTJE9l3Kt2ipEM32UOc' ? 'selected' : ''}>Aita (Youthfull Social media)</option>
+                        <option value="iWydkXKoiVtvdn4vLKp9" ${state.settings.voice === 'iWydkXKoiVtvdn4vLKp9' ? 'selected' : ''}>Cahaya (Youthfull social media)</option>
+                        <option value="custom" ${!['URAuwR59OqCASDVp35yi', 'ZF5uWKM2iVvSId3tBCYt', 'LxiqOV1uxBCgYTeitAHf', 'MSsKJV9ZON0v7tZR6NlP', 'TIXYCOMzK2Vw9OZovSLs', 'ffTJE9l3Kt2ipEM32UOc', 'iWydkXKoiVtvdn4vLKp9'].includes(state.settings.voice) ? 'selected' : ''}>Custom Voice ID...</option>
                     </select>
                 </div>
-                <div id="custom-voice-container" class="setting-item" style="display: ${!['21m00Tcm4TlvDq8ikWAM', 'EXAVITQu4vr4xnSDxMaL', 'aEO01A4wXgrby6St4D4o', 'TxGEqnHW47ic3KoP1L9U'].includes(state.settings.voice) ? 'block' : 'none'}; margin-top: -8px;">
+                <div id="custom-voice-container" class="setting-item" style="display: ${!['URAuwR59OqCASDVp35yi', 'ZF5uWKM2iVvSId3tBCYt', 'LxiqOV1uxBCgYTeitAHf', 'MSsKJV9ZON0v7tZR6NlP', 'TIXYCOMzK2Vw9OZovSLs', 'ffTJE9l3Kt2ipEM32UOc', 'iWydkXKoiVtvdn4vLKp9'].includes(state.settings.voice) ? 'block' : 'none'}; margin-top: -8px;">
                     <input type="text" class="setting-input" placeholder="Masukkan Voice ID ElevenLabs..." value="${state.settings.voice}" onchange="updateSetting('voice', this.value)">
                 </div>
             ` : ''}
@@ -1626,14 +1735,14 @@ function renderResults() {
 
     return `
         <div class="results-section">
-            <div class="results-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 0 4px;">
-                <h3 style="font-size: 15px; font-weight: 700; color: #212529; margin: 0;">Hasil Generasi</h3>
-                ${canSync ? `<button class="btn-sync" onclick="syncTasks()" style="background: #f8f9fa; border: 1px solid #e9ecef; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 600; color: #495057; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;">
+            <div class="results-header-row">
+                <h3>Hasil Generasi</h3>
+                ${canSync ? `<button class="btn-sync" onclick="syncTasks()">
                     <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i> Sync Kling 3
                 </button>` : ''}
             </div>
             ${state.completedResults.length === 0 ? `
-                <div class="empty-results" style="text-align: center; padding: 60px 20px; background: #f8f9fa; border-radius: 20px; color: #adb5bd; border: 1px dashed #dee2e6;">
+                <div class="empty-results">
                     <i data-lucide="image-off" style="width: 32px; height: 32px; margin-bottom: 12px; opacity: 0.5;"></i>
                     <p style="font-size: 13px; margin: 0; font-weight: 500;">Belum ada hasil generasi.</p>
                 </div>
@@ -1647,7 +1756,7 @@ function renderResults() {
                                 ${res.type === 'video' ? `
                                     <video src="${res.url}" class="result-media" controls playsinline></video>
                                 ` : res.type === 'audio' ? `
-                                    <div class="audio-result-container" style="width: 100%; padding: 20px; background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                                    <div class="audio-result-container">
                                         <audio src="${res.url}" controls style="width: 100%;"></audio>
                                     </div>
                                 ` : `
@@ -1711,6 +1820,9 @@ async function syncTasks() {
     } else if (activeGen.id === 'runway') {
         listEndpoint = 'https://api.freepik.com/v1/ai/text-to-image/runway';
         listType = 'list';
+    } else if (activeGen.id === 'flux-2-turbo') {
+        listEndpoint = 'https://api.freepik.com/v1/ai/text-to-image/flux-2-turbo';
+        listType = 'list';
     }
 
     if (!listEndpoint || listType !== 'list') {
@@ -1735,7 +1847,20 @@ async function syncTasks() {
         url.searchParams.append('apiKey', state.apiKey.trim());
 
         const response = await fetch(url);
-        const data = await response.json();
+        const text = await response.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            console.error("Failed to parse JSON response in sync:", text);
+            if (text.includes("Starting Server...")) {
+                throw new Error("Server sedang memulai ulang. Silakan coba lagi dalam beberapa detik.");
+            }
+            if (text.includes("<!DOCTYPE html>") || text.includes("<!doctype html>")) {
+                throw new Error("API Freepik sedang mengalami gangguan (Error 500/502). Silakan coba lagi nanti.");
+            }
+            throw new Error("Server mengembalikan respon yang tidak valid saat sinkronisasi.");
+        }
 
         if (!response.ok) {
             if (response.status === 429) {
@@ -1751,7 +1876,11 @@ async function syncTasks() {
                 return;
             }
             
-            throw new Error(data.message || "Gagal sinkronisasi.");
+            let apiMsg = data.message || data.error || "Gagal sinkronisasi.";
+            if (typeof apiMsg === 'string' && (apiMsg.toLowerCase().includes("<!doctype html>") || apiMsg.toLowerCase().includes("<html"))) {
+                apiMsg = "API Freepik sedang mengalami gangguan (Error 500/502). Silakan coba lagi nanti.";
+            }
+            throw new Error(apiMsg);
         }
 
         const tasks = data.data || data.items || (Array.isArray(data) ? data : []);
@@ -1946,10 +2075,24 @@ async function generate() {
             if (!state.currentPrompt) {
                 throw new Error("Wajib masukkan Prompt untuk Runway.");
             }
+        } else if (activeGen.id === 'flux-2-turbo') {
+            if (!state.currentPrompt) {
+                throw new Error("Wajib masukkan Prompt untuk Flux 2 Turbo.");
+            }
         }
 
         let finalPrompt = state.currentPrompt || "";
-        if (finalPrompt && activeGen.id !== 'elevenlabs-turbo-v2-5') {
+        
+        let shouldTranslate = true;
+        if (!finalPrompt) {
+            shouldTranslate = false;
+        } else if (activeGen.id === 'elevenlabs-turbo-v2-5') {
+            shouldTranslate = false;
+        } else if (activeGen.outputType === 'video' && !activeGen.id.includes('motion-control')) {
+            shouldTranslate = false;
+        }
+
+        if (shouldTranslate) {
             try {
                 const translateRes = await fetch('/api/translate', {
                     method: 'POST',
@@ -2111,7 +2254,7 @@ async function generate() {
             }
             body = {
                 text: finalPrompt,
-                voice_id: state.settings.voice || '21m00Tcm4TlvDq8ikWAM',
+                voice_id: state.settings.voice || 'URAuwR59OqCASDVp35yi',
                 stability: state.settings.stability !== undefined ? state.settings.stability : 0.5,
                 similarity_boost: state.settings.similarity_boost !== undefined ? state.settings.similarity_boost : 0.2,
                 speed: state.settings.speed !== undefined ? state.settings.speed : 1,
@@ -2134,6 +2277,29 @@ async function generate() {
             if (state.settings.seed !== '' && state.settings.seed !== undefined) {
                 body.seed = parseInt(state.settings.seed);
             }
+        } else if (activeGen.id === 'flux-2-turbo') {
+            let width = 1024;
+            let height = 1024;
+            const ar = state.settings.aspect_ratio || "16:9";
+            
+            if (ar === '16:9') {
+                width = 1440;
+                height = 810;
+            } else if (ar === '9:16') {
+                width = 810;
+                height = 1440;
+            } else if (ar === '1:1') {
+                width = 1024;
+                height = 1024;
+            }
+
+            body = {
+                prompt: finalPrompt,
+                guidance_scale: state.settings.guidance_scale !== undefined ? parseFloat(state.settings.guidance_scale) : 2.5,
+                image_size: { width, height },
+                seed: state.settings.seed !== '' && state.settings.seed !== undefined ? parseInt(state.settings.seed) : Math.floor(Math.random() * 4294967295),
+                enable_safety_checker: state.settings.safety_checker !== undefined ? state.settings.safety_checker : true
+            };
         }
 
         console.log("Generating with body:", body);
@@ -2151,12 +2317,18 @@ async function generate() {
             })
         });
 
+        const text = await response.text();
         let data;
         try {
-            data = await response.json();
+            data = JSON.parse(text);
         } catch (e) {
-            const text = await response.text();
             console.error("Failed to parse JSON response:", text);
+            if (text.includes("Starting Server...")) {
+                throw new Error("Server sedang memulai ulang. Silakan coba lagi dalam beberapa detik.");
+            }
+            if (text.includes("<!DOCTYPE html>") || text.includes("<!doctype html>")) {
+                throw new Error("API Freepik sedang mengalami gangguan (Error 500/502). Silakan coba lagi nanti.");
+            }
             throw new Error("Server mengembalikan respon yang tidak valid. Silakan coba lagi.");
         }
 
@@ -2169,7 +2341,10 @@ async function generate() {
             if (data.errors) detailMsg = typeof data.errors === 'string' ? data.errors : JSON.stringify(data.errors);
             if (data.detail) detailMsg = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
             
-            const apiMsg = data.message || data.error || 'Gagal membuat task.';
+            let apiMsg = data.message || data.error || 'Gagal membuat task.';
+            if (typeof apiMsg === 'string' && (apiMsg.toLowerCase().includes("<!doctype html>") || apiMsg.toLowerCase().includes("<html"))) {
+                apiMsg = "API Freepik sedang mengalami gangguan (Error 500/502). Silakan coba lagi nanti.";
+            }
             const fullErrorMsg = detailMsg ? `${apiMsg} (${detailMsg})` : apiMsg;
             
             if (response.status === 429) {
@@ -2240,17 +2415,27 @@ async function generate() {
         console.error("Generate error:", error);
         showToast(error.message, "error");
     } finally {
-        state.cooldownUntil = Date.now() + 3000; // 3 seconds cooldown
+        state.cooldownUntil = Date.now() + 5000; // 5 seconds cooldown
         if (btn) {
             const activeGen = GENERATORS.find(g => g.id === state.activeGenerator) || GENERATORS[0];
-            btn.innerHTML = '⏳ Cooldown...';
-            setTimeout(() => {
+            let secondsLeft = 5;
+            btn.innerHTML = `⏳ Cooldown (${secondsLeft}s)...`;
+            
+            const countdownInterval = setInterval(() => {
+                secondsLeft--;
                 const currentBtn = document.querySelector('.btn-generate');
-                if (currentBtn && Date.now() >= state.cooldownUntil) {
-                    currentBtn.disabled = false;
-                    currentBtn.innerHTML = `🚀 Generate ${activeGen.outputType.charAt(0).toUpperCase() + activeGen.outputType.slice(1)}`;
+                if (currentBtn) {
+                    currentBtn.innerHTML = `⏳ Cooldown (${secondsLeft}s)...`;
                 }
-            }, 3000);
+                
+                if (secondsLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    if (currentBtn && Date.now() >= state.cooldownUntil) {
+                        currentBtn.disabled = false;
+                        currentBtn.innerHTML = `🚀 Generate ${activeGen.outputType.charAt(0).toUpperCase() + activeGen.outputType.slice(1)}`;
+                    }
+                }
+            }, 1000);
         }
     }
 }
@@ -2306,7 +2491,17 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
             }
         });
 
-        const data = await response.json();
+        const text = await response.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            console.error("Failed to parse JSON response in polling:", text);
+            if (text.includes("Starting Server...")) {
+                console.log("Server is restarting, will retry polling...");
+            }
+            return; // Ignore parse errors in polling and try again later
+        }
         
         // Re-find task index in case it was modified during the await
         const currentTaskIndex = state.activeTasks.findIndex(t => t.id === taskId);
@@ -2330,7 +2525,11 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
             }
 
             console.error("Polling failed with status:", response.status, data);
-            showToast(`Gagal mengecek status (${response.status}): ${data.message || 'Unknown error'}`, "error");
+            let apiMsg = data.message || 'Unknown error';
+            if (typeof apiMsg === 'string' && (apiMsg.toLowerCase().includes("<!doctype html>") || apiMsg.toLowerCase().includes("<html"))) {
+                apiMsg = "API Freepik sedang mengalami gangguan (Error 500/502).";
+            }
+            showToast(`Gagal mengecek status (${response.status}): ${apiMsg}`, "error");
             state.activeTasks.splice(currentTaskIndex, 1);
             updateTasksAndResultsDOM();
             return;
@@ -2532,6 +2731,7 @@ function toggleUrlInput() {
 function updateUrl(type, val) {
     const uploadState = getUploadState();
     uploadState.urls[type] = val;
+    uploadState.autoUploaded[type] = false;
     // No need to re-render everything when typing in URL input
     // Just update the state, the inputs already have the value
 }
@@ -2576,7 +2776,7 @@ function setActiveGenerator(id) {
         state.settings.style = 'Realistic';
         state.settings.seed = '';
     } else if (id === 'elevenlabs-turbo-v2-5') {
-        state.settings.voice = '21m00Tcm4TlvDq8ikWAM';
+        state.settings.voice = 'URAuwR59OqCASDVp35yi';
         state.settings.stability = 0.5;
         state.settings.similarity_boost = 0.2;
         state.settings.speed = 1;
@@ -2586,15 +2786,24 @@ function setActiveGenerator(id) {
         state.settings.cfg_scale = 0.5;
     }
     
-    // Update active class in DOM directly to prevent flicker in the selector
-    const items = document.querySelectorAll('.model-item');
-    items.forEach(item => {
-        if (item.getAttribute('onclick').includes(id)) {
-            item.classList.add('active');
-        } else {
-            item.classList.remove('active');
+    // Update active class in DOM surgically to prevent scroll reset
+    const modelItems = document.querySelectorAll('.model-item');
+    if (modelItems.length > 0) {
+        modelItems.forEach(item => {
+            const onclickAttr = item.getAttribute('onclick') || '';
+            if (onclickAttr.includes(`'${id}'`) || onclickAttr.includes(`"${id}"`)) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    } else {
+        const modelSelector = document.querySelector('.model-selector');
+        if (modelSelector) {
+            modelSelector.innerHTML = renderModelSelector();
+            if (window.lucide) lucide.createIcons();
         }
-    });
+    }
 
     // Then update the rest of the content
     const activeGen = GENERATORS.find(g => g.id === id) || GENERATORS[0];
@@ -2651,8 +2860,54 @@ function updateUploadDOM() {
     }
 }
 
+async function compressImageFile(file) {
+    if (!file.type.startsWith('image/')) return file;
+    if (file.size <= 500 * 1024) return file; // Skip if already < 500KB
+
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                const MAX_DIM = 1920;
+                if (width > height && width > MAX_DIM) {
+                    height = Math.round((height * MAX_DIM) / width);
+                    width = MAX_DIM;
+                } else if (height > MAX_DIM) {
+                    width = Math.round((width * MAX_DIM) / height);
+                    height = MAX_DIM;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        resolve(file);
+                        return;
+                    }
+                    const newFile = new File([blob], file.name, {
+                        type: file.type,
+                        lastModified: Date.now()
+                    });
+                    console.log(`Compressed image from ${(file.size/1024).toFixed(1)}KB to ${(newFile.size/1024).toFixed(1)}KB`);
+                    resolve(newFile);
+                }, file.type, 0.8);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
 async function handleFileChange(type, input) {
-    const file = input.files[0];
+    let file = input.files[0];
     if (!file) return;
 
     // Client-side size validation (30MB limit to avoid proxy 413 errors)
@@ -2670,6 +2925,15 @@ async function handleFileChange(type, input) {
     uploadState.uploading[type] = true;
     
     updateUploadDOM();
+
+    // Auto-compress image if > 500KB
+    if (file.type.startsWith('image/') && file.size > 500 * 1024) {
+        try {
+            file = await compressImageFile(file);
+        } catch (err) {
+            console.error("Compression failed, using original file", err);
+        }
+    }
 
     // 1. Show local preview immediately and upload
     const reader = new FileReader();
@@ -2692,12 +2956,17 @@ async function handleFileChange(type, input) {
             });
 
             const contentType = response.headers.get("content-type");
+            const text = await response.text();
             let data;
             
             if (contentType && contentType.includes("application/json")) {
-                data = await response.json();
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    console.error("Failed to parse JSON response in upload:", text);
+                    throw new Error("Server mengembalikan respon yang tidak valid saat upload.");
+                }
             } else {
-                const text = await response.text();
                 if (text.includes("Cookie check") || text.includes("Action required")) {
                     state.showSetup = true;
                     renderContent();
@@ -2707,12 +2976,19 @@ async function handleFileChange(type, input) {
                 throw new Error("Server mengembalikan respon yang tidak valid (bukan JSON).");
             }
 
-            if (!response.ok) throw new Error(data.message || "Gagal mengupload file.");
+            if (!response.ok) {
+                let apiMsg = data.message || "Gagal mengupload file.";
+                if (typeof apiMsg === 'string' && (apiMsg.toLowerCase().includes("<!doctype html>") || apiMsg.toLowerCase().includes("<html"))) {
+                    apiMsg = "API Freepik sedang mengalami gangguan (Error 500/502). Silakan coba lagi nanti.";
+                }
+                throw new Error(apiMsg);
+            }
 
             const publicUrl = data.url;
             console.log(`File uploaded successfully. Public URL: ${publicUrl}`);
             
             uploadState.urls[type] = publicUrl;
+            uploadState.autoUploaded[type] = true;
         } catch (error) {
             console.error("Upload error:", error);
             showToast(error.message || "Gagal mengupload file. Silakan coba lagi.", "error");
@@ -3014,7 +3290,10 @@ window.addEventListener('DOMContentLoaded', () => {
     window.logout = logout;
     window.approveUser = approveUser;
     window.rejectUser = rejectUser;
+    window.deleteUserAccount = deleteUserAccount;
+    window.clearCloudinaryStorage = clearCloudinaryStorage;
     window.saveApiKey = saveApiKey;
+    window.toggleApiKeyVisibility = toggleApiKeyVisibility;
     window.handleStatusClick = handleStatusClick;
     window.toggleModal = toggleModal;
     window.acceptDisclaimer = acceptDisclaimer;
