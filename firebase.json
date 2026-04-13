@@ -6,6 +6,25 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "headers": [
+      {
+        "source": "**/*.@(jpg|jpeg|gif|png|webp|mp4|webm)",
+        "headers": [
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "*"
+          },
+          {
+            "key": "Access-Control-Allow-Methods",
+            "value": "GET, OPTIONS"
+          },
+          {
+            "key": "Cross-Origin-Resource-Policy",
+            "value": "cross-origin"
+          }
+        ]
+      }
+    ],
     "rewrites": [
       {
         "source": "**",
