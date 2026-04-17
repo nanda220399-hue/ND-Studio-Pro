@@ -126,6 +126,7 @@ const GENERATORS = [
         icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
         badge: 'V2.6',
         description: 'Kling 2.6 Standard - Motion Control: Transfer gerakan dari video ke gambar.',
+        tips: 'Gunakan video referensi dengan gerakan yang jelas untuk hasil terbaik.',
         inputs: ['image', 'video', 'prompt'],
         outputType: 'video',
         settings: { orientation: true, cfg: true },
@@ -139,6 +140,7 @@ const GENERATORS = [
         icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
         badge: 'V2.6 PRO',
         description: 'Kling 2.6 Pro - Motion Control: Kualitas lebih tinggi dan gerakan lebih presisi.',
+        tips: 'Ideal untuk gerakan kompleks seperti menari atau olahraga.',
         inputs: ['image', 'video', 'prompt'],
         outputType: 'video',
         settings: { orientation: true, cfg: true },
@@ -152,6 +154,7 @@ const GENERATORS = [
         icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
         badge: 'V3 MC',
         description: 'Kling 3 Standard - Motion control video: Transfer motion from a reference video to a character image.',
+        tips: 'Versi terbaru dengan pemahaman fisik yang lebih baik.',
         inputs: ['image', 'video', 'prompt'],
         outputType: 'video',
         settings: { orientation: true, cfg: true },
@@ -165,6 +168,7 @@ const GENERATORS = [
         icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
         badge: 'V3 MC PRO',
         description: 'Kling 3 Pro - Motion control video: Transfer motion from a reference video to a character image.',
+        tips: 'Kualitas sinematik tertinggi untuk kontrol gerakan.',
         inputs: ['image', 'video', 'prompt'],
         outputType: 'video',
         settings: { orientation: true, cfg: true },
@@ -178,9 +182,10 @@ const GENERATORS = [
         icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
         badge: 'V5',
         description: 'Pixverse V5 - Image to Video: High-quality video generation with advanced motion control.',
+        tips: 'Sangat bagus untuk pemandangan alam dan efek partikel.',
         inputs: ['image', 'prompt'],
         outputType: 'video',
-        settings: { resolution: true, duration: 'pixverse', negative_prompt: true, seed: true },
+        settings: { style: true, duration: 'pixverse', negative_prompt: true, seed: true },
         endpoint: 'https://api.freepik.com/v1/ai/image-to-video/pixverse-v5',
         statusEndpoint: 'https://api.freepik.com/v1/ai/image-to-video/pixverse-v5',
         pollingType: 'path'
@@ -191,6 +196,7 @@ const GENERATORS = [
         icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
         badge: 'PRO',
         description: 'Seedance 1.5 Pro - High-quality AI video generation with audio and camera control.',
+        tips: 'Gunakan pengaturan kamera untuk hasil yang lebih dinamis.',
         inputs: ['image', 'prompt'],
         outputType: 'video',
         settings: { aspect_ratio: 'seedance', duration: 'seedance', generate_audio: true, camera_fixed: true, seed: true },
@@ -199,14 +205,70 @@ const GENERATORS = [
         pollingType: 'path'
     },
     {
+        id: 'veo-3-1-i2v',
+        name: 'Veo 3.1 Image to Video',
+        icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
+        badge: 'NEW',
+        description: 'Veo 3.1 - High-quality Image-to-Video generation by Google. Supports 4K and Audio.',
+        tips: 'Model video tercanggih dari Google saat ini.',
+        inputs: ['image', 'prompt'],
+        outputType: 'video',
+        settings: { aspect_ratio: true, duration: 'veo', resolution: 'veo', generate_audio: true, negative_prompt: true, seed: true },
+        endpoint: 'https://api.freepik.com/v1/ai/image-to-video/veo-3-1',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/image-to-video/veo-3-1',
+        pollingType: 'path'
+    },
+    {
+        id: 'veo-3-1-reference',
+        name: 'Veo 3.1 Reference to Video',
+        icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
+        badge: 'NEW',
+        description: 'Veo 3.1 Reference to Video - Generate consistent character/object videos using 1-3 reference images.',
+        tips: 'Gunakan foto karakter dari berbagai sudut untuk konsistensi maksimal.',
+        inputs: ['image', 'video', 'prompt'],
+        outputType: 'video',
+        settings: { aspect_ratio: true, resolution: 'veo', generate_audio: true, negative_prompt: true, seed: true },
+        endpoint: 'https://api.freepik.com/v1/ai/reference-to-video/veo-3-1',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/reference-to-video/veo-3-1',
+        pollingType: 'path'
+    },
+    {
+        id: 'nano-banana-pro',
+        name: 'Nano Banana Pro',
+        icon: '<div class="tool-icon-container tool-icon-image"><i data-lucide="zap" class="model-icon-lucide"></i></div>',
+        badge: 'NEW',
+        description: 'Nano Banana Pro (Gemini 3) - Advanced image generation with complex compositions and 4K support.',
+        tips: 'Sangat cerdas dalam mengikuti instruksi prompt yang panjang.',
+        inputs: ['prompt', 'image', 'video'],
+        outputType: 'image',
+        settings: { aspect_ratio: 'nano', resolution: true, seed: true },
+        endpoint: 'https://api.freepik.com/v1/ai/text-to-image/nano-banana-pro',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/text-to-image/nano-banana-pro',
+        pollingType: 'path'
+    },
+    {
+        id: 'nano-banana-pro-flash',
+        name: 'Nano Banana Pro Flash',
+        icon: '<div class="tool-icon-container tool-icon-image" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i data-lucide="zap" class="model-icon-lucide"></i></div>',
+        badge: 'FLASH',
+        description: 'Nano Banana Pro Flash (Gemini 3.1 Flash) - Faster variant optimized for quick image generation.',
+        inputs: ['prompt', 'image', 'video'],
+        outputType: 'image',
+        settings: { aspect_ratio: 'nano', resolution: true, seed: true },
+        endpoint: 'https://api.freepik.com/v1/ai/text-to-image/nano-banana-pro-flash',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/text-to-image/nano-banana-pro-flash',
+        pollingType: 'path'
+    },
+    {
         id: 'flux-2-pro',
         name: 'Flux 2 Pro',
         icon: '<div class="tool-icon-container tool-icon-image"><i data-lucide="image" class="model-icon-lucide"></i></div>',
         badge: 'PRO',
-        description: 'Flux 2 Pro - High-quality image generation with realistic, cinematic, and ultra-detailed styles.',
-        inputs: ['prompt'],
+        description: 'Flux 2 Pro - High-quality image generation. Supports Image-to-Image and Prompt Upsampling.',
+        tips: 'Gunakan Prompt Upsampling untuk detail yang lebih kaya.',
+        inputs: ['prompt', 'image'],
         outputType: 'image',
-        settings: { style: true, aspect_ratio: 'flux', cfg: true, steps: true, seed: true },
+        settings: { style_preset: true, aspect_ratio: 'flux', prompt_upsampling: true, seed: true },
         endpoint: 'https://api.freepik.com/v1/ai/text-to-image/flux-2-pro',
         statusEndpoint: 'https://api.freepik.com/v1/ai/text-to-image/flux-2-pro',
         pollingType: 'path'
@@ -295,6 +357,7 @@ const GENERATORS = [
         icon: '<div class="tool-icon-container tool-icon-audio"><i data-lucide="mic" class="model-icon-lucide"></i></div>',
         badge: 'NEW',
         description: 'Voice Over - High-quality AI voice generation using ElevenLabs Turbo v2.5.',
+        tips: 'Mendukung berbagai bahasa. Masukkan teks yang ingin diucapkan.',
         inputs: ['prompt'],
         outputType: 'audio',
         settings: { voice: true, stability: true, similarity_boost: true, speed: true, use_speaker_boost: true },
@@ -587,8 +650,18 @@ function startProgressSimulation() {
         let changed = false;
         state.activeTasks.forEach(task => {
             if (task.progress < 98) {
-                // Random small increment to feel real-time
-                const inc = Math.random() * 2.5; // Faster increment
+                // Determine increment based on model type
+                let inc = Math.random() * 2.5; // Default increment
+                
+                const modelId = task.generatorId || '';
+                if (modelId.includes('kling') || modelId.includes('veo') || modelId.includes('seedance')) {
+                    // Slower increment for heavy video models to avoid staying at 98% too long
+                    inc = Math.random() * 0.8; 
+                } else if (modelId.includes('flux') || modelId.includes('nano')) {
+                    // Faster for images
+                    inc = Math.random() * 5;
+                }
+
                 task.progress = Math.min(98, task.progress + inc);
                 changed = true;
             }
@@ -674,6 +747,63 @@ function renderContent() {
             `;
         } else {
             const activeGen = GENERATORS.find(g => g.id === state.activeGenerator) || GENERATORS[0];
+            
+            // Optimization: If we are already in the App view, update surgically to prevent flickering
+            const mainApp = document.querySelector('main');
+            const resultsContainer = document.getElementById('results-container');
+            
+            if (mainApp && resultsContainer && !state.showAdminDashboard && !state.showSetup) {
+                // Update specific parts that depend on the active generator
+                const modelInfo = document.querySelector('.model-info-card');
+                if (modelInfo) {
+                    const newInfoHTML = renderModelInfo(activeGen);
+                    if (modelInfo.outerHTML !== newInfoHTML) modelInfo.outerHTML = newInfoHTML;
+                }
+                
+                const uploadWrapper = document.querySelector('.upload-section-wrapper');
+                if (uploadWrapper) {
+                    const newUploadHTML = renderUploadSection(activeGen);
+                    if (uploadWrapper.innerHTML !== newUploadHTML) uploadWrapper.innerHTML = newUploadHTML;
+                }
+                
+                const settingsSection = document.querySelector('.settings-section');
+                if (settingsSection) {
+                    const newSettingsHTML = renderSettings(activeGen);
+                    if (settingsSection.outerHTML !== newSettingsHTML) settingsSection.outerHTML = newSettingsHTML;
+                }
+                
+                const generateContainer = document.querySelector('.generate-container');
+                if (generateContainer) {
+                    const newGenerateHTML = renderGenerateButton(activeGen);
+                    if (generateContainer.outerHTML !== newGenerateHTML) generateContainer.outerHTML = newGenerateHTML;
+                }
+                
+                const modelSelector = document.querySelector('.model-selector');
+                if (modelSelector) {
+                    const newSelectorHTML = renderModelSelector();
+                    if (modelSelector.outerHTML !== newSelectorHTML) modelSelector.outerHTML = newSelectorHTML;
+                }
+
+                const globalErrorContainer = document.querySelector('.global-error-alert');
+                const newErrorHTML = renderGlobalError();
+                if (newErrorHTML) {
+                    if (!globalErrorContainer) {
+                        mainApp.insertAdjacentHTML('afterbegin', newErrorHTML);
+                    } else if (globalErrorContainer.outerHTML !== newErrorHTML) {
+                        globalErrorContainer.outerHTML = newErrorHTML;
+                    }
+                } else if (globalErrorContainer) {
+                    globalErrorContainer.remove();
+                }
+
+                // Update tasks and results using the optimized function
+                updateTasksAndResultsDOM();
+                
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+
+            // Full render for first time or page switch
             app.innerHTML = `
                 ${renderHeader()}
                 <main>
@@ -685,11 +815,12 @@ function renderContent() {
                     ${renderPromptSection()}
                     ${renderSettings(activeGen)}
                     ${renderGenerateButton(activeGen)}
-                    <div id="active-tasks-container">${renderActiveTasks()}</div>
-                    <div id="results-container">${renderResults()}</div>
+                    <div id="active-tasks-container"></div>
+                    <div id="results-container"></div>
                 </main>
                 ${renderFooter()}
             `;
+            updateTasksAndResultsDOM();
         }
 
         // Re-initialize Lucide icons
@@ -974,6 +1105,10 @@ function renderHeader() {
                     </div>
                 ` : ''}
 
+                <button class="btn-icon-action" onclick="showGuide()" title="Panduan Penggunaan">
+                    <i data-lucide="book-open"></i>
+                </button>
+
                 <button class="btn-icon-action" onclick="toggleModal('modal-disclaimer', true)" title="Info">
                     <i data-lucide="info"></i>
                 </button>
@@ -1105,7 +1240,9 @@ function renderUploadSection(gen) {
     const isKling3Pro = gen.id === 'kling-v3-pro';
     const isKling3OmniPro = gen.id === 'kling-v3-omni-pro';
     const isSeeDream45 = gen.id === 'seedream-4-5-edit';
-    const hasTwoInputs = gen.inputs.includes('video') || (isKling3Std && gen.inputs.includes('image')) || (isSeeDream45 && gen.inputs.includes('video')) || (isKling3OmniPro && gen.inputs.includes('video'));
+    const isVeoRef = gen.id === 'veo-3-1-reference';
+    const isNanoPro = gen.id.includes('nano-banana-pro');
+    const hasTwoInputs = gen.inputs.includes('video') || (isKling3Std && gen.inputs.includes('image')) || (isSeeDream45 && gen.inputs.includes('video')) || (isKling3OmniPro && gen.inputs.includes('video')) || (isVeoRef && gen.inputs.includes('video')) || (isNanoPro && gen.inputs.includes('video'));
 
     const uploadState = getUploadState();
 
@@ -1132,7 +1269,7 @@ function renderUploadSection(gen) {
                     ` : `
                         <div class="upload-placeholder">
                             <i data-lucide="image"></i>
-                            <span>${gen.id === 'kling-v3-std' || gen.id === 'kling-v3-omni-pro' ? 'Start Image<br>(Awal)' : (gen.id === 'kling-v3-pro' ? 'Upload Gambar' : (gen.id === 'seedream-4-5-edit' ? 'Reference Image 1' : (gen.id === 'seedance-1-5-pro' ? 'Upload Image<br>(Optional)' : 'Gambar<br>Karakter')))}</span>
+                            <span>${gen.id === 'kling-v3-std' || gen.id === 'kling-v3-omni-pro' ? 'Start Image<br>(Awal)' : (gen.id === 'kling-v3-pro' ? 'Upload Gambar' : (gen.id === 'seedream-4-5-edit' || isVeoRef || isNanoPro ? 'Reference Image 1' : (gen.id === 'seedance-1-5-pro' ? 'Upload Image<br>(Optional)' : 'Gambar<br>Karakter')))}</span>
                         </div>
                     `}
                 </div>
@@ -1147,7 +1284,7 @@ function renderUploadSection(gen) {
                             <span>Uploading...</span>
                         </div>
                     ` : uploadState.files.video ? `
-                        ${(isKling3Std || isKling3OmniPro || gen.id === 'seedream-4-5-edit') ? `<img src="${uploadState.files.video}" class="upload-preview">` : `<video src="${uploadState.files.video}" class="upload-preview" muted autoplay loop playsinline></video>`}
+                        ${(isKling3Std || isKling3OmniPro || isSeeDream45 || isVeoRef || isNanoPro) ? `<img src="${uploadState.files.video}" class="upload-preview">` : `<video src="${uploadState.files.video}" class="upload-preview" muted autoplay loop playsinline></video>`}
                         <button class="btn-remove" onclick="removeFile(event, 'video')"><i data-lucide="x"></i></button>
                     ` : uploadState.urls.video ? `
                         <div class="upload-placeholder">
@@ -1158,8 +1295,8 @@ function renderUploadSection(gen) {
                         </div>
                     ` : `
                         <div class="upload-placeholder">
-                            <i data-lucide="${(isKling3Std || isKling3OmniPro || gen.id === 'seedream-4-5-edit') ? 'image' : 'video'}"></i>
-                            <span>${(isKling3Std || isKling3OmniPro) ? 'End Image<br>(Akhir)' : (gen.id === 'seedream-4-5-edit' ? 'Reference Image 2' : 'Video<br>Referensi')}</span>
+                            <i data-lucide="${(isKling3Std || isKling3OmniPro || isSeeDream45 || isVeoRef || isNanoPro) ? 'image' : 'video'}"></i>
+                            <span>${(isKling3Std || isKling3OmniPro) ? 'End Image<br>(Akhir)' : (isSeeDream45 ? 'Reference Image 2' : (isVeoRef ? 'Reference Image 2' : (isNanoPro ? 'Reference Image 2' : 'Video<br>Referensi')))}</span>
                         </div>
                     `}
                 </div>
@@ -1174,14 +1311,14 @@ function renderUploadSection(gen) {
                     <input type="text" class="url-input" placeholder="${isKling3Std ? 'https://... (Start Image URL)' : 'https://... (URL Gambar)'}" 
                            value="${uploadState.autoUploaded.image ? '' : uploadState.urls.image}" oninput="updateUrl('image', this.value)">
                     ${hasTwoInputs ? `
-                        <input type="text" class="url-input" placeholder="${isKling3Std ? 'https://... (End Image URL)' : 'https://... (URL Video)'}" 
+                        <input type="text" class="url-input" placeholder="${(isKling3Std || isKling3OmniPro || isSeeDream45 || isVeoRef || isNanoPro) ? 'https://... (URL Gambar 2)' : 'https://... (URL Video)'}" 
                                value="${uploadState.autoUploaded.video ? '' : uploadState.urls.video}" oninput="updateUrl('video', this.value)">
                     ` : ''}
                 </div>
             ` : ''}
         </div>
         <input type="file" id="file-input-image" hidden accept="image/*" onchange="handleFileChange('image', this)">
-        <input type="file" id="file-input-video" hidden accept="${(isKling3Std || isKling3OmniPro || isSeeDream45) ? 'image/*' : 'video/*'}" onchange="handleFileChange('video', this)">
+        <input type="file" id="file-input-video" hidden accept="${(isKling3Std || isKling3OmniPro || isSeeDream45 || isVeoRef || isNanoPro) ? 'image/*' : 'video/*'}" onchange="handleFileChange('video', this)">
     `;
 }
 
@@ -1296,7 +1433,7 @@ function renderSettings(gen) {
                 </div>
             ` : ''}
 
-            ${gen.settings.style ? `
+            ${gen.settings.style_preset ? `
                 <div class="setting-item">
                     <div class="setting-label"><span>Style Preset</span></div>
                     <div class="style-grid">
@@ -1308,14 +1445,41 @@ function renderSettings(gen) {
                 </div>
             ` : ''}
 
+            ${gen.settings.prompt_upsampling ? `
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <span>Prompt Upsampling</span>
+                        <span class="setting-value">${state.settings.prompt_upsampling ? 'ON' : 'OFF'}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="switch">
+                            <input type="checkbox" ${state.settings.prompt_upsampling ? 'checked' : ''} 
+                                   onchange="updateSetting('prompt_upsampling', this.checked)">
+                            <span class="slider round"></span>
+                        </label>
+                        <span style="font-size: 11px; color: var(--text-muted);">Otomatis memperbagus prompt.</span>
+                    </div>
+                </div>
+            ` : ''}
+
             ${gen.settings.resolution ? `
                 <div class="setting-item">
                     <div class="setting-label"><span>Resolution</span></div>
                     <select class="setting-select" onchange="updateSetting('resolution', this.value)">
-                        <option value="360p" ${state.settings.resolution === '360p' ? 'selected' : ''}>360p</option>
-                        <option value="540p" ${state.settings.resolution === '540p' ? 'selected' : ''}>540p</option>
-                        <option value="720p" ${state.settings.resolution === '720p' ? 'selected' : ''}>720p</option>
-                        <option value="1080p" ${state.settings.resolution === '1080p' ? 'selected' : ''}>1080p</option>
+                        ${gen.id === 'nano-banana-pro' || gen.id === 'nano-banana-pro-flash' ? `
+                            <option value="1K" ${state.settings.resolution === '1K' ? 'selected' : ''}>1K (Fast)</option>
+                            <option value="2K" ${state.settings.resolution === '2K' ? 'selected' : ''}>2K (Standard)</option>
+                            <option value="4K" ${state.settings.resolution === '4K' ? 'selected' : ''}>4K (High Quality)</option>
+                        ` : gen.settings.resolution === 'veo' ? `
+                            <option value="720p" ${state.settings.resolution === '720p' ? 'selected' : ''}>720p</option>
+                            <option value="1080p" ${state.settings.resolution === '1080p' ? 'selected' : ''}>1080p</option>
+                            <option value="4k" ${state.settings.resolution === '4k' ? 'selected' : ''}>4K</option>
+                        ` : `
+                            <option value="360p" ${state.settings.resolution === '360p' ? 'selected' : ''}>360p</option>
+                            <option value="540p" ${state.settings.resolution === '540p' ? 'selected' : ''}>540p</option>
+                            <option value="720p" ${state.settings.resolution === '720p' ? 'selected' : ''}>720p</option>
+                            <option value="1080p" ${state.settings.resolution === '1080p' ? 'selected' : ''}>1080p</option>
+                        `}
                     </select>
                 </div>
             ` : ''}
@@ -1337,6 +1501,17 @@ function renderSettings(gen) {
                             <option value="1:1" ${state.settings.aspect_ratio === '1:1' ? 'selected' : ''}>1:1 (Square)</option>
                             <option value="9:16" ${state.settings.aspect_ratio === '9:16' ? 'selected' : ''}>9:16 (Portrait)</option>
                             <option value="16:9" ${state.settings.aspect_ratio === '16:9' ? 'selected' : ''}>16:9 (Landscape)</option>
+                        ` : gen.settings.aspect_ratio === 'nano' ? `
+                            <option value="1:1" ${state.settings.aspect_ratio === '1:1' ? 'selected' : ''}>1:1 (Square)</option>
+                            <option value="2:3" ${state.settings.aspect_ratio === '2:3' ? 'selected' : ''}>2:3 (Portrait)</option>
+                            <option value="3:2" ${state.settings.aspect_ratio === '3:2' ? 'selected' : ''}>3:2 (Landscape)</option>
+                            <option value="4:3" ${state.settings.aspect_ratio === '4:3' ? 'selected' : ''}>4:3 (Standard)</option>
+                            <option value="3:4" ${state.settings.aspect_ratio === '3:4' ? 'selected' : ''}>3:4 (Standard Portrait)</option>
+                            <option value="5:4" ${state.settings.aspect_ratio === '5:4' ? 'selected' : ''}>5:4 (Photo)</option>
+                            <option value="4:5" ${state.settings.aspect_ratio === '4:5' ? 'selected' : ''}>4:5 (Photo Portrait)</option>
+                            <option value="16:9" ${state.settings.aspect_ratio === '16:9' ? 'selected' : ''}>16:9 (Widescreen)</option>
+                            <option value="9:16" ${state.settings.aspect_ratio === '9:16' ? 'selected' : ''}>9:16 (Social Story)</option>
+                            <option value="21:9" ${state.settings.aspect_ratio === '21:9' ? 'selected' : ''}>21:9 (Ultra-wide)</option>
                         ` : gen.settings.aspect_ratio === 'seedance' ? `
                             <option value="widescreen_16_9" ${state.settings.aspect_ratio === 'widescreen_16_9' ? 'selected' : ''}>16:9 (Widescreen)</option>
                             <option value="social_story_9_16" ${state.settings.aspect_ratio === 'social_story_9_16' ? 'selected' : ''}>9:16 (Portrait)</option>
@@ -1389,11 +1564,16 @@ function renderSettings(gen) {
                 <div class="setting-item">
                     <div class="setting-label"><span>Duration (Seconds)</span></div>
                     <select class="setting-select" onchange="updateSetting('duration', this.value)">
-                        ${gen.settings.duration === 'seedance' ? [5,10,12].map(d => `
+                        ${gen.settings.duration === 'veo' ? `
+                            <option value="4" ${state.settings.duration == 4 ? 'selected' : ''}>4 Seconds</option>
+                            <option value="6" ${state.settings.duration == 6 ? 'selected' : ''}>6 Seconds</option>
+                            <option value="8" ${state.settings.duration == 8 ? 'selected' : ''}>8 Seconds</option>
+                        ` : gen.settings.duration === 'seedance' ? [5,10,12].map(d => `
                             <option value="${d}" ${state.settings.duration == d ? 'selected' : ''}>${d}s</option>
-                        `).join('') : gen.settings.duration === 'pixverse' ? [5,10].map(d => `
-                            <option value="${d}" ${state.settings.duration == d ? 'selected' : ''}>${d}s</option>
-                        `).join('') : [3,4,5,6,7,8,9,10,11,12,13,14,15].map(d => `
+                        `).join('') : gen.settings.duration === 'pixverse' ? `
+                            <option value="5" ${state.settings.duration == 5 ? 'selected' : ''}>5 Seconds (1080p)</option>
+                            <option value="8" ${state.settings.duration == 8 ? 'selected' : ''}>8 Seconds (720p)</option>
+                        ` : (gen.id.includes('motion-control') ? [3,4,5,6,7,8,9,10,11,12,13,14,15,20,25,30] : [3,4,5,6,7,8,9,10,11,12,13,14,15]).map(d => `
                             <option value="${d}" ${state.settings.duration == d ? 'selected' : ''}>${d}s</option>
                         `).join('')}
                     </select>
@@ -2035,8 +2215,8 @@ async function generate() {
             videoInput = uploadState.files.video || uploadState.urls.video;
         }
 
-        // Kling models strictly require public HTTPS URLs
-        const needsPublicUrl = activeGen.id.toLowerCase().includes('kling') || activeGen.id === 'seedance-1-5-pro' || activeGen.id === 'pixverse-v5';
+        // Kling and Veo models strictly require public HTTPS URLs
+        const needsPublicUrl = activeGen.id.toLowerCase().includes('kling') || activeGen.id === 'seedance-1-5-pro' || activeGen.id === 'pixverse-v5' || activeGen.id === 'veo-3-1-i2v' || activeGen.id === 'veo-3-1-reference';
         if (needsPublicUrl) {
             console.log(`[DEBUG] ${activeGen.name} Input URLs:`, {
                 image: imageInput,
@@ -2184,14 +2364,66 @@ async function generate() {
             if (state.settings.seed !== '' && state.settings.seed !== undefined) {
                 body.seed = parseInt(state.settings.seed);
             }
+        } else if (activeGen.id === 'veo-3-1-i2v') {
+            if (!imageInput) {
+                throw new Error("Wajib upload Gambar (atau masukkan URL) untuk Veo 3.1 Image to Video.");
+            }
+            body = {
+                image: ensureHttps(imageInput),
+                prompt: finalPrompt,
+                negative_prompt: state.settings.negative_prompt || "",
+                duration: parseInt(state.settings.duration) || 8,
+                resolution: state.settings.resolution || "720p",
+                aspect_ratio: state.settings.aspect_ratio || "16:9",
+                generate_audio: state.settings.generate_audio !== undefined ? state.settings.generate_audio : true,
+                seed: state.settings.seed !== '' && state.settings.seed !== undefined ? parseInt(state.settings.seed) : Math.floor(Math.random() * 4294967295)
+            };
+        } else if (activeGen.id === 'veo-3-1-reference') {
+            if (!imageInput) {
+                throw new Error("Wajib upload setidaknya satu Gambar Referensi untuk Veo 3.1 Reference to Video.");
+            }
+            const imageUrls = [
+                ensureHttps(imageInput),
+                videoInput ? ensureHttps(videoInput) : null
+            ].filter(Boolean);
+
+            body = {
+                image_urls: imageUrls,
+                prompt: finalPrompt,
+                negative_prompt: state.settings.negative_prompt || "",
+                resolution: state.settings.resolution || "720p",
+                aspect_ratio: state.settings.aspect_ratio || "16:9",
+                generate_audio: state.settings.generate_audio !== undefined ? state.settings.generate_audio : true,
+                seed: state.settings.seed !== '' && state.settings.seed !== undefined ? parseInt(state.settings.seed) : Math.floor(Math.random() * 4294967295)
+            };
+        } else if (activeGen.id === 'nano-banana-pro' || activeGen.id === 'nano-banana-pro-flash') {
+            body = {
+                prompt: finalPrompt,
+                aspect_ratio: state.settings.aspect_ratio || "1:1",
+                resolution: state.settings.resolution || "2K"
+            };
+            if (imageInput || videoInput) {
+                body.reference_images = [];
+                if (imageInput) {
+                    body.reference_images.push({
+                        image: ensureHttps(imageInput),
+                        text: "Reference 1",
+                        mime_type: "image/jpeg"
+                    });
+                }
+                if (videoInput) {
+                    body.reference_images.push({
+                        image: ensureHttps(videoInput),
+                        text: "Reference 2",
+                        mime_type: "image/jpeg"
+                    });
+                }
+            }
         } else if (activeGen.id === 'flux-2-pro') {
             let prompt = finalPrompt;
-            let negativePrompt = state.settings.negative_prompt || "";
             
             if (state.settings.style === 'Realistic') {
-                // Enhance realistic style to avoid "poster" look
                 prompt = `photorealistic raw photo of ${prompt}, high detail, 8k, highly detailed skin texture, natural lighting, masterwork`;
-                negativePrompt = (negativePrompt ? negativePrompt + ", " : "") + "poster, text, typography, watermark, logo, distorted, cartoon, anime, illustration, painting";
             } else if (state.settings.style && state.settings.style !== 'None') {
                 prompt = `${state.settings.style} style, ${prompt}`;
             }
@@ -2213,23 +2445,37 @@ async function generate() {
             
             body = {
                 prompt: prompt,
-                negative_prompt: negativePrompt,
                 width: width,
                 height: height,
-                cfg_scale: state.settings.cfg_scale !== undefined ? state.settings.cfg_scale : 0.5,
-                steps: state.settings.steps || 25,
+                prompt_upsampling: state.settings.prompt_upsampling || false,
                 seed: state.settings.seed !== '' && state.settings.seed !== undefined ? parseInt(state.settings.seed) : Math.floor(Math.random() * 4294967295)
             };
+
+            // Add Image-to-Image if image is uploaded
+            if (imageInput) {
+                // Freepik requires base64 without the prefix for flux-2-pro input_image
+                const base64Image = imageInput.includes('base64,') ? imageInput.split('base64,')[1] : imageInput;
+                body.input_image = base64Image;
+            }
         } else if (activeGen.id === 'pixverse-v5') {
             if (!imageInput) {
                 throw new Error("Wajib upload Gambar untuk Pixverse V5.");
             }
+            
+            let prompt = finalPrompt || "Cinematic video";
+            if (state.settings.style && state.settings.style !== 'None') {
+                prompt = `${state.settings.style} style, ${prompt}`;
+            }
+
+            const duration = parseInt(state.settings.duration) || 5;
+            const resolution = duration === 8 ? "720p" : "1080p";
+
             body = {
-                prompt: finalPrompt || "Cinematic video",
+                prompt: prompt,
                 image_url: ensureHttps(imageInput),
                 negative_prompt: state.settings.negative_prompt || "",
-                resolution: state.settings.resolution || "360p",
-                duration: parseInt(state.settings.duration) || 5,
+                resolution: resolution,
+                duration: duration,
                 seed: state.settings.seed !== '' && state.settings.seed !== undefined ? parseInt(state.settings.seed) : Math.floor(Math.random() * 4294967295)
             };
         } else if (activeGen.id === 'seedance-1-5-pro') {
@@ -2456,10 +2702,10 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
     // List of potential status endpoints and formats to try if 404 occurs
     const fallbacks = [
         { base: activeGen.statusEndpoint || 'https://api.freepik.com/v1/ai/video/kling-v3', type: activeGen.pollingType || 'path' },
-        { base: 'https://api.freepik.com/v1/ai/video/kling-v3', type: 'path' },
-        { base: 'https://api.freepik.com/v1/ai/video/kling-v3', type: 'list' },
         { base: 'https://api.freepik.com/v1/ai/video/tasks', type: 'path' },
         { base: 'https://api.freepik.com/v1/ai/video/tasks', type: 'list' },
+        { base: 'https://api.freepik.com/v1/ai/video/kling-v3', type: 'path' },
+        { base: 'https://api.freepik.com/v1/ai/video/kling-v3', type: 'list' },
         { base: 'https://api.freepik.com/v1/ai/text-to-image/seedream-v4-5-edit', type: 'path' },
         { base: 'https://api.freepik.com/v1/ai/video/seedance-1-5-pro-720p', type: 'path' },
         { base: 'https://api.freepik.com/v1/ai/video/status', type: 'query' },
@@ -2766,13 +3012,29 @@ function setActiveGenerator(id) {
         state.settings.seed = '';
     } else if (id === 'pixverse-v5') {
         state.settings.aspect_ratio = '16:9';
-        state.settings.resolution = '360p';
+        state.settings.style = 'None';
         state.settings.duration = '5';
+        state.settings.seed = '';
+    } else if (id === 'veo-3-1-i2v') {
+        state.settings.aspect_ratio = '16:9';
+        state.settings.duration = '8';
+        state.settings.resolution = '720p';
+        state.settings.generate_audio = true;
+        state.settings.negative_prompt = '';
+        state.settings.seed = '';
+    } else if (id === 'veo-3-1-reference') {
+        state.settings.aspect_ratio = '16:9';
+        state.settings.resolution = '720p';
+        state.settings.generate_audio = true;
+        state.settings.negative_prompt = '';
+        state.settings.seed = '';
+    } else if (id === 'nano-banana-pro' || id === 'nano-banana-pro-flash') {
+        state.settings.aspect_ratio = '1:1';
+        state.settings.resolution = '2K';
         state.settings.seed = '';
     } else if (id === 'flux-2-pro') {
         state.settings.aspect_ratio = '16:9';
-        state.settings.cfg_scale = 0.5;
-        state.settings.steps = 25;
+        state.settings.prompt_upsampling = false;
         state.settings.style = 'Realistic';
         state.settings.seed = '';
     } else if (id === 'elevenlabs-turbo-v2-5') {
@@ -3188,23 +3450,54 @@ function updateSetting(key, val) {
     // No need to re-render everything for other setting changes
 }
 
+// --- DOM UPDATE OPTIMIZATION ---
+let lastResultsData = null;
+let lastTasksData = null;
+let lastUsageData = null;
+
 function updateTasksAndResultsDOM() {
     const tasksContainer = document.getElementById('active-tasks-container');
     if (tasksContainer) {
-        tasksContainer.innerHTML = renderActiveTasks();
+        const currentTasksData = JSON.stringify(state.activeTasks);
+        if (lastTasksData !== currentTasksData) {
+            tasksContainer.innerHTML = renderActiveTasks();
+            lastTasksData = currentTasksData;
+            if (window.lucide) lucide.createIcons({ root: tasksContainer });
+        }
     }
+
     const resultsContainer = document.getElementById('results-container');
     if (resultsContainer) {
-        resultsContainer.innerHTML = renderResults();
+        // Compare data instead of innerHTML to avoid false positives from Lucide SVGs
+        const currentResultsData = JSON.stringify({
+            results: state.completedResults,
+            activeGen: state.activeGenerator,
+            apiKey: !!state.apiKey // apiKey presence affects canSync button
+        });
+
+        if (lastResultsData !== currentResultsData) {
+            resultsContainer.innerHTML = renderResults();
+            lastResultsData = currentResultsData;
+            // Only re-initialize icons for the results container
+            if (window.lucide) lucide.createIcons({ root: resultsContainer });
+        }
     }
     
     // Update usage stats bar
     const usageStats = document.querySelector('.usage-stats-bar');
     if (usageStats) {
-        usageStats.outerHTML = renderUsageStats();
+        const currentUsageData = JSON.stringify({
+            active: state.activeTasks.length,
+            history: state.generationHistory.length
+        });
+        if (lastUsageData !== currentUsageData) {
+            usageStats.outerHTML = renderUsageStats();
+            lastUsageData = currentUsageData;
+            // Re-find and re-init icons for the new usage bar
+            const newUsageStats = document.querySelector('.usage-stats-bar');
+            if (newUsageStats && window.lucide) lucide.createIcons({ root: newUsageStats });
+        }
     }
-    
-    if (window.lucide) lucide.createIcons();
 }
 
 function deleteResult(index) {
@@ -3263,6 +3556,41 @@ function resetApiKey() {
 
 // --- UTILS ---
 
+function showGuide() {
+    const modal = document.getElementById('modal-guide');
+    const body = modal.querySelector('.guide-body');
+    
+    body.innerHTML = `
+        <div style="background: rgba(212, 175, 55, 0.1); border: 1px solid var(--border-color); padding: 15px; border-radius: 12px; margin-bottom: 10px;">
+            <p style="font-size: 13px; color: var(--accent-gold); font-weight: 600; margin-bottom: 5px;">💡 Tips Umum:</p>
+            <ul style="font-size: 12px; color: var(--text-main); padding-left: 20px; line-height: 1.6;">
+                <li>Gunakan prompt dalam Bahasa Inggris untuk hasil yang lebih akurat.</li>
+                <li>Pastikan gambar yang diunggah memiliki kualitas yang baik (tidak blur).</li>
+                <li>Untuk model Video, proses generasi biasanya memakan waktu 1-3 menit.</li>
+            </ul>
+        </div>
+        ${GENERATORS.map(gen => `
+            <div class="guide-item">
+                <div class="guide-item-header">
+                    <div class="guide-item-icon">${gen.icon}</div>
+                    <div class="guide-item-title">${gen.name}</div>
+                </div>
+                <div class="guide-item-desc">${gen.description}</div>
+                ${gen.tips ? `<div style="font-size: 11px; color: var(--accent-gold); font-style: italic; margin-top: -5px;">✨ Tips: ${gen.tips}</div>` : ''}
+                <div class="guide-item-meta">
+                    <span class="guide-badge">Output: ${gen.outputType.toUpperCase()}</span>
+                    ${gen.inputs.includes('image') ? '<span class="guide-badge">Butuh Gambar</span>' : ''}
+                    ${gen.inputs.includes('video') ? '<span class="guide-badge">Butuh Video/Ref</span>' : ''}
+                    ${gen.inputs.includes('prompt') ? '<span class="guide-badge">Butuh Prompt</span>' : ''}
+                </div>
+            </div>
+        `).join('')}
+    `;
+    
+    toggleModal('modal-guide', true);
+    if (window.lucide) lucide.createIcons();
+}
+
 function toggleModal(id, show) {
     const modal = document.getElementById(id);
     if (modal) {
@@ -3304,6 +3632,7 @@ window.addEventListener('DOMContentLoaded', () => {
     window.toggleUrlInput = toggleUrlInput;
     window.generate = generate;
     window.pollTaskStatus = pollTaskStatus;
+    window.showGuide = showGuide;
     window.cancelTask = cancelTask;
     window.syncTasks = syncTasks;
     window.editWithSeedream = editWithSeedream;
