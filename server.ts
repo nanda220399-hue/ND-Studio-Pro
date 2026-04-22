@@ -511,8 +511,32 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  const server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
+  });
+
+  server.on('error', (err: any) => {
+    console.error('Server error:', err);
+    if (err.code === 'EADDRINUSE') {
+      console.error(`Port ${PORT} is already in use`);
+    }
+  });
+
+  // Handle global process errors to prevent EPIPE and other stream errors from crashing the server
+  process.on('uncaughtException', (err: any) => {
+    console.error('Uncaught Exception:', err);
+    // EPIPE (Broken Pipe) happens when a client closes the connection unexpectedly.
+    // It's safe to ignore and shouldn't crash the server.
+    if (err.code === 'EPIPE') {
+      console.log('Handled EPIPE (broken pipe) error safely.');
+      return;
+    }
+    // For other fatal errors, the server might be in an unstable state, 
+    // but in a dev environment we prefer to stay alive.
+  });
+
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   });
 
   // Periodic cleanup: Delete files in uploads folder older than 1 hour

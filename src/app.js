@@ -11,9 +11,9 @@ import { doc, getDoc, setDoc, onSnapshot, collection, updateDoc, deleteDoc, quer
 let state = {
     apiKey: '',
     activeGenerator: 'kling-v3-std',
-    uploadedFiles: { image: null, video: null },
-    uploadedUrls: { image: '', video: '' },
-    uploading: { image: false, video: false },
+    uploadedFiles: { image: null, video: null, image3: null },
+    uploadedUrls: { image: '', video: '', image3: '' },
+    uploading: { image: false, video: false, image3: false },
     generatorUploads: {}, // Per-generator upload state
     generatorPrompts: {}, // Per-generator prompt state
     currentPrompt: '',
@@ -35,7 +35,10 @@ let state = {
         similarity_boost: 0.2,
         speed: 1,
         use_speaker_boost: true,
-        music_duration: '30'
+        music_duration: '30',
+        person_generation: 'allow_adult',
+        safety_settings: 'block_medium_and_above',
+        enhance_prompt: true
     },
     activeTasks: [],
     completedResults: [],
@@ -239,7 +242,7 @@ const GENERATORS = [
         badge: 'NEW',
         description: 'Nano Banana Pro (Gemini 3) - Advanced image generation with complex compositions and 4K support.',
         tips: 'Sangat cerdas dalam mengikuti instruksi prompt yang panjang.',
-        inputs: ['prompt', 'image', 'video'],
+        inputs: ['prompt', 'image', 'video', 'image3'],
         outputType: 'image',
         settings: { aspect_ratio: 'nano', resolution: true, seed: true },
         endpoint: 'https://api.freepik.com/v1/ai/text-to-image/nano-banana-pro',
@@ -252,11 +255,53 @@ const GENERATORS = [
         icon: '<div class="tool-icon-container tool-icon-image" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i data-lucide="zap" class="model-icon-lucide"></i></div>',
         badge: 'FLASH',
         description: 'Nano Banana Pro Flash (Gemini 3.1 Flash) - Faster variant optimized for quick image generation.',
-        inputs: ['prompt', 'image', 'video'],
+        inputs: ['prompt', 'image', 'video', 'image3'],
         outputType: 'image',
         settings: { aspect_ratio: 'nano', resolution: true, seed: true },
         endpoint: 'https://api.freepik.com/v1/ai/text-to-image/nano-banana-pro-flash',
         statusEndpoint: 'https://api.freepik.com/v1/ai/text-to-image/nano-banana-pro-flash',
+        pollingType: 'path'
+    },
+    {
+        id: 'imagen4-fast',
+        name: 'Imagen 4 Fast',
+        icon: '<div class="tool-icon-container tool-icon-image"><i data-lucide="zap" class="model-icon-lucide"></i></div>',
+        badge: 'FAST',
+        description: 'Imagen 4 Fast - Optimized for speed and cost-effectiveness. Google\'s latest high-speed image generation.',
+        tips: 'Kualitas studio dengan kecepatan kilat.',
+        inputs: ['prompt'],
+        outputType: 'image',
+        settings: { aspect_ratio: 'imagen4', enhance_prompt: true, safety_settings: true, person_generation: true, seed: true },
+        endpoint: 'https://api.freepik.com/v1/ai/text-to-image/imagen4-fast',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/text-to-image/imagen4-fast',
+        pollingType: 'path'
+    },
+    {
+        id: 'imagen4-ultra',
+        name: 'Imagen 4 Ultra',
+        icon: '<div class="tool-icon-container tool-icon-image"><i data-lucide="image" class="model-icon-lucide"></i></div>',
+        badge: 'ULTRA',
+        description: 'Imagen 4 Ultra - Google\'s most capable image generation model. Optimized for highest quality and photorealism.',
+        tips: 'Gunakan detail maksimal untuk hasil foto yang sangat nyata.',
+        inputs: ['prompt'],
+        outputType: 'image',
+        settings: { aspect_ratio: 'imagen4', enhance_prompt: true, safety_settings: true, person_generation: true, seed: true },
+        endpoint: 'https://api.freepik.com/v1/ai/text-to-image/imagen4-ultra',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/text-to-image/imagen4-ultra',
+        pollingType: 'path'
+    },
+    {
+        id: 'gemini-2-5-flash-image',
+        name: 'Gemini 2.5 Flash Image',
+        icon: '<div class="tool-icon-container tool-icon-image"><i data-lucide="sparkles" class="model-icon-lucide"></i></div>',
+        badge: 'PREVIEW',
+        description: 'Gemini 2.5 Flash - Create or edit images with lightning speed. Supports up to 3 reference images for style transfer or editing.',
+        tips: 'Gunakan hingga 3 gambar referensi untuk kontrol lebih baik.',
+        inputs: ['prompt', 'image', 'video', 'image3'], // Use 'video' as the second image slot for consistency, then 'image3'
+        outputType: 'image',
+        settings: { seed: true },
+        endpoint: 'https://api.freepik.com/v1/ai/gemini-2-5-flash-image-preview',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/gemini-2-5-flash-image-preview',
         pollingType: 'path'
     },
     {
@@ -331,7 +376,7 @@ const GENERATORS = [
         icon: '<div class="tool-icon-container tool-icon-image"><i data-lucide="image" class="model-icon-lucide"></i></div>',
         badge: 'V4.5',
         description: 'SeeDream 4.5 Edit: High-fidelity Text-to-Image generation with reference images. Preserves subject details and style while editing.',
-        inputs: ['image', 'video', 'prompt'],
+        inputs: ['image', 'video', 'image3', 'prompt'],
         outputType: 'image',
         settings: { aspect_ratio: 'seedream', seed: true, safety_checker: true },
         endpoint: 'https://api.freepik.com/v1/ai/text-to-image/seedream-v4-5-edit',
@@ -605,15 +650,22 @@ async function fetchWithProxy(url, options = {}) {
 function getUploadState() {
     if (!state.generatorUploads[state.activeGenerator]) {
         state.generatorUploads[state.activeGenerator] = {
-            files: { image: null, video: null },
-            urls: { image: '', video: '' },
-            uploading: { image: false, video: false },
-            autoUploaded: { image: false, video: false }
+            files: { image: null, video: null, image3: null },
+            urls: { image: '', video: '', image3: '' },
+            uploading: { image: false, video: false, image3: false },
+            autoUploaded: { image: false, video: false, image3: false }
         };
     }
     // Ensure autoUploaded exists for older states
     if (!state.generatorUploads[state.activeGenerator].autoUploaded) {
-        state.generatorUploads[state.activeGenerator].autoUploaded = { image: false, video: false };
+        state.generatorUploads[state.activeGenerator].autoUploaded = { image: false, video: false, image3: false };
+    }
+    // Ensure image3 exists for older states
+    if (!state.generatorUploads[state.activeGenerator].files.hasOwnProperty('image3')) {
+        state.generatorUploads[state.activeGenerator].files.image3 = null;
+        state.generatorUploads[state.activeGenerator].urls.image3 = '';
+        state.generatorUploads[state.activeGenerator].uploading.image3 = false;
+        state.generatorUploads[state.activeGenerator].autoUploaded.image3 = false;
     }
     return state.generatorUploads[state.activeGenerator];
 }
@@ -1242,12 +1294,14 @@ function renderUploadSection(gen) {
     const isSeeDream45 = gen.id === 'seedream-4-5-edit';
     const isVeoRef = gen.id === 'veo-3-1-reference';
     const isNanoPro = gen.id.includes('nano-banana-pro');
-    const hasTwoInputs = gen.inputs.includes('video') || (isKling3Std && gen.inputs.includes('image')) || (isSeeDream45 && gen.inputs.includes('video')) || (isKling3OmniPro && gen.inputs.includes('video')) || (isVeoRef && gen.inputs.includes('video')) || (isNanoPro && gen.inputs.includes('video'));
+    const isGeminiFlash = gen.id === 'gemini-2-5-flash-image';
+    const hasTwoInputs = gen.inputs.includes('video') || (isKling3Std && gen.inputs.includes('image')) || (isSeeDream45 && gen.inputs.includes('video')) || (isKling3OmniPro && gen.inputs.includes('video')) || (isVeoRef && gen.inputs.includes('video')) || (isNanoPro && gen.inputs.includes('video')) || (isGeminiFlash && gen.inputs.includes('video'));
+    const hasThreeInputs = gen.inputs.includes('image3');
 
     const uploadState = getUploadState();
 
     return `
-        <div class="upload-section ${!hasTwoInputs ? 'single-input' : ''}">
+        <div class="upload-section ${!hasTwoInputs && !hasThreeInputs ? 'single-input' : ''} ${hasThreeInputs ? 'three-inputs' : ''}">
             ${gen.inputs.includes('image') ? `
                 <div class="upload-card ${uploadState.files.image || uploadState.urls.image ? 'has-file' : ''} ${uploadState.uploading.image ? 'uploading' : ''}" 
                      onclick="${showUrlInput ? '' : "triggerUpload('image')"}">
@@ -1269,13 +1323,13 @@ function renderUploadSection(gen) {
                     ` : `
                         <div class="upload-placeholder">
                             <i data-lucide="image"></i>
-                            <span>${gen.id === 'kling-v3-std' || gen.id === 'kling-v3-omni-pro' ? 'Start Image<br>(Awal)' : (gen.id === 'kling-v3-pro' ? 'Upload Gambar' : (gen.id === 'seedream-4-5-edit' || isVeoRef || isNanoPro ? 'Reference Image 1' : (gen.id === 'seedance-1-5-pro' ? 'Upload Image<br>(Optional)' : 'Gambar<br>Karakter')))}</span>
+                            <span>${gen.id === 'kling-v3-std' || gen.id === 'kling-v3-omni-pro' ? 'Start Image<br>(Awal)' : (gen.id === 'kling-v3-pro' ? 'Upload Gambar' : (gen.id === 'seedream-4-5-edit' || isVeoRef || isNanoPro || isGeminiFlash ? 'Reference Image 1' : (gen.id === 'seedance-1-5-pro' ? 'Upload Image<br>(Optional)' : 'Gambar<br>Karakter')))}</span>
                         </div>
                     `}
                 </div>
             ` : ''}
             
-            ${hasTwoInputs ? `
+            ${hasTwoInputs || hasThreeInputs ? `
                 <div class="upload-card ${uploadState.files.video || uploadState.urls.video ? 'has-file' : ''} ${uploadState.uploading.video ? 'uploading' : ''}" 
                      onclick="${showUrlInput ? '' : "triggerUpload('video')"}">
                     ${uploadState.uploading.video ? `
@@ -1284,7 +1338,7 @@ function renderUploadSection(gen) {
                             <span>Uploading...</span>
                         </div>
                     ` : uploadState.files.video ? `
-                        ${(isKling3Std || isKling3OmniPro || isSeeDream45 || isVeoRef || isNanoPro) ? `<img src="${uploadState.files.video}" class="upload-preview">` : `<video src="${uploadState.files.video}" class="upload-preview" muted autoplay loop playsinline></video>`}
+                        ${(isKling3Std || isKling3OmniPro || isSeeDream45 || isVeoRef || isNanoPro || isGeminiFlash) ? `<img src="${uploadState.files.video}" class="upload-preview">` : `<video src="${uploadState.files.video}" class="upload-preview" muted autoplay loop playsinline></video>`}
                         <button class="btn-remove" onclick="removeFile(event, 'video')"><i data-lucide="x"></i></button>
                     ` : uploadState.urls.video ? `
                         <div class="upload-placeholder">
@@ -1295,8 +1349,35 @@ function renderUploadSection(gen) {
                         </div>
                     ` : `
                         <div class="upload-placeholder">
-                            <i data-lucide="${(isKling3Std || isKling3OmniPro || isSeeDream45 || isVeoRef || isNanoPro) ? 'image' : 'video'}"></i>
-                            <span>${(isKling3Std || isKling3OmniPro) ? 'End Image<br>(Akhir)' : (isSeeDream45 ? 'Reference Image 2' : (isVeoRef ? 'Reference Image 2' : (isNanoPro ? 'Reference Image 2' : 'Video<br>Referensi')))}</span>
+                            <i data-lucide="${(isKling3Std || isKling3OmniPro || isSeeDream45 || isVeoRef || isNanoPro || isGeminiFlash) ? 'image' : 'video'}"></i>
+                            <span>${(isKling3Std || isKling3OmniPro) ? 'End Image<br>(Akhir)' : (isSeeDream45 || isVeoRef || isNanoPro || isGeminiFlash ? 'Reference Image 2' : 'Video<br>Referensi')}</span>
+                        </div>
+                    `}
+                </div>
+            ` : ''}
+
+            ${hasThreeInputs ? `
+                <div class="upload-card ${uploadState.files.image3 || uploadState.urls.image3 ? 'has-file' : ''} ${uploadState.uploading.image3 ? 'uploading' : ''}" 
+                     onclick="${showUrlInput ? '' : "triggerUpload('image3')"}">
+                    ${uploadState.uploading.image3 ? `
+                        <div class="upload-loader">
+                            <div class="spinner"></div>
+                            <span>Uploading...</span>
+                        </div>
+                    ` : uploadState.files.image3 ? `
+                        <img src="${uploadState.files.image3}" class="upload-preview">
+                        <button class="btn-remove" onclick="removeFile(event, 'image3')"><i data-lucide="x"></i></button>
+                    ` : uploadState.urls.image3 ? `
+                        <div class="upload-placeholder">
+                            <i data-lucide="check-circle" style="color: #40c057;"></i>
+                            <span style="font-size: 10px; color: #40c057; font-weight: 700;">URL TERPASANG</span>
+                            <span style="font-size: 9px; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; width: 80%; white-space: nowrap;">${uploadState.autoUploaded.image3 ? 'File siap digunakan' : uploadState.urls.image3}</span>
+                            <button class="btn-remove" onclick="removeFile(event, 'image3')"><i data-lucide="x"></i></button>
+                        </div>
+                    ` : `
+                        <div class="upload-placeholder">
+                            <i data-lucide="image"></i>
+                            <span>Reference Image 3</span>
                         </div>
                     `}
                 </div>
@@ -1310,15 +1391,20 @@ function renderUploadSection(gen) {
                 <div class="url-input-group">
                     <input type="text" class="url-input" placeholder="${isKling3Std ? 'https://... (Start Image URL)' : 'https://... (URL Gambar)'}" 
                            value="${uploadState.autoUploaded.image ? '' : uploadState.urls.image}" oninput="updateUrl('image', this.value)">
-                    ${hasTwoInputs ? `
-                        <input type="text" class="url-input" placeholder="${(isKling3Std || isKling3OmniPro || isSeeDream45 || isVeoRef || isNanoPro) ? 'https://... (URL Gambar 2)' : 'https://... (URL Video)'}" 
+                    ${hasTwoInputs || hasThreeInputs ? `
+                        <input type="text" class="url-input" placeholder="${(isKling3Std || isKling3OmniPro || isSeeDream45 || isVeoRef || isNanoPro || isGeminiFlash) ? 'https://... (Reference Image 2)' : 'https://... (URL Video)'}" 
                                value="${uploadState.autoUploaded.video ? '' : uploadState.urls.video}" oninput="updateUrl('video', this.value)">
+                    ` : ''}
+                    ${hasThreeInputs ? `
+                        <input type="text" class="url-input" placeholder="https://... (Reference Image 3)" 
+                               value="${uploadState.autoUploaded.image3 ? '' : uploadState.urls.image3}" oninput="updateUrl('image3', this.value)">
                     ` : ''}
                 </div>
             ` : ''}
         </div>
         <input type="file" id="file-input-image" hidden accept="image/*" onchange="handleFileChange('image', this)">
-        <input type="file" id="file-input-video" hidden accept="${(isKling3Std || isKling3OmniPro || isSeeDream45 || isVeoRef || isNanoPro) ? 'image/*' : 'video/*'}" onchange="handleFileChange('video', this)">
+        <input type="file" id="file-input-video" hidden accept="${(isKling3Std || isKling3OmniPro || isSeeDream45 || isVeoRef || isNanoPro || isGeminiFlash) ? 'image/*' : 'video/*'}" onchange="handleFileChange('video', this)">
+        <input type="file" id="file-input-image3" hidden accept="image/*" onchange="handleFileChange('image3', this)">
     `;
 }
 
@@ -1462,6 +1548,68 @@ function renderSettings(gen) {
                 </div>
             ` : ''}
 
+            ${gen.settings.enhance_prompt ? `
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span>Enhance Prompt</span>
+                            <div class="setting-info-tooltip">
+                                <i data-lucide="help-circle"></i>
+                                <span class="tooltip-text">Otomatis memperluas dan memperbagus prompt menggunakan model bahasa AI (LLM) untuk hasil yang lebih detail.</span>
+                            </div>
+                        </div>
+                        <span class="setting-value" id="enhance-prompt-val">${state.settings.enhance_prompt ? 'ON' : 'OFF'}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="switch">
+                            <input type="checkbox" ${state.settings.enhance_prompt ? 'checked' : ''} 
+                                   onchange="updateSetting('enhance_prompt', this.checked); document.getElementById('enhance-prompt-val').innerText = this.checked ? 'ON' : 'OFF'">
+                            <span class="slider round"></span>
+                        </label>
+                        <span style="font-size: 11px; color: var(--text-muted);">Gunakan LLM untuk memperbagus prompt.</span>
+                    </div>
+                </div>
+            ` : ''}
+
+            ${gen.settings.person_generation ? `
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span>Person Generation</span>
+                            <div class="setting-info-tooltip">
+                                <i data-lucide="help-circle"></i>
+                                <span class="tooltip-text">Mengatur kebijakan pembuatan gambar wajah atau tubuh manusia.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <select class="setting-select" onchange="updateSetting('person_generation', this.value)">
+                        <option value="dont_allow" ${state.settings.person_generation === 'dont_allow' ? 'selected' : ''}>Don't Allow</option>
+                        <option value="allow_adult" ${state.settings.person_generation === 'allow_adult' ? 'selected' : ''}>Allow Adult</option>
+                        <option value="allow_all" ${state.settings.person_generation === 'allow_all' ? 'selected' : ''}>Allow All</option>
+                    </select>
+                </div>
+            ` : ''}
+
+            ${gen.settings.safety_settings ? `
+                <div class="setting-item">
+                    <div class="setting-label">
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <span>Safety Settings</span>
+                            <div class="setting-info-tooltip">
+                                <i data-lucide="help-circle"></i>
+                                <span class="tooltip-text">Mengatur tingkat filter keamanan konten untuk memblokir gambar yang dianggap tidak pantas.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <select class="setting-select" onchange="updateSetting('safety_settings', this.value)">
+                        <option value="block_low_and_above" ${state.settings.safety_settings === 'block_low_and_above' ? 'selected' : ''}>Block Low and Above</option>
+                        <option value="block_medium_and_above" ${state.settings.safety_settings === 'block_medium_and_above' ? 'selected' : ''}>Block Medium and Above</option>
+                        <option value="block_only_high" ${state.settings.safety_settings === 'block_only_high' ? 'selected' : ''}>Block Only High</option>
+                        <option value="block_none" ${state.settings.safety_settings === 'block_none' ? 'selected' : ''}>Block None</option>
+                    </select>
+                </div>
+            ` : ''}
+
             ${gen.settings.resolution ? `
                 <div class="setting-item">
                     <div class="setting-label"><span>Resolution</span></div>
@@ -1516,6 +1664,12 @@ function renderSettings(gen) {
                             <option value="widescreen_16_9" ${state.settings.aspect_ratio === 'widescreen_16_9' ? 'selected' : ''}>16:9 (Widescreen)</option>
                             <option value="social_story_9_16" ${state.settings.aspect_ratio === 'social_story_9_16' ? 'selected' : ''}>9:16 (Portrait)</option>
                             <option value="square_1_1" ${state.settings.aspect_ratio === 'square_1_1' ? 'selected' : ''}>1:1 (Square)</option>
+                        ` : gen.settings.aspect_ratio === 'imagen4' ? `
+                            <option value="square_1_1" ${state.settings.aspect_ratio === 'square_1_1' ? 'selected' : ''}>Square (1:1)</option>
+                            <option value="social_story_9_16" ${state.settings.aspect_ratio === 'social_story_9_16' ? 'selected' : ''}>Social Story (9:16)</option>
+                            <option value="widescreen_16_9" ${state.settings.aspect_ratio === 'widescreen_16_9' ? 'selected' : ''}>Widescreen (16:9)</option>
+                            <option value="traditional_3_4" ${state.settings.aspect_ratio === 'traditional_3_4' ? 'selected' : ''}>Traditional (3:4)</option>
+                            <option value="classic_4_3" ${state.settings.aspect_ratio === 'classic_4_3' ? 'selected' : ''}>Classic (4:3)</option>
                         ` : gen.settings.aspect_ratio === 'pixverse' ? `
                             <option value="16:9" ${state.settings.aspect_ratio === '16:9' ? 'selected' : ''}>16:9 (Landscape)</option>
                             <option value="9:16" ${state.settings.aspect_ratio === '9:16' ? 'selected' : ''}>9:16 (Portrait)</option>
@@ -1910,16 +2064,10 @@ function cancelTask(taskId) {
 }
 
 function renderResults() {
-    const activeGen = GENERATORS.find(g => g.id === state.activeGenerator) || GENERATORS[0];
-    const canSync = activeGen.id === 'kling-v3-std';
-
     return `
         <div class="results-section">
             <div class="results-header-row">
                 <h3>Hasil Generasi</h3>
-                ${canSync ? `<button class="btn-sync" onclick="syncTasks()">
-                    <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i> Sync Kling 3
-                </button>` : ''}
             </div>
             ${state.completedResults.length === 0 ? `
                 <div class="empty-results">
@@ -1996,6 +2144,12 @@ async function syncTasks() {
         listType = 'list';
     } else if (activeGen.id === 'pixverse-v5') {
         listEndpoint = 'https://api.freepik.com/v1/ai/image-to-video/pixverse-v5';
+        listType = 'list';
+    } else if (activeGen.id === 'imagen4-fast' || activeGen.id === 'imagen4-ultra') {
+        listEndpoint = `https://api.freepik.com/v1/ai/text-to-image/${activeGen.id}`;
+        listType = 'list';
+    } else if (activeGen.id === 'gemini-2-5-flash-image') {
+        listEndpoint = 'https://api.freepik.com/v1/ai/gemini-2-5-flash-image-preview';
         listType = 'list';
     } else if (activeGen.id === 'runway') {
         listEndpoint = 'https://api.freepik.com/v1/ai/text-to-image/runway';
@@ -2205,14 +2359,16 @@ async function generate() {
         // Priority: Use the public URL if available (required for Kling), fallback to base64 only if necessary (e.g. SeeDream)
         let imageInput = uploadState.urls.image || uploadState.files.image;
         let videoInput = uploadState.urls.video || uploadState.files.video;
+        let image3Input = uploadState.urls.image3 || uploadState.files.image3;
 
         const activeGen = GENERATORS.find(g => g.id === state.activeGenerator) || GENERATORS[0];
         if (!activeGen) throw new Error("Model generator tidak ditemukan.");
 
-        // Force base64 for SeeDream to avoid URL accessibility issues
-        if (activeGen.id === 'seedream-4-5-edit') {
+        // Force base64 for SeeDream and Gemini to avoid URL accessibility issues for local files
+        if (activeGen.id === 'seedream-4-5-edit' || activeGen.id === 'gemini-2-5-flash-image') {
             imageInput = uploadState.files.image || uploadState.urls.image;
             videoInput = uploadState.files.video || uploadState.urls.video;
+            image3Input = uploadState.files.image3 || uploadState.urls.image3;
         }
 
         // Kling and Veo models strictly require public HTTPS URLs
@@ -2340,11 +2496,13 @@ async function generate() {
         } else if (activeGen.id === 'seedream-4-5-edit') {
             const img1 = (imageInput || "").toString().trim();
             const img2 = (videoInput || "").toString().trim();
+            const img3 = (image3Input || "").toString().trim();
             
             // Match the curl example exactly: an array of valid URLs or base64
             const referenceImages = [
                 img1 ? (img1.startsWith('http') ? ensureHttps(img1) : img1) : "",
-                img2 ? (img2.startsWith('http') ? ensureHttps(img2) : img2) : ""
+                img2 ? (img2.startsWith('http') ? ensureHttps(img2) : img2) : "",
+                img3 ? (img3.startsWith('http') ? ensureHttps(img3) : img3) : ""
             ].filter(url => url !== "");
             
             // Ensure aspect_ratio is valid for SeeDream
@@ -2402,7 +2560,7 @@ async function generate() {
                 aspect_ratio: state.settings.aspect_ratio || "1:1",
                 resolution: state.settings.resolution || "2K"
             };
-            if (imageInput || videoInput) {
+            if (imageInput || videoInput || image3Input) {
                 body.reference_images = [];
                 if (imageInput) {
                     body.reference_images.push({
@@ -2415,6 +2573,13 @@ async function generate() {
                     body.reference_images.push({
                         image: ensureHttps(videoInput),
                         text: "Reference 2",
+                        mime_type: "image/jpeg"
+                    });
+                }
+                if (image3Input) {
+                    body.reference_images.push({
+                        image: ensureHttps(image3Input),
+                        text: "Reference 3",
                         mime_type: "image/jpeg"
                     });
                 }
@@ -2478,6 +2643,39 @@ async function generate() {
                 duration: duration,
                 seed: state.settings.seed !== '' && state.settings.seed !== undefined ? parseInt(state.settings.seed) : Math.floor(Math.random() * 4294967295)
             };
+        } else if (activeGen.id === 'imagen4-fast' || activeGen.id === 'imagen4-ultra') {
+            body = {
+                prompt: finalPrompt,
+                aspect_ratio: state.settings.aspect_ratio || "square_1_1",
+                person_generation: state.settings.person_generation || "allow_adult",
+                safety_settings: state.settings.safety_settings || "block_medium_and_above",
+                enhance_prompt: state.settings.enhance_prompt !== undefined ? state.settings.enhance_prompt : true,
+                language: "en"
+            };
+            
+            // Only add output_options if explicitly needed, sometimes invalid combinations cause failures
+            if (activeGen.id === 'imagen4-ultra') {
+                body.output_options = {
+                    mime_type: "image/jpeg",
+                    compression_quality: 90
+                };
+            }
+
+            if (state.settings.seed !== '' && state.settings.seed !== undefined) {
+                body.seed = parseInt(state.settings.seed);
+            }
+        } else if (activeGen.id === 'gemini-2-5-flash-image') {
+            body = {
+                prompt: finalPrompt
+            };
+            const refs = [];
+            if (imageInput) refs.push(imageInput);
+            if (videoInput) refs.push(videoInput);
+            if (image3Input) refs.push(image3Input);
+            
+            if (refs.length > 0) {
+                body.reference_images = refs;
+            }
         } else if (activeGen.id === 'seedance-1-5-pro') {
             body = {
                 prompt: finalPrompt,
@@ -2594,7 +2792,8 @@ async function generate() {
             const fullErrorMsg = detailMsg ? `${apiMsg} (${detailMsg})` : apiMsg;
             
             if (response.status === 429) {
-                state.globalError = "Limit API Freepik telah tercapai (Too Many Requests). Silakan coba lagi nanti.";
+                state.cooldownUntil = Date.now() + 60000; // 1 minute cooldown on 429
+                state.globalError = "Limit API Freepik telah tercapai (Too Many Requests). Harap tunggu 1 menit sebelum mencoba lagi.";
                 renderContent();
                 throw new Error(state.globalError);
             } else if (response.status === 403 && (apiMsg.toLowerCase().includes('quota') || apiMsg.toLowerCase().includes('limit'))) {
@@ -2938,6 +3137,8 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
             if (!errMsg) {
                 if (activeGen.outputType === 'video') {
                     errMsg = "Unknown Freepik error (Status: FAILED). Pastikan video referensi berdurasi 3-30 detik dan format didukung.";
+                } else if (activeGen.id.includes('imagen4')) {
+                    errMsg = "Unknown Imagen 4 error (Status: FAILED). Hal ini sering terjadi karena prompt sensitif. Coba ubah 'Safety Settings' ke level lebih rendah atau ubah prompt Anda.";
                 } else {
                     errMsg = "Unknown Freepik error (Status: FAILED). Silakan cek parameter input atau coba lagi nanti.";
                 }
@@ -3036,6 +3237,14 @@ function setActiveGenerator(id) {
         state.settings.aspect_ratio = '16:9';
         state.settings.prompt_upsampling = false;
         state.settings.style = 'Realistic';
+        state.settings.seed = '';
+    } else if (id === 'imagen4-fast' || id === 'imagen4-ultra') {
+        state.settings.aspect_ratio = 'square_1_1';
+        state.settings.person_generation = 'allow_adult';
+        state.settings.safety_settings = 'block_medium_and_above';
+        state.settings.enhance_prompt = true;
+        state.settings.seed = '';
+    } else if (id === 'gemini-2-5-flash-image') {
         state.settings.seed = '';
     } else if (id === 'elevenlabs-turbo-v2-5') {
         state.settings.voice = 'URAuwR59OqCASDVp35yi';

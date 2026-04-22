@@ -870,6 +870,30 @@ header {
     grid-column: span 1;
 }
 
+.upload-section.three-inputs {
+    grid-template-columns: repeat(3, 1fr);
+    margin: 0 10px 24px;
+    gap: 10px;
+}
+
+.upload-section.three-inputs .upload-card {
+    height: 180px;
+}
+
+.upload-section.three-inputs .upload-placeholder i {
+    width: 20px;
+    height: 20px;
+}
+
+.upload-section.three-inputs .upload-placeholder span {
+    font-size: 10px;
+}
+
+.upload-section.three-inputs .url-toggle,
+.upload-section.three-inputs .url-input-group {
+    grid-column: span 3;
+}
+
 .upload-card {
     background: #151515;
     border: 2px dashed var(--border-color);
@@ -1642,6 +1666,17 @@ header {
     }
     .result-overlay-actions {
         opacity: 1;
+    }
+    .upload-section.three-inputs {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    .upload-section.three-inputs .upload-card {
+        height: 250px;
+    }
+    .upload-section.three-inputs .url-toggle,
+    .upload-section.three-inputs .url-input-group {
+        grid-column: span 1;
     }
 }
 
