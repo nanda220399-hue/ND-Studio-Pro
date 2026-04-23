@@ -3387,10 +3387,11 @@ async function handleFileChange(type, input) {
     let file = input.files[0];
     if (!file) return;
 
-    // Client-side size validation (30MB limit to avoid proxy 413 errors)
-    const MAX_SIZE_MB = 30;
+    // Client-side size validation (Cloudinary Direct limit is approx 100MB for free tier)
+    const MAX_SIZE_MB = 100;
+    
     if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-        showToast(`Ukuran file terlalu besar. Maksimal ${MAX_SIZE_MB}MB.`, "error");
+        showToast(`File terlalu besar. Maksimal ${MAX_SIZE_MB}MB.`, "error");
         input.value = ''; // Reset input
         return;
     }
@@ -3420,61 +3421,83 @@ async function handleFileChange(type, input) {
         updateUploadDOM();
 
         try {
-            const response = await fetch('/api/upload', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    file: base64Result,
-                    name: file.name,
-                    type: file.type
-                })
-            });
-
-            const contentType = response.headers.get("content-type");
-            const text = await response.text();
-            let data;
+            console.log(`Bypassing Vercel limit: Uploading ${type} direct...`);
             
-            if (contentType && contentType.includes("application/json")) {
-                try {
-                    data = JSON.parse(text);
-                } catch (e) {
-                    console.error("Failed to parse JSON response in upload:", text);
-                    if (text.includes("Starting Server") || text.includes("Ready in")) {
-                        throw new Error("Server sedang bersiap (Cold Start). Silakan tunggu 5 detik dan coba upload lagi.");
+            // Konfigurasi Cloudinary
+            const CLOUD_NAME = 'dwpoqmll1';
+            const UPLOAD_PRESET = 'ml_default'; 
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', UPLOAD_PRESET);
+            formData.append('folder', 'nd_studio_pro');
+
+            let publicUrl = '';
+
+            try {
+                // Mencoba Cloudinary Direct
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.secure_url) {
+                    publicUrl = data.secure_url;
+                } else {
+                    console.warn("Cloudinary direct failed, trying fallback...", data.error?.message);
+                    if (data.error?.message?.includes("Upload preset must be whitelisted")) {
+                        showToast("Tips: Aktifkan 'Unsigned Upload' di setelan Cloudinary agar upload video besar lebih lancar.", "info");
                     }
-                    throw new Error("Server mengembalikan respon yang tidak valid saat upload.");
+                    throw new Error("Cloudinary Failed");
                 }
-            } else {
-                if (text.includes("Starting Server") || text.includes("Ready in")) {
-                    throw new Error("Server sedang bersiap (Cold Start). Silakan tunggu 5 detik dan coba upload lagi.");
+            } catch (err) {
+                // Fallback 1: tmpfiles.org
+                try {
+                    console.log("Using fallback: tmpfiles.org");
+                    const tmpFormData = new FormData();
+                    tmpFormData.append('file', file);
+                    const tmpRes = await fetch('https://tmpfiles.org/api/v1/upload', {
+                        method: 'POST',
+                        body: tmpFormData
+                    });
+                    const tmpData = await tmpRes.json();
+                    if (tmpData.status === 'success') {
+                        publicUrl = tmpData.data.url.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
+                    } else {
+                        throw new Error("tmpfiles failed");
+                    }
+                } catch (tmpErr) {
+                    // Fallback 2: uguu.se
+                    console.log("Using fallback: uguu.se");
+                    const uguuFormData = new FormData();
+                    uguuFormData.append('files[]', file);
+                    const uguuRes = await fetch('https://uguu.se/upload.php', {
+                        method: 'POST',
+                        body: uguuFormData
+                    });
+                    const uguuData = await uguuRes.json();
+                    if (uguuData.success) {
+                        publicUrl = uguuData.files[0].url;
+                    } else {
+                        throw new Error("Semua provider upload gagal.");
+                    }
                 }
-                if (text.includes("Cookie check") || text.includes("Action required")) {
-                    state.showSetup = true;
-                    renderContent();
-                    throw new Error("Akses diblokir browser. Silakan klik tombol kuning '🔓 Klik untuk Authenticate' di bawah Logo ND STUDIO PRO.");
-                }
-                console.error("Non-JSON response from server:", text);
-                throw new Error("Server sedang sibuk atau sedang memulai ulang. Silakan coba sesaat lagi.");
+            }
+            
+            // Force HTTPS as Freepik strictly requires it
+            if (publicUrl.startsWith('http://')) {
+                publicUrl = publicUrl.replace('http://', 'https://');
             }
 
-            if (!response.ok) {
-                let apiMsg = data.message || "Gagal mengupload file.";
-                if (typeof apiMsg === 'string' && (apiMsg.toLowerCase().includes("<!doctype html>") || apiMsg.toLowerCase().includes("<html"))) {
-                    apiMsg = "API Freepik sedang mengalami gangguan (Error 500/502). Silakan coba lagi nanti.";
-                }
-                throw new Error(apiMsg);
-            }
-
-            const publicUrl = data.url;
-            console.log(`File uploaded successfully. Public URL: ${publicUrl}`);
+            console.log(`File uploaded successfully. URL: ${publicUrl}`);
             
             uploadState.urls[type] = publicUrl;
             uploadState.autoUploaded[type] = true;
         } catch (error) {
-            console.error("Upload error:", error);
-            showToast(error.message || "Gagal mengupload file. Silakan coba lagi.", "error");
+            console.error("All upload attempts failed:", error);
+            showToast("Gagal upload file. Silakan coba file yang lebih kecil atau gunakan URL manual.", "error");
             uploadState.files[type] = null;
         } finally {
             uploadState.uploading[type] = false;

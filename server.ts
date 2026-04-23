@@ -268,8 +268,11 @@ async function startServer() {
         }
         console.log(`File uploaded to public storage: ${publicUrl}`);
         
-        // Clean up local file
-        fs.unlinkSync(path.join(uploadsDir, filename));
+        // Clean up local file if it exists
+        const localPath = path.join(uploadsDir, filename);
+        if (fs.existsSync(localPath)) {
+          fs.unlinkSync(localPath);
+        }
         
         res.json({ url: publicUrl });
       } else {
