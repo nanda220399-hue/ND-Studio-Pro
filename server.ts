@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import axios from "axios";
@@ -502,78 +501,39 @@ async function startServer() {
   });
 
   // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
+    // In Vercel or Production
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
+    if (fs.existsSync(distPath)) {
+      app.use(express.static(distPath));
+    }
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      const indexPath = path.join(process.cwd(), 'dist', 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(404).send("Aplikasi belum di-build (dist tidak ditemukan).");
+      }
     });
   }
 
-  const server = app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-
-  server.on('error', (err: any) => {
-    console.error('Server error:', err);
-    if (err.code === 'EADDRINUSE') {
-      console.error(`Port ${PORT} is already in use`);
-    }
-  });
-
-  // Handle global process errors to prevent EPIPE and other stream errors from crashing the server
-  process.on('uncaughtException', (err: any) => {
-    console.error('Uncaught Exception:', err);
-    // EPIPE (Broken Pipe) happens when a client closes the connection unexpectedly.
-    // It's safe to ignore and shouldn't crash the server.
-    if (err.code === 'EPIPE') {
-      console.log('Handled EPIPE (broken pipe) error safely.');
-      return;
-    }
-    // For other fatal errors, the server might be in an unstable state, 
-    // but in a dev environment we prefer to stay alive.
-  });
-
-  process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  });
-
-  // Periodic cleanup: Delete files in uploads folder older than 1 hour
-  setInterval(() => {
-    console.log("Running scheduled cleanup of uploads directory...");
-    fs.readdir(uploadsDir, (err, files) => {
-      if (err) return console.error("Cleanup error:", err);
-      
-      const now = Date.now();
-      files.forEach(file => {
-        const filePath = path.join(uploadsDir, file);
-        fs.stat(filePath, (err, stats) => {
-          if (err) return;
-          // Delete if older than 1 hour (3600000 ms)
-          if (now - stats.mtimeMs > 3600000) {
-            fs.unlink(filePath, (err) => {
-              if (!err) console.log(`Deleted old file: ${file}`);
-            });
-          }
-        });
-      });
+  // Only listen if not in a serverless environment (Vercel)
+  if (!process.env.VERCEL) {
+    const server = app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${PORT}`);
     });
-  }, 30 * 60 * 1000); // Run every 30 minutes
 
-  // Global error handler
-  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    console.error("Global Error Handler:", err);
-    res.status(500).json({ 
-      message: "Internal Server Error", 
-      details: err.message || "An unexpected error occurred" 
+    server.on('error', (err: any) => {
+      console.error('Server error:', err);
     });
-  });
+  }
 
   return app;
 }
