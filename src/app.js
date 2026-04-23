@@ -861,14 +861,20 @@ function renderContent() {
                 <main>
                     ${renderGlobalError()}
                     ${renderUsageStats()}
-                    ${renderModelSelector()}
-                    ${renderModelInfo(activeGen)}
-                    <div class="upload-section-wrapper">${renderUploadSection(activeGen)}</div>
-                    ${renderPromptSection()}
-                    ${renderSettings(activeGen)}
-                    ${renderGenerateButton(activeGen)}
-                    <div id="active-tasks-container"></div>
-                    <div id="results-container"></div>
+                    <div class="app-main-layout">
+                        <div class="sidebar-controls">
+                            ${renderModelSelector()}
+                            ${renderModelInfo(activeGen)}
+                            <div class="upload-section-wrapper">${renderUploadSection(activeGen)}</div>
+                            ${renderPromptSection()}
+                            ${renderSettings(activeGen)}
+                            ${renderGenerateButton(activeGen)}
+                        </div>
+                        <div class="main-gallery">
+                            <div id="active-tasks-container"></div>
+                            <div id="results-container"></div>
+                        </div>
+                    </div>
                 </main>
                 ${renderFooter()}
             `;
@@ -2767,13 +2773,13 @@ async function generate() {
             data = JSON.parse(text);
         } catch (e) {
             console.error("Failed to parse JSON response:", text);
-            if (text.includes("Starting Server...")) {
-                throw new Error("Server sedang memulai ulang. Silakan coba lagi dalam beberapa detik.");
+            if (text.includes("Starting Server") || text.includes("Ready in")) {
+                throw new Error("Server sedang bersiap (Cold Start). Silakan tunggu 5 detik dan klik Generate lagi.");
             }
             if (text.includes("<!DOCTYPE html>") || text.includes("<!doctype html>")) {
                 throw new Error("API Freepik sedang mengalami gangguan (Error 500/502). Silakan coba lagi nanti.");
             }
-            throw new Error("Server mengembalikan respon yang tidak valid. Silakan coba lagi.");
+            throw new Error("Server sedang sibuk. Silakan tunggu 5 detik dan klik Generate lagi.");
         }
 
         if (!response.ok) {
@@ -3435,16 +3441,22 @@ async function handleFileChange(type, input) {
                     data = JSON.parse(text);
                 } catch (e) {
                     console.error("Failed to parse JSON response in upload:", text);
+                    if (text.includes("Starting Server") || text.includes("Ready in")) {
+                        throw new Error("Server sedang bersiap (Cold Start). Silakan tunggu 5 detik dan coba upload lagi.");
+                    }
                     throw new Error("Server mengembalikan respon yang tidak valid saat upload.");
                 }
             } else {
+                if (text.includes("Starting Server") || text.includes("Ready in")) {
+                    throw new Error("Server sedang bersiap (Cold Start). Silakan tunggu 5 detik dan coba upload lagi.");
+                }
                 if (text.includes("Cookie check") || text.includes("Action required")) {
                     state.showSetup = true;
                     renderContent();
                     throw new Error("Akses diblokir browser. Silakan klik tombol kuning '🔓 Klik untuk Authenticate' di bawah Logo ND STUDIO PRO.");
                 }
                 console.error("Non-JSON response from server:", text);
-                throw new Error("Server mengembalikan respon yang tidak valid (bukan JSON).");
+                throw new Error("Server sedang sibuk atau sedang memulai ulang. Silakan coba sesaat lagi.");
             }
 
             if (!response.ok) {
