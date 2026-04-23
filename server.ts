@@ -6,21 +6,26 @@ import axios from "axios";
 import multer from "multer";
 import fs from "fs";
 import { v2 as cloudinary } from 'cloudinary';
+import os from "os";
 
-// Configure Cloudinary
+// Configure Cloudinary (Prefer Env Vars if available)
 cloudinary.config({ 
-  cloud_name: 'dwpoqmll1', 
-  api_key: '417135212776651', 
-  api_secret: 'x9wjOixxcA2QxxDqKZK0ii_M2tk' 
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dwpoqmll1', 
+  api_key: process.env.CLOUDINARY_API_KEY || '417135212776651', 
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'x9wjOixxcA2QxxDqKZK0ii_M2tk' 
 });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(process.cwd(), 'uploads');
+// FIX: Use /tmp for Vercel compatibility
+const uploadsDir = path.join(os.tmpdir(), 'uploads');
 if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+  try {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  } catch (err) {
+    console.error("Gagal membuat folder upload:", err);
+  }
 }
 
 // Configure multer for file storage
@@ -569,6 +574,9 @@ async function startServer() {
       details: err.message || "An unexpected error occurred" 
     });
   });
+
+  return app;
 }
 
-startServer();
+const appPromise = startServer();
+export default appPromise;
