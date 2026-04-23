@@ -96,6 +96,29 @@ async function startServer() {
     `);
   });
 
+  // Proxy download to force "Save As" behavior (Crucial for iOS)
+  app.get("/api/download-proxy", async (req, res) => {
+    const fileUrl = req.query.url as string;
+    if (!fileUrl) return res.status(400).send("No URL provided");
+    
+    try {
+      const response = await axios({
+        method: 'get',
+        url: fileUrl,
+        responseType: 'stream'
+      });
+      
+      const fileName = path.basename(new URL(fileUrl).pathname) || 'download';
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.setHeader('Content-Type', response.headers['content-type'] || 'application/octet-stream');
+      
+      response.data.pipe(res);
+    } catch (error) {
+      console.error("Download proxy error:", error);
+      res.redirect(fileUrl); // Fallback to direct link if proxy fails
+    }
+  });
+
   app.post("/api/upload", (req, res, next) => {
     console.log("Hit /api/upload route");
     if (req.is('application/json')) {

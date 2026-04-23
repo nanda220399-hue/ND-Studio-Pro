@@ -2097,8 +2097,11 @@ function renderResults() {
                                     <img src="${res.url}" class="result-media">
                                 `}
                                 <div class="result-overlay-actions">
-                                    <button class="btn-overlay-action btn-download" onclick="window.open('${res.url}', '_blank')" title="Download HD">
+                                    <button class="btn-overlay-action btn-download" onclick="handleDownload('${res.url}', '${res.generatorId}-${index}')" title="Download HD">
                                         <i data-lucide="download"></i>
+                                    </button>
+                                    <button class="btn-overlay-action btn-share" onclick="handleShare('${res.url}', '${res.prompt ? res.prompt.replace(/'/g, "\\'") : 'ND Studio Pro Result'}')" title="Share">
+                                        <i data-lucide="share-2"></i>
                                     </button>
                                     ${res.type === 'image' ? `
                                     <button class="btn-overlay-action btn-seedream" onclick="editWithSeedream('${res.url}')" title="Edit with SeeDream">
@@ -3895,6 +3898,47 @@ window.addEventListener('DOMContentLoaded', () => {
     window.updateGuidanceValue = updateGuidanceValue;
     window.state = state;
     window.renderContent = renderContent;
+
+    window.handleDownload = async function(url, filename) {
+        try {
+            console.log("Downloading via proxy:", url);
+            const proxyUrl = `/api/download-proxy?url=${encodeURIComponent(url)}`;
+            
+            const link = document.createElement('a');
+            link.href = proxyUrl;
+            link.download = filename || 'nd-studio-result';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast("Mengunduh file...", "success");
+        } catch (error) {
+            console.error("Download error:", error);
+            window.open(url, '_blank');
+        }
+    };
+
+    window.handleShare = async function(url, title) {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'ND Studio Pro Result',
+                    text: title,
+                    url: url
+                });
+                console.log('Shared successfully');
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Share failed:', err);
+                    copyToClipboard(url);
+                    showToast("Link disalin ke clipboard", "success");
+                }
+            }
+        } else {
+            copyToClipboard(url);
+            showToast("Link disalin ke clipboard", "success");
+        }
+    };
 
     init();
     initAuth();
