@@ -792,8 +792,12 @@ function renderContent() {
                 ${renderHeader()}
                 <main>
                     ${renderGlobalError()}
-                    ${renderUsageStats()}
-                    ${renderSetupPage()}
+                    <div class="app-main-layout">
+                        <div class="sidebar-controls">
+                            ${renderUsageStats()}
+                            ${renderSetupPage()}
+                        </div>
+                    </div>
                 </main>
                 ${renderFooter()}
             `;
@@ -806,6 +810,11 @@ function renderContent() {
             
             if (mainApp && resultsContainer && !state.showAdminDashboard && !state.showSetup) {
                 // Update specific parts that depend on the active generator
+                const usageStats = document.querySelector('.usage-stats-bar');
+                if (usageStats) {
+                    usageStats.outerHTML = renderUsageStats();
+                }
+                
                 const modelInfo = document.querySelector('.model-info-card');
                 if (modelInfo) {
                     const newInfoHTML = renderModelInfo(activeGen);
@@ -860,9 +869,9 @@ function renderContent() {
                 ${renderHeader()}
                 <main>
                     ${renderGlobalError()}
-                    ${renderUsageStats()}
                     <div class="app-main-layout">
                         <div class="sidebar-controls">
+                            ${renderUsageStats()}
                             ${renderModelSelector()}
                             ${renderModelInfo(activeGen)}
                             <div class="upload-section-wrapper">${renderUploadSection(activeGen)}</div>

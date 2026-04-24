@@ -68,15 +68,18 @@ body {
         align-items: start;
     }
     
+/* Sidebar sticky adjustments for better desktop visibility */
+@media (min-width: 1024px) {
     .sidebar-controls {
         position: sticky;
-        top: 80px;
-        max-height: calc(100vh - 120px);
+        top: 90px; /* Increased to avoid overlap with header shadows */
+        max-height: calc(100vh - 110px);
         overflow-y: auto;
-        padding-right: 8px;
+        padding: 0 12px 40px 0; /* Added bottom padding for better scroll feel */
         scrollbar-width: thin;
         scrollbar-color: var(--border-color) transparent;
     }
+}
     
     .sidebar-controls::-webkit-scrollbar {
         width: 4px;
@@ -279,7 +282,7 @@ header {
     justify-content: center;
     gap: 20px;
     background: #151515;
-    margin: 0 16px 16px;
+    margin: 16px 16px 8px; /* Adjusted for sidebar placement */
     padding: 10px 16px;
     border-radius: 16px;
     box-shadow: var(--shadow);
@@ -288,8 +291,9 @@ header {
 
 @media (min-width: 1024px) {
     .usage-stats-bar {
-        margin: 0 40px 24px;
-        max-width: fit-content;
+        margin: 10px 16px 0; /* Align with sidebar padding */
+        max-width: 100%;
+        justify-content: flex-start; /* Align contents to left in sidebar */
     }
 }
 
@@ -730,20 +734,26 @@ header {
 .model-selector {
     display: flex;
     overflow-x: auto;
-    padding: 20px 16px;
-    gap: 8px;
-    scrollbar-width: none;
+    padding: 24px 16px 20px; /* Increased top padding to prevent badge clipping */
+    gap: 12px;
+    scrollbar-width: auto; /* Show scrollbar on desktop for better usability */
+    scrollbar-color: var(--border-color) transparent;
     -webkit-overflow-scrolling: touch;
 }
 
-@media (min-width: 450px) {
-    .model-selector {
-        /* Removed justify-content: center to prevent left-side items from being unreachable when overflowing */
+@media (min-width: 1024px) {
+    .model-selector::-webkit-scrollbar {
+        display: block;
+        height: 6px;
+    }
+    .model-selector::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 10px;
     }
 }
 
 .model-selector::-webkit-scrollbar {
-    display: none;
+    height: 4px;
 }
 
 .model-item {
