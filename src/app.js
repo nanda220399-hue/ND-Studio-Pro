@@ -792,9 +792,9 @@ function renderContent() {
                 ${renderHeader()}
                 <main>
                     ${renderGlobalError()}
-                    <div class="app-main-layout">
-                        <div class="sidebar-controls">
-                            ${renderUsageStats()}
+                    <div class="app-stacked-layout">
+                        ${renderUsageStats()}
+                        <div class="main-controls-wrapper">
                             ${renderSetupPage()}
                         </div>
                     </div>
@@ -804,82 +804,24 @@ function renderContent() {
         } else {
             const activeGen = GENERATORS.find(g => g.id === state.activeGenerator) || GENERATORS[0];
             
-            // Optimization: If we are already in the App view, update surgically to prevent flickering
-            const mainApp = document.querySelector('main');
-            const resultsContainer = document.getElementById('results-container');
-            
-            if (mainApp && resultsContainer && !state.showAdminDashboard && !state.showSetup) {
-                // Update specific parts that depend on the active generator
-                const usageStats = document.querySelector('.usage-stats-bar');
-                if (usageStats) {
-                    usageStats.outerHTML = renderUsageStats();
-                }
-                
-                const modelInfo = document.querySelector('.model-info-card');
-                if (modelInfo) {
-                    const newInfoHTML = renderModelInfo(activeGen);
-                    if (modelInfo.outerHTML !== newInfoHTML) modelInfo.outerHTML = newInfoHTML;
-                }
-                
-                const uploadWrapper = document.querySelector('.upload-section-wrapper');
-                if (uploadWrapper) {
-                    const newUploadHTML = renderUploadSection(activeGen);
-                    if (uploadWrapper.innerHTML !== newUploadHTML) uploadWrapper.innerHTML = newUploadHTML;
-                }
-                
-                const settingsSection = document.querySelector('.settings-section');
-                if (settingsSection) {
-                    const newSettingsHTML = renderSettings(activeGen);
-                    if (settingsSection.outerHTML !== newSettingsHTML) settingsSection.outerHTML = newSettingsHTML;
-                }
-                
-                const generateContainer = document.querySelector('.generate-container');
-                if (generateContainer) {
-                    const newGenerateHTML = renderGenerateButton(activeGen);
-                    if (generateContainer.outerHTML !== newGenerateHTML) generateContainer.outerHTML = newGenerateHTML;
-                }
-                
-                const modelSelector = document.querySelector('.model-selector');
-                if (modelSelector) {
-                    const newSelectorHTML = renderModelSelector();
-                    if (modelSelector.outerHTML !== newSelectorHTML) modelSelector.outerHTML = newSelectorHTML;
-                }
-
-                const globalErrorContainer = document.querySelector('.global-error-alert');
-                const newErrorHTML = renderGlobalError();
-                if (newErrorHTML) {
-                    if (!globalErrorContainer) {
-                        mainApp.insertAdjacentHTML('afterbegin', newErrorHTML);
-                    } else if (globalErrorContainer.outerHTML !== newErrorHTML) {
-                        globalErrorContainer.outerHTML = newErrorHTML;
-                    }
-                } else if (globalErrorContainer) {
-                    globalErrorContainer.remove();
-                }
-
-                // Update tasks and results using the optimized function
-                updateTasksAndResultsDOM();
-                
-                if (window.lucide) lucide.createIcons();
-                return;
-            }
-
-            // Full render for first time or page switch
+            // Full render
             app.innerHTML = `
                 ${renderHeader()}
                 <main>
                     ${renderGlobalError()}
-                    <div class="app-main-layout">
-                        <div class="sidebar-controls">
-                            ${renderUsageStats()}
-                            ${renderModelSelector()}
+                    <div class="app-stacked-layout">
+                        ${renderUsageStats()}
+                        ${renderModelSelector()}
+                        
+                        <div class="main-controls-wrapper">
                             ${renderModelInfo(activeGen)}
                             <div class="upload-section-wrapper">${renderUploadSection(activeGen)}</div>
                             ${renderPromptSection()}
                             ${renderSettings(activeGen)}
                             ${renderGenerateButton(activeGen)}
                         </div>
-                        <div class="main-gallery">
+
+                        <div class="results-layout-wrapper">
                             <div id="active-tasks-container"></div>
                             <div id="results-container"></div>
                         </div>
