@@ -56,6 +56,7 @@ let state = {
     isAdmin: false,
     showAdminDashboard: false,
     showApiKey: false,
+    showLogin: false,
     musicSelections: {
         genre: '',
         mood: '',
@@ -746,15 +747,22 @@ function renderContent() {
             return;
         }
 
-        // 2. Login Page
+        // 2. Landing & Login Page
         if (!state.currentUser) {
-            app.innerHTML = `
-                ${renderHeader()}
-                <main>
-                    ${renderLoginPage()}
-                </main>
-                ${renderFooter()}
-            `;
+            if (state.showLogin) {
+                app.innerHTML = `
+                    ${renderHeader()}
+                    <main>
+                        ${renderLoginPage()}
+                    </main>
+                    ${renderFooter()}
+                `;
+            } else {
+                app.innerHTML = `
+                    ${renderLandingPage()}
+                    ${renderFooter()}
+                `;
+            }
             if (window.lucide) lucide.createIcons();
             return;
         }
@@ -848,6 +856,188 @@ function renderContent() {
         }
     }
 }
+
+
+function navigateToLogin() {
+    state.showLogin = true;
+    renderContent();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function navigateToLanding() {
+    state.showLogin = false;
+    renderContent();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderLandingPage() {
+    const purchaseUrl = 'https://lynk.id/nanda239/ger9z5r0gz5x';
+    
+    // Video Embeds from ScreenPal
+    const videoEmbeds = [
+        'cOfZbqnOAC5', 'cOfZbqnOACC', 'cOfZbqnOACp', 
+        'cOfZbqnOACk', 'cOfZbqnOACg', 'cOfZbqnOACB', 
+        'cOfZbqnOACA', 'cOfZbqnOACz', 'cOfZbqnOACA',
+        'cOfZFfnOAdk', 'cOfZFfnOAdp', 'cOfZFfnOAdC',
+        'cOfZFfnOAd5', 'cOfZFfnOAdE', 'cOfZFfnOAdG'
+    ];
+
+    return `
+        <div class="landing-page">
+            <!-- Floating Nav -->
+            <nav class="landing-nav">
+                <div class="header-left">
+                    <div class="premium-logo">
+                        <div class="logo-diamond"></div>
+                        <div class="logo-text">ND</div>
+                    </div>
+                    <div class="brand-name">ND STUDIO PRO</div>
+                </div>
+                <div class="landing-nav-actions">
+                    <button class="nav-link" onclick="navigateToLogin()">Login</button>
+                    <button class="btn-primary-gold-small" onclick="window.open('${purchaseUrl}', '_blank')">Full Akses sekarang</button>
+                </div>
+            </nav>
+
+            <!-- Hero Section -->
+            <section class="hero-section">
+                <div class="hero-content">
+                    <div class="hero-badge">PREMIUM AI VIDEO GENERATOR</div>
+                    <h1 class="hero-title">Wujudkan Imajinasi Menjadi <br><span>Karya Video Nyata</span></h1>
+                    <p class="hero-subtitle">
+                        Platform AI Video tercanggih untuk kreator konten profesional. 
+                        Hasilkan video berkualitas tinggi dalam hitungan detik dengan teknologi ND STUDIO PRO.
+                    </p>
+                    <div class="hero-actions">
+                        <button class="btn-primary-gold" onclick="navigateToLogin()">
+                            <i data-lucide="zap"></i> Mulai Sekarang
+                        </button>
+                        <button class="btn-secondary-white" onclick="window.open('${purchaseUrl}', '_blank')">
+                            <i data-lucide="shopping-cart"></i> Full Akses sekarang
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Video Showcase Horizontal Scroll -->
+            <section class="showcase-section">
+                <div class="section-header">
+                    <h2 class="section-title">Testimoni & Hasil Karya</h2>
+                    <p class="section-subtitle">Geser untuk melihat keajaiban video yang dihasilkan.</p>
+                </div>
+                
+                <div class="video-scroll-container">
+                    <div class="video-scroll-wrapper">
+                        ${videoEmbeds.map(id => `
+                            <div class="video-card-vertical scroll-item">
+                                <iframe 
+                                    src="https://go.screenpal.com/player/${id}?ff=1&ahc=1&dcc=1&tl=1&bg=transparent&share=0&download=0&embed=1&cl=1&autoplay=1&muted=1" 
+                                    style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" 
+                                    scrolling="no" 
+                                    allow="autoplay"
+                                    allowfullscreen="true">
+                                </iframe>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tools & Features Section -->
+            <section class="tools-section">
+                <div class="section-header">
+                    <h2 class="section-title">ND STUDIO PRO - ALL-IN-ONE AI TOOLS (20 TOOLS)</h2>
+                    <p class="section-subtitle">Akses ekosistem AI terlengkap untuk produksi konten profesional dalam satu platform.</p>
+                </div>
+                
+                <div class="tools-grid-categories">
+                    <!-- VIDEO GENERATION -->
+                    <div class="category-group">
+                        <div class="category-header">
+                            <i data-lucide="video"></i>
+                            <h3>🎬 VIDEO GENERATION (11 Tools)</h3>
+                        </div>
+                        <div class="tools-list">
+                            <div class="tool-list-item"><span>Kling 3 Motion Control (Pro) - Up to 30s</span></div>
+                            <div class="tool-list-item"><span>Kling 3 Motion Control (Std) - Up to 30s</span></div>
+                            <div class="tool-list-item"><span>Kling 2.6 Motion Control (Pro) - Up to 30s</span></div>
+                            <div class="tool-list-item"><span>Kling 2.6 Motion Control (Std) - Up to 30s</span></div>
+                            <div class="tool-list-item"><span>Kling 3 Omni Pro (Advanced Multi-modal)</span></div>
+                            <div class="tool-list-item"><span>Kling 3 Pro (High Quality)</span></div>
+                            <div class="tool-list-item"><span>Kling 3 Standard</span></div>
+                            <div class="tool-list-item"><span>Veo 3.1 Image to Video (Google AI)</span></div>
+                            <div class="tool-list-item"><span>Veo 3.1 Reference to Video</span></div>
+                            <div class="tool-list-item"><span>Pixverse V5 (Advanced Motion)</span></div>
+                            <div class="tool-list-item"><span>Seedance 1.5 Pro (Camera Control)</span></div>
+                        </div>
+                    </div>
+
+                    <!-- IMAGE GENERATION -->
+                    <div class="category-group">
+                        <div class="category-header">
+                            <i data-lucide="image"></i>
+                            <h3>🖼️ IMAGE GENERATION (7 Tools)</h3>
+                        </div>
+                        <div class="tools-list">
+                            <div class="tool-list-item"><span>Nano Banana Pro (Gemini 3 - 4K)</span></div>
+                            <div class="tool-list-item"><span>Nano Banana Pro Flash (Super Fast)</span></div>
+                            <div class="tool-list-item"><span>SeeDream 4.5 Edit (Subject Consistency)</span></div>
+                            <div class="tool-list-item"><span>Flux 2 Pro (Ultra Realistic)</span></div>
+                            <div class="tool-list-item"><span>Flux 2 Turbo (Speed Optimized)</span></div>
+                            <div class="tool-list-item"><span>Runway Gen (Text to Image)</span></div>
+                            <div class="tool-list-item"><span>Flux 2 Style (Custom Styles)</span></div>
+                        </div>
+                    </div>
+
+                    <!-- AUDIO & VOICE -->
+                    <div class="category-group">
+                        <div class="category-header">
+                            <i data-lucide="music"></i>
+                            <h3>🎵 AUDIO & VOICE (2 Tools)</h3>
+                        </div>
+                        <div class="tools-list">
+                            <div class="tool-list-item"><span>Voice Over (ElevenLabs Turbo v2.5)</span></div>
+                            <div class="tool-list-item"><span>Music Generation (High-Quality AI Music)</span></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Features -->
+            <section class="features-section">
+                <div class="feature-card">
+                    <i data-lucide="sparkles"></i>
+                    <h3>Kualitas 4K</h3>
+                    <p>Hasil video super tajam dengan detail yang memukau untuk kebutuhan profesional.</p>
+                </div>
+                <div class="feature-card">
+                    <i data-lucide="zap"></i>
+                    <h3>Proses Kilat</h3>
+                    <p>Hasilkan video hanya dalam hitungan detik menggunakan server high-end.</p>
+                </div>
+                <div class="feature-card">
+                    <i data-lucide="shield-check"></i>
+                    <h3>Akses Eksklusif</h3>
+                    <p>Gunakan semua fitur premium tanpa batas dan tanpa watermark.</p>
+                </div>
+            </section>
+
+            <!-- Final CTA -->
+            <section class="cta-bottom">
+                <div class="cta-container">
+                    <h2>Siap Bergabung dengan Masa Depan?</h2>
+                    <p>Dapatkan akses penuh ke semua fitur generator video AI kami sekarang.</p>
+                    <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+                        <button class="btn-primary-gold" style="background:#000; color:var(--accent-gold);" onclick="window.open('${purchaseUrl}', '_blank')">
+                            Full Akses sekarang <i data-lucide="shopping-bag"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    `;
+}
+
 
 // --- UI COMPONENTS ---
 
@@ -1076,7 +1266,7 @@ function renderHeader() {
 
     return `
         <header>
-            <div class="header-left">
+            <div class="header-left" onclick="navigateToLanding()" style="cursor: pointer;">
                 <div class="premium-logo">
                     <div class="logo-diamond"></div>
                     <div class="logo-text">ND</div>
@@ -3890,6 +4080,10 @@ window.addEventListener('DOMContentLoaded', () => {
             showToast("Link disalin ke clipboard", "success");
         }
     };
+    
+    window.navigateToLogin = navigateToLogin;
+    window.navigateToLanding = navigateToLanding;
+    window.login = login;
 
     init();
     initAuth();
