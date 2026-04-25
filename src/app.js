@@ -931,7 +931,7 @@ function renderLandingPage() {
                         ${videoEmbeds.map(id => `
                             <div class="video-card-vertical scroll-item">
                                 <iframe 
-                                    src="https://go.screenpal.com/player/${id}?ff=1&ahc=1&dcc=1&tl=1&bg=transparent&share=0&download=0&embed=1&cl=1&autoplay=1&muted=1" 
+                                    src="https://go.screenpal.com/player/${id}?ap=1&mute=1&tl=0&cl=0&bg=transparent&embed=1" 
                                     style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" 
                                     scrolling="no" 
                                     allow="autoplay"
