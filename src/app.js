@@ -429,8 +429,29 @@ const GENERATORS = [
 
 // --- AUTH FUNCTIONS ---
 
+function resetUserState() {
+    state.apiKey = '';
+    state.userDoc = null;
+    state.isAdmin = false;
+    state.uploadedFiles = { image: null, video: null, image3: null };
+    state.uploadedUrls = { image: '', video: '', image3: '' };
+    state.activeTasks = [];
+    state.completedResults = [];
+    state.generationHistory = [];
+    state.generatorUploads = {};
+    state.generatorPrompts = {};
+    state.currentPrompt = '';
+    state.globalError = null;
+    state.showAdminDashboard = false;
+    state.showApiKey = false;
+    state.showLogin = false;
+}
+
 function initAuth() {
     onAuthStateChanged(auth, async (user) => {
+        // Reset state immediately to prevent stale data between accounts
+        resetUserState();
+        
         state.currentUser = user;
         state.isAuthLoading = false;
         
@@ -447,7 +468,7 @@ function initAuth() {
                 handleFirestoreError(error, OperationType.GET, 'users/' + user.uid);
             }
             
-            if (!userSnap.exists()) {
+            if (userSnap && !userSnap.exists()) {
                 const newUser = {
                     uid: user.uid,
                     email: user.email,
@@ -464,7 +485,7 @@ function initAuth() {
                     handleFirestoreError(error, OperationType.CREATE, 'users/' + user.uid);
                 }
                 state.userDoc = newUser;
-            } else {
+            } else if (userSnap) {
                 state.userDoc = userSnap.data();
                 // If user is admin but role is not set, update it
                 if (state.isAdmin && (state.userDoc.role !== 'admin' || !state.userDoc.isApproved)) {
@@ -484,7 +505,9 @@ function initAuth() {
                     renderContent();
                 }
             }, (error) => {
-                handleFirestoreError(error, OperationType.GET, 'users/' + user.uid);
+                // If permission is denied here, it might be because the account is blocked by security rules
+                console.error("User document listener error:", error);
+                // Don't throw fatal error here, let it fail gracefully
             });
 
             // If admin, listen for all users
@@ -496,9 +519,6 @@ function initAuth() {
                     handleFirestoreError(error, OperationType.LIST, 'users');
                 });
             }
-        } else {
-            state.userDoc = null;
-            state.isAdmin = false;
         }
         
         renderContent();
