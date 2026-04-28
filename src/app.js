@@ -1388,7 +1388,7 @@ function renderSetupPage() {
                         <div class="step-desc">Dapatkan $5 kredit gratis</div>
                     </div>
                 </div>
-                <a href="https://www.freepik.com/auth/register" target="_blank" class="btn-step-action">
+                <a href="https://www.freepik.com/sign-up?client_id=freepik&lang=en" target="_blank" class="btn-step-action">
                     📝 Buka Halaman Daftar →
                 </a>
             </div>
@@ -2152,7 +2152,7 @@ function renderGenerateButton(gen) {
     let btnType = gen.outputType.charAt(0).toUpperCase() + gen.outputType.slice(1);
     if (gen.id === 'elevenlabs-turbo-v2-5') btnType = 'Voice';
     if (gen.id === 'music-generation') btnType = 'Music';
-    let btnText = `🚀 Generate ${btnType}`;
+    let btnText = `✨ Generate ${btnType}`;
     
     if (noApiKey) btnText = '🔑 Masukkan API Key';
     else if (isUploading) btnText = '⏳ Uploading...';
@@ -3049,7 +3049,7 @@ async function generate() {
         // Record generation for queue limit tracking
         state.generationHistory.push(Date.now());
 
-        showToast("🚀 Task berhasil dibuat! Sedang diproses...", "success");
+        showToast("✨ Task berhasil dibuat! Sedang diproses...", "success");
         updateTasksAndResultsDOM();
         
         // Add a small initial delay before polling to ensure task is registered
@@ -3076,7 +3076,7 @@ async function generate() {
                     clearInterval(countdownInterval);
                     if (currentBtn && Date.now() >= state.cooldownUntil) {
                         currentBtn.disabled = false;
-                        currentBtn.innerHTML = `🚀 Generate ${activeGen.outputType.charAt(0).toUpperCase() + activeGen.outputType.slice(1)}`;
+                        currentBtn.innerHTML = `✨ Generate ${activeGen.outputType.charAt(0).toUpperCase() + activeGen.outputType.slice(1)}`;
                     }
                 }
             }, 1000);
@@ -3816,7 +3816,7 @@ function updateMusicUI() {
         if (isEmpty) {
             btn.innerText = '✨ Pilih Opsi Musik';
         } else {
-            btn.innerText = '🚀 Generate Music';
+            btn.innerText = '✨ Generate Music';
         }
     }
 }
