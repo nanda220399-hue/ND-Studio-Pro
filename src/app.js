@@ -181,6 +181,20 @@ const GENERATORS = [
         pollingType: 'path'
     },
     {
+        id: 'kling-v2-6-pro-i2v',
+        name: 'Kling 2.6 Pro I2V',
+        icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
+        badge: 'V2.6 PRO',
+        description: 'Kling 2.6 Pro - Image to Video: Kualitas profesional dengan detail lebih tajam.',
+        tips: 'Gunakan aspect ratio 16:9 atau 9:16 untuk hasil terbaik.',
+        inputs: ['image', 'prompt'],
+        outputType: 'video',
+        settings: { aspect_ratio: 'seedance', duration: 'kling26', generate_audio: true, cfg: true, negative_prompt: true },
+        endpoint: 'https://api.freepik.com/v1/ai/image-to-video/kling-v2-6-pro',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/image-to-video/kling-v2-6',
+        pollingType: 'path'
+    },
+    {
         id: 'pixverse-v5',
         name: 'Pixverse V5',
         icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
@@ -1889,7 +1903,9 @@ function renderSettings(gen) {
                             <option value="4" ${state.settings.duration == 4 ? 'selected' : ''}>4 Seconds</option>
                             <option value="6" ${state.settings.duration == 6 ? 'selected' : ''}>6 Seconds</option>
                             <option value="8" ${state.settings.duration == 8 ? 'selected' : ''}>8 Seconds</option>
-                        ` : gen.settings.duration === 'seedance' ? [5,10,12].map(d => `
+                        ` : gen.settings.duration === 'kling26' ? [5,10].map(d => `
+                            <option value="${d}" ${state.settings.duration == d ? 'selected' : ''}>${d}s</option>
+                        `).join('') : gen.settings.duration === 'seedance' ? [5,10,12].map(d => `
                             <option value="${d}" ${state.settings.duration == d ? 'selected' : ''}>${d}s</option>
                         `).join('') : gen.settings.duration === 'pixverse' ? `
                             <option value="5" ${state.settings.duration == 5 ? 'selected' : ''}>5 Seconds (1080p)</option>
@@ -2304,10 +2320,10 @@ async function syncTasks() {
     let listType = activeGen.pollingType;
     
     // Kling 3 specific list endpoint fallback
-    if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro' || activeGen.id === 'kling-v3-motion-control-std' || activeGen.id === 'kling-v3-motion-control-pro' || activeGen.id === 'kling-v3-omni-pro') {
+    if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro' || activeGen.id === 'kling-v3-motion-control-std' || activeGen.id === 'kling-v3-motion-control-pro' || activeGen.id === 'kling-v3-omni-pro' || activeGen.id === 'kling-v2-6-pro-i2v') {
         listEndpoint = (activeGen.id === 'kling-v3-motion-control-std' || activeGen.id === 'kling-v3-motion-control-pro')
             ? activeGen.endpoint
-            : (activeGen.id === 'kling-v3-omni-pro' ? 'https://api.freepik.com/v1/ai/video/kling-v3-omni' : 'https://api.freepik.com/v1/ai/video/kling-v3');
+            : (activeGen.id === 'kling-v3-omni-pro' ? 'https://api.freepik.com/v1/ai/video/kling-v3-omni' : (activeGen.id === 'kling-v2-6-pro-i2v' ? 'https://api.freepik.com/v1/ai/image-to-video/kling-v2-6' : 'https://api.freepik.com/v1/ai/video/kling-v3'));
         listType = 'list';
     } else if (activeGen.id === 'seedream-4-5-edit') {
         listEndpoint = 'https://api.freepik.com/v1/ai/text-to-image/seedream-v4-5-edit';
@@ -2542,7 +2558,7 @@ async function generate() {
         }
 
         // Kling and Veo models strictly require public HTTPS URLs
-        const needsPublicUrl = activeGen.id.toLowerCase().includes('kling') || activeGen.id === 'seedance-1-5-pro' || activeGen.id === 'pixverse-v5' || activeGen.id === 'veo-3-1-i2v' || activeGen.id === 'veo-3-1-reference';
+        const needsPublicUrl = activeGen.id.toLowerCase().includes('kling') || activeGen.id === 'seedance-1-5-pro' || activeGen.id === 'pixverse-v5' || activeGen.id === 'veo-3-1-i2v' || activeGen.id === 'veo-3-1-reference' || activeGen.id === 'kling-v2-6-pro-i2v';
         if (needsPublicUrl) {
             console.log(`[DEBUG] ${activeGen.name} Input URLs:`, {
                 image: imageInput,
@@ -2562,9 +2578,9 @@ async function generate() {
             if (!imageInput || !videoInput) {
                 throw new Error("Wajib upload Gambar Karakter & Video Referensi (atau masukkan URL)");
             }
-        } else if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro' || activeGen.id === 'kling-v3-omni-pro') {
+        } else if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro' || activeGen.id === 'kling-v3-omni-pro' || activeGen.id === 'kling-v2-6-pro-i2v') {
             if (!state.currentPrompt && !imageInput) {
-                throw new Error("Wajib masukkan Prompt atau Start Image untuk Kling 3.");
+                throw new Error("Wajib masukkan Prompt atau Start Image untuk Kling.");
             }
         } else if (activeGen.id === 'seedream-4-5-edit') {
             if (!imageInput && !videoInput) {
@@ -2592,7 +2608,10 @@ async function generate() {
         let shouldTranslate = true;
         if (!finalPrompt) {
             shouldTranslate = false;
-        } else if (activeGen.id === 'elevenlabs-turbo-v2-5') {
+        } else if (activeGen.id === 'elevenlabs-turbo-v2-5' || activeGen.id === 'music-generation') {
+            shouldTranslate = false;
+        } else if (activeGen.id.toLowerCase().includes('kling') || activeGen.id.toLowerCase().includes('veo')) {
+            // Kling and Veo models often work better with original intent or handle multi-lang well enough
             shouldTranslate = false;
         } else if (activeGen.outputType === 'video' && !activeGen.id.includes('motion-control')) {
             shouldTranslate = false;
@@ -2628,7 +2647,7 @@ async function generate() {
                 character_orientation: state.settings.orientation,
                 cfg_scale: state.settings.cfg_scale
             };
-        } else if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro' || activeGen.id === 'kling-v3-omni-pro') {
+        } else if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro' || activeGen.id === 'kling-v3-omni-pro' || activeGen.id === 'kling-v2-6-pro-i2v') {
             let ar = state.settings.aspect_ratio;
             if (ar === 'square_1_1') ar = '1:1';
             else if (ar === 'widescreen_16_9') ar = '16:9';
@@ -2638,7 +2657,17 @@ async function generate() {
                 ar = '16:9';
             }
 
-            if (activeGen.id === 'kling-v3-omni-pro') {
+            if (activeGen.id === 'kling-v2-6-pro-i2v') {
+                body = {
+                    prompt: finalPrompt,
+                    image: ensureHttps(imageInput) || undefined,
+                    aspect_ratio: ar === '16:9' ? 'widescreen_16_9' : (ar === '9:16' ? 'social_story_9_16' : 'square_1_1'),
+                    duration: state.settings.duration ? String(state.settings.duration) : "5",
+                    negative_prompt: state.settings.negative_prompt,
+                    cfg_scale: state.settings.cfg_scale !== undefined ? state.settings.cfg_scale : 0.5,
+                    generate_audio: state.settings.generate_audio !== undefined ? state.settings.generate_audio : true
+                };
+            } else if (activeGen.id === 'kling-v3-omni-pro') {
                 body = {
                     prompt: finalPrompt,
                     start_image_url: ensureHttps(imageInput) || undefined,
@@ -2975,7 +3004,7 @@ async function generate() {
                 renderContent();
                 throw new Error(state.globalError);
             } else if (response.status === 400) {
-                throw new Error(`Bad Request (400): ${fullErrorMsg}. Pastikan format gambar valid dan prompt menggunakan bahasa Inggris.`);
+                throw new Error(`Bad Request (400): ${fullErrorMsg}. Pastikan format gambar/input valid.`);
             }
             
             throw new Error(fullErrorMsg);
@@ -3399,6 +3428,12 @@ function setActiveGenerator(id) {
         state.settings.generate_audio = true;
         state.settings.negative_prompt = '';
         state.settings.seed = '';
+    } else if (id === 'kling-v2-6-pro-i2v') {
+        state.settings.aspect_ratio = 'widescreen_16_9';
+        state.settings.duration = '5';
+        state.settings.generate_audio = true;
+        state.settings.cfg_scale = 0.5;
+        state.settings.negative_prompt = '';
     } else if (id === 'nano-banana-pro' || id === 'nano-banana-pro-flash') {
         state.settings.aspect_ratio = '1:1';
         state.settings.resolution = '2K';
