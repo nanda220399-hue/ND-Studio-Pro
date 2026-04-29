@@ -1490,6 +1490,9 @@ function renderUploadSection(gen) {
                         <div class="upload-loader">
                             <div class="spinner"></div>
                             <span>Uploading...</span>
+                            <button class="btn-remove-loader" onclick="removeFile(event, 'image')" title="Batal">
+                                <i data-lucide="x" style="width: 12px; height: 12px;"></i>
+                            </button>
                         </div>
                     ` : uploadState.files.image ? `
                         <img src="${uploadState.files.image}" class="upload-preview">
@@ -1517,6 +1520,9 @@ function renderUploadSection(gen) {
                         <div class="upload-loader">
                             <div class="spinner"></div>
                             <span>Uploading...</span>
+                            <button class="btn-remove-loader" onclick="removeFile(event, 'video')" title="Batal">
+                                <i data-lucide="x" style="width: 12px; height: 12px;"></i>
+                            </button>
                         </div>
                     ` : uploadState.files.video ? `
                         ${(isKling3Std || isKling3OmniPro || isSeeDream45 || isVeoRef || isNanoPro || isGeminiFlash) ? `<img src="${uploadState.files.video}" class="upload-preview">` : `<video src="${uploadState.files.video}" class="upload-preview" muted autoplay loop playsinline></video>`}
@@ -1544,6 +1550,9 @@ function renderUploadSection(gen) {
                         <div class="upload-loader">
                             <div class="spinner"></div>
                             <span>Uploading...</span>
+                            <button class="btn-remove-loader" onclick="removeFile(event, 'image3')" title="Batal">
+                                <i data-lucide="x" style="width: 12px; height: 12px;"></i>
+                            </button>
                         </div>
                     ` : uploadState.files.image3 ? `
                         <img src="${uploadState.files.image3}" class="upload-preview">
@@ -2579,6 +2588,9 @@ async function generate() {
                 throw new Error("Wajib upload Gambar Karakter & Video Referensi (atau masukkan URL)");
             }
         } else if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro' || activeGen.id === 'kling-v3-omni-pro' || activeGen.id === 'kling-v2-6-pro-i2v') {
+            if (activeGen.id === 'kling-v2-6-pro-i2v' && !imageInput) {
+                throw new Error("Wajib upload Gambar (atau masukkan URL) untuk Kling 2.6 Pro I2V.");
+            }
             if (!state.currentPrompt && !imageInput) {
                 throw new Error("Wajib masukkan Prompt atau Start Image untuk Kling.");
             }
@@ -2658,11 +2670,12 @@ async function generate() {
             }
 
             if (activeGen.id === 'kling-v2-6-pro-i2v') {
+                const durationVal = state.settings.duration ? String(state.settings.duration) : "5";
                 body = {
                     prompt: finalPrompt,
                     image: ensureHttps(imageInput) || undefined,
                     aspect_ratio: ar === '16:9' ? 'widescreen_16_9' : (ar === '9:16' ? 'social_story_9_16' : 'square_1_1'),
-                    duration: state.settings.duration ? String(state.settings.duration) : "5",
+                    duration: (durationVal === "5" || durationVal === "10") ? durationVal : "5",
                     negative_prompt: state.settings.negative_prompt,
                     cfg_scale: state.settings.cfg_scale !== undefined ? state.settings.cfg_scale : 0.5,
                     generate_audio: state.settings.generate_audio !== undefined ? state.settings.generate_audio : true
@@ -3334,16 +3347,16 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
             }
             
             if (!errMsg) {
-                if (activeGen.outputType === 'video') {
-                    errMsg = "Unknown Freepik error (Status: FAILED). Pastikan video referensi berdurasi 3-30 detik dan format didukung.";
-                } else if (activeGen.id.includes('imagen4')) {
-                    errMsg = "Unknown Imagen 4 error (Status: FAILED). Hal ini sering terjadi karena prompt sensitif. Coba ubah 'Safety Settings' ke level lebih rendah atau ubah prompt Anda.";
+                if (status === 'FAILED' && taskData.generated && taskData.generated.length === 0) {
+                    errMsg = "Task gagal diproses oleh AI (Internal AI Failure).";
+                } else if (activeGen.outputType === 'video') {
+                    errMsg = "Gagal (Status: FAILED). Ini mungkin karena prompt sensitif, durasi tidak valid, atau gangguan pada model AI.";
                 } else {
-                    errMsg = "Unknown Freepik error (Status: FAILED). Silakan cek parameter input atau coba lagi nanti.";
+                    errMsg = "Gagal (Status: FAILED). Silakan cek parameter input atau coba lagi nanti.";
                 }
             }
             
-            showToast("Generation failed: " + errMsg, "error");
+            showToast("Task Gagal: " + errMsg, "error");
             state.activeTasks.splice(currentTaskIndex, 1);
             updateTasksAndResultsDOM();
         } else {
