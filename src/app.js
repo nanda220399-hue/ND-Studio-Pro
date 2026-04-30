@@ -1485,7 +1485,10 @@ function renderUploadSection(gen) {
         <div class="upload-section ${!hasTwoInputs && !hasThreeInputs ? 'single-input' : ''} ${hasThreeInputs ? 'three-inputs' : ''}">
             ${gen.inputs.includes('image') ? `
                 <div class="upload-card ${uploadState.files.image || uploadState.urls.image ? 'has-file' : ''} ${uploadState.uploading.image ? 'uploading' : ''}" 
-                     onclick="${showUrlInput ? '' : "triggerUpload('image')"}">
+                     onclick="${showUrlInput ? '' : "triggerUpload('image')"} "
+                     ondragover="handleDragOver(event)"
+                     ondragleave="handleDragLeave(event)"
+                     ondrop="handleDrop(event, 'image')">
                     ${uploadState.uploading.image ? `
                         <div class="upload-loader">
                             <div class="spinner"></div>
@@ -1515,7 +1518,10 @@ function renderUploadSection(gen) {
             
             ${hasTwoInputs || hasThreeInputs ? `
                 <div class="upload-card ${uploadState.files.video || uploadState.urls.video ? 'has-file' : ''} ${uploadState.uploading.video ? 'uploading' : ''}" 
-                     onclick="${showUrlInput ? '' : "triggerUpload('video')"}">
+                     onclick="${showUrlInput ? '' : "triggerUpload('video')"} "
+                     ondragover="handleDragOver(event)"
+                     ondragleave="handleDragLeave(event)"
+                     ondrop="handleDrop(event, 'video')">
                     ${uploadState.uploading.video ? `
                         <div class="upload-loader">
                             <div class="spinner"></div>
@@ -1545,7 +1551,10 @@ function renderUploadSection(gen) {
 
             ${hasThreeInputs ? `
                 <div class="upload-card ${uploadState.files.image3 || uploadState.urls.image3 ? 'has-file' : ''} ${uploadState.uploading.image3 ? 'uploading' : ''}" 
-                     onclick="${showUrlInput ? '' : "triggerUpload('image3')"}">
+                     onclick="${showUrlInput ? '' : "triggerUpload('image3')"} "
+                     ondragover="handleDragOver(event)"
+                     ondragleave="handleDragLeave(event)"
+                     ondrop="handleDrop(event, 'image3')">
                     ${uploadState.uploading.image3 ? `
                         <div class="upload-loader">
                             <div class="spinner"></div>
@@ -3592,6 +3601,30 @@ async function compressImageFile(file) {
     });
 }
 
+function handleDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.remove('drag-over');
+}
+
+async function handleDrop(e, type) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.remove('drag-over');
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+        // Reuse handleFileChange logic by passing a mock input object
+        await handleFileChange(type, { files: files });
+    }
+}
+
 async function handleFileChange(type, input) {
     let file = input.files[0];
     if (!file) return;
@@ -4081,6 +4114,9 @@ window.addEventListener('DOMContentLoaded', () => {
     window.setActiveGenerator = setActiveGenerator;
     window.triggerUpload = triggerUpload;
     window.handleFileChange = handleFileChange;
+    window.handleDragOver = handleDragOver;
+    window.handleDragLeave = handleDragLeave;
+    window.handleDrop = handleDrop;
     window.removeFile = removeFile;
     window.toggleUrlInput = toggleUrlInput;
     window.generate = generate;
