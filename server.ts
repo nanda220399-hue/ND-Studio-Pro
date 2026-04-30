@@ -99,16 +99,22 @@ async function startServer() {
   // Proxy download to force "Save As" behavior (Crucial for iOS)
   app.get("/api/download-proxy", async (req, res) => {
     const fileUrl = req.query.url as string;
+    const customFilename = req.query.filename as string;
     if (!fileUrl) return res.status(400).send("No URL provided");
     
     try {
+      // Add Edge Caching to save origin bandwidth
+      // Cache for 1 hour on the Edge, browser shouldn't cache indefinitely
+      res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=600');
+      
       const response = await axios({
         method: 'get',
         url: fileUrl,
-        responseType: 'stream'
+        responseType: 'stream',
+        timeout: 30000 // 30s timeout
       });
       
-      const fileName = path.basename(new URL(fileUrl).pathname) || 'download';
+      const fileName = customFilename || path.basename(new URL(fileUrl).pathname) || 'download';
       res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
       res.setHeader('Content-Type', response.headers['content-type'] || 'application/octet-stream');
       

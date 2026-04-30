@@ -2551,20 +2551,17 @@ async function generate() {
             throw new Error(`Limit antrean tercapai (${state.queueLimit}/menit). Tunggu beberapa saat.`);
         }
 
-        // Priority: Use the public URL if available (required for Kling), fallback to base64 only if necessary (e.g. SeeDream)
+        // Priority: ALWAYS prefer the public URL if available to save Vercel bandwidth (Fast Origin Transfer)
+        // Only fallback to base64 if no URL exists and the model explicitly allows it
         let imageInput = uploadState.urls.image || uploadState.files.image;
         let videoInput = uploadState.urls.video || uploadState.files.video;
         let image3Input = uploadState.urls.image3 || uploadState.files.image3;
-
+ 
         const activeGen = GENERATORS.find(g => g.id === state.activeGenerator) || GENERATORS[0];
         if (!activeGen) throw new Error("Model generator tidak ditemukan.");
-
-        // Force base64 for SeeDream and Gemini to avoid URL accessibility issues for local files
-        if (activeGen.id === 'seedream-4-5-edit' || activeGen.id === 'gemini-2-5-flash-image') {
-            imageInput = uploadState.files.image || uploadState.urls.image;
-            videoInput = uploadState.files.video || uploadState.urls.video;
-            image3Input = uploadState.files.image3 || uploadState.urls.image3;
-        }
+ 
+        // Note: We removed the "Force base64" logic because sending large base64 strings 
+        // through Vercel proxy consumes expensive bandwidth. Public URLs are much more efficient.
 
         // Kling and Veo models strictly require public HTTPS URLs
         const needsPublicUrl = activeGen.id.toLowerCase().includes('kling') || activeGen.id === 'seedance-1-5-pro' || activeGen.id === 'pixverse-v5' || activeGen.id === 'veo-3-1-i2v' || activeGen.id === 'veo-3-1-reference' || activeGen.id === 'kling-v2-6-pro-i2v';
@@ -4110,8 +4107,28 @@ window.addEventListener('DOMContentLoaded', () => {
 
     window.handleDownload = async function(url, filename) {
         try {
-            console.log("Downloading via proxy:", url);
-            const proxyUrl = `/api/download-proxy?url=${encodeURIComponent(url)}`;
+            // Cek apakah browser mendukung fetch dengan CORS untuk URL ini
+            // Jika berhasil, kita bisa download di client tanpa proxy backend (hemat bandwidth Vercel)
+            const isVideo = url.toLowerCase().includes('.mp4') || url.toLowerCase().includes('.mov') || url.toLowerCase().includes('.webm');
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+            // Prioritas 1: Coba direct download via a[download] untuk gambar (seringkali berhasil tanpa proxy)
+            if (!isVideo && !isIOS) {
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename || 'nd-studio-result';
+                link.target = '_blank';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast("Memulai unduhan...", "success");
+                return;
+            }
+
+            // Prioritas 2: Gunakan proxy backend hanya jika diperlukan (iOS atau Video cross-origin)
+            // Tambahkan parameter untuk identifikasi agar server bisa set cache
+            console.log("Downloading via proxy to save local bandwidth:", url);
+            const proxyUrl = `/api/download-proxy?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename || 'result')}`;
             
             const link = document.createElement('a');
             link.href = proxyUrl;
@@ -4120,7 +4137,7 @@ window.addEventListener('DOMContentLoaded', () => {
             link.click();
             document.body.removeChild(link);
             
-            showToast("Mengunduh file...", "success");
+            showToast("Mengunduh via server (Pro)...", "success");
         } catch (error) {
             console.error("Download error:", error);
             window.open(url, '_blank');
