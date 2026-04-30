@@ -114,9 +114,39 @@ async function startServer() {
         timeout: 30000 // 30s timeout
       });
       
-      const fileName = customFilename || path.basename(new URL(fileUrl).pathname) || 'download';
-      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-      res.setHeader('Content-Type', response.headers['content-type'] || 'application/octet-stream');
+      let fileName = customFilename || path.basename(new URL(fileUrl).pathname) || 'download';
+      
+      const contentType = response.headers['content-type'];
+      
+      // Ensure extension from Content-Type if missing
+      if (!fileName.includes('.')) {
+        if (contentType) {
+          const mimeExt: Record<string, string> = {
+            'image/jpeg': '.jpg',
+            'image/png': '.png',
+            'image/webp': '.webp',
+            'video/mp4': '.mp4',
+            'video/mpeg': '.mpeg',
+            'video/quicktime': '.mov',
+            'audio/mpeg': '.mp3',
+            'audio/wav': '.wav'
+          };
+          fileName += mimeExt[contentType.toLowerCase()] || '';
+        }
+      }
+
+      // For iOS, if it's an image or video, serving it "inline" in a new tab 
+      // often allows the user to long-press and "Save to Photos" which they prefer.
+      const isIOS = req.headers['user-agent']?.includes('iPhone') || req.headers['user-agent']?.includes('iPad');
+      const isViewable = contentType?.startsWith('image/') || contentType?.startsWith('video/');
+      
+      if (isIOS && isViewable) {
+          res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+      } else {
+          res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      }
+      
+      res.setHeader('Content-Type', contentType || 'application/octet-stream');
       
       response.data.pipe(res);
     } catch (error) {

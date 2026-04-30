@@ -4107,16 +4107,39 @@ window.addEventListener('DOMContentLoaded', () => {
 
     window.handleDownload = async function(url, filename) {
         try {
-            // Cek apakah browser mendukung fetch dengan CORS untuk URL ini
-            // Jika berhasil, kita bisa download di client tanpa proxy backend (hemat bandwidth Vercel)
+            // Deteksi ekstensi dari URL
+            let ext = '';
+            try {
+                const urlPath = new URL(url).pathname;
+                const pathParts = urlPath.split('.');
+                if (pathParts.length > 1) {
+                    ext = '.' + pathParts.pop().toLowerCase();
+                    // Hilangkan query params jika masih menempel di ekstensi
+                    if (ext.includes('?')) ext = ext.split('?')[0];
+                }
+            } catch (e) {
+                console.warn("Could not parse URL for extension:", url);
+            }
+
+            // Fallback ekstensi jika tidak ketemu tapi ada petunjuk di URL
+            if (!ext) {
+                if (url.includes('.mp4')) ext = '.mp4';
+                else if (url.includes('.png')) ext = '.png';
+                else if (url.includes('.jpg') || url.includes('.jpeg')) ext = '.jpg';
+                else if (url.includes('.webp')) ext = '.webp';
+                else if (url.includes('.mp3')) ext = '.mp3';
+            }
+
+            const fullFilename = filename ? (filename.includes('.') ? filename : filename + ext) : 'nd-studio-result' + ext;
+
             const isVideo = url.toLowerCase().includes('.mp4') || url.toLowerCase().includes('.mov') || url.toLowerCase().includes('.webm');
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-            // Prioritas 1: Coba direct download via a[download] untuk gambar (seringkali berhasil tanpa proxy)
-            if (!isVideo && !isIOS) {
+            // Prioritas 1: Direct download for non-iOS
+            if (!isIOS) {
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = filename || 'nd-studio-result';
+                link.download = fullFilename;
                 link.target = '_blank';
                 document.body.appendChild(link);
                 link.click();
@@ -4125,19 +4148,20 @@ window.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Prioritas 2: Gunakan proxy backend hanya jika diperlukan (iOS atau Video cross-origin)
-            // Tambahkan parameter untuk identifikasi agar server bisa set cache
-            console.log("Downloading via proxy to save local bandwidth:", url);
-            const proxyUrl = `/api/download-proxy?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename || 'result')}`;
+            // Prioritas 2: Proxy for iOS
+            console.log("Downloading via proxy for iOS compatibility:", url);
+            const proxyUrl = `/api/download-proxy?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(fullFilename)}`;
             
             const link = document.createElement('a');
             link.href = proxyUrl;
-            link.download = filename || 'nd-studio-result';
+            link.download = fullFilename;
+            // Di iOS, buka di tab baru agar user bisa "Save to Photos" atau "Save to Files" dengan mudah
+            link.target = '_blank'; 
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             
-            showToast("Mengunduh via server (Pro)...", "success");
+            showToast("Membuka file (iOS)...", "success");
         } catch (error) {
             console.error("Download error:", error);
             window.open(url, '_blank');
