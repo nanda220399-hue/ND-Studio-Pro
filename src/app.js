@@ -989,11 +989,12 @@ function renderLandingPage() {
                     <div class="category-group">
                         <div class="category-header">
                             <i data-lucide="video"></i>
-                            <h3>🎬 VIDEO GENERATION (11 Tools)</h3>
+                            <h3>🎬 VIDEO GENERATION (12 Tools)</h3>
                         </div>
                         <div class="tools-list">
                             <div class="tool-list-item"><span>Kling 3 Motion Control (Pro) - Up to 30s</span></div>
                             <div class="tool-list-item"><span>Kling 3 Motion Control (Std) - Up to 30s</span></div>
+                            <div class="tool-list-item"><span>Kling 2.6 Pro I2V (High Quality)</span></div>
                             <div class="tool-list-item"><span>Kling 2.6 Motion Control (Pro) - Up to 30s</span></div>
                             <div class="tool-list-item"><span>Kling 2.6 Motion Control (Std) - Up to 30s</span></div>
                             <div class="tool-list-item"><span>Kling 3 Omni Pro (Advanced Multi-modal)</span></div>
@@ -1056,6 +1057,53 @@ function renderLandingPage() {
                 </div>
             </section>
 
+            <!-- Pricing Section (Rekomendasi 2) -->
+            <section class="pricing-section" id="pricing">
+                <div class="section-header">
+                    <h2 class="section-title">Investasi Kreatif Terbaik</h2>
+                    <p class="section-subtitle">Bebaskan imajinasi Anda dengan akses tanpa batas selamanya.</p>
+                </div>
+                <div class="pricing-grid">
+                    <div class="pricing-card featured">
+                        <div class="pricing-badge">PROMO LIMIT TERBATAS</div>
+                        <h3 class="pricing-name">Lifetime Pro Access</h3>
+                        <div class="pricing-price"><small>Rp</small> 150.000<span class="price-period">Sekali Bayar</span></div>
+                        <p style="color: var(--text-muted); font-size: 13px; margin: -20px 0 30px; line-height: 1.4;">Tanpa biaya langganan bulanan. Bayar sekali, pakai selamanya!</p>
+                        <ul class="pricing-features">
+                            <li><i data-lucide="zap"></i> 20+ Premium AI Tools Terlengkap</li>
+                            <li><i data-lucide="video"></i> Video Generator 4K Unlimited</li>
+                            <li><i data-lucide="shield-check"></i> Bebas Watermark (Hasil Bersih)</li>
+                            <li><i data-lucide="star"></i> Update Fitur AI Terkini Otomatis</li>
+                            <li><i data-lucide="lock"></i> Private Private Server Akses</li>
+                        </ul>
+                        <button class="btn-pricing" onclick="window.open('${purchaseUrl}', '_blank')">Ambil Promo Sekarang</button>
+                        <div style="margin-top: 15px; font-size: 11px; color: var(--accent-gold); font-weight: 600;">⚠️ Sisa 5 Slot dengan Harga Ini!</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FAQ Section (Rekomendasi 1) -->
+            <section class="faq-section">
+                <div class="section-header">
+                    <h2 class="section-title">Pertanyaan Umum</h2>
+                    <p class="section-subtitle">Semua hal yang perlu Anda ketahui tentang ND STUDIO PRO.</p>
+                </div>
+                <div class="faq-grid">
+                    <div class="faq-item">
+                        <div class="faq-question">Apakah video yang dihasilkan ada watermark? <i data-lucide="plus"></i></div>
+                        <div class="faq-answer">Tidak. Semua video yang dihasilkan menggunakan akun premium kami tidak akan memiliki watermark.</div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">Berapa lama proses pembuatan videonya? <i data-lucide="plus"></i></div>
+                        <div class="faq-answer">Tergantung durasi dan kompleksitas, biasanya memakan waktu antara 30 detik hingga 3 menit.</div>
+                    </div>
+                    <div class="faq-item">
+                        <div class="faq-question">Apakah saya bisa menggunakan untuk komersial? <i data-lucide="plus"></i></div>
+                        <div class="faq-answer">Ya, semua hasil karya Anda di ND STUDIO PRO sepenuhnya menjadi hak milik Anda untuk kebutuhan komersial.</div>
+                    </div>
+                </div>
+            </section>
+
             <!-- Final CTA -->
             <section class="cta-bottom">
                 <div class="cta-container">
@@ -1068,6 +1116,37 @@ function renderLandingPage() {
                     </div>
                 </div>
             </section>
+
+            <!-- Footer (Rekomendasi 5) -->
+            <footer class="landing-footer">
+                <div class="footer-top">
+                    <div class="footer-brand">
+                        <div class="premium-logo">
+                            <div class="logo-diamond"></div>
+                            <div class="logo-text">ND</div>
+                        </div>
+                        <h3>ND STUDIO PRO</h3>
+                        <p>Platform AI Kreatif Terlengkap di Indonesia.</p>
+                    </div>
+                    <div class="footer-links">
+                        <h4>Navigasi</h4>
+                        <a href="#" onclick="navigateToLogin()">Login</a>
+                        <a href="#pricing">Harga</a>
+                        <a href="${purchaseUrl}" target="_blank">Beli Akses</a>
+                    </div>
+                    <div class="footer-social">
+                        <h4>Ikuti Kami</h4>
+                        <div class="social-icons">
+                            <a href="https://www.threads.net/@nanda99.official" target="_blank" title="Threads">
+                                <i data-lucide="at-sign"></i> <span>Threads</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>&copy; 2026 ND STUDIO PRO. All rights reserved.</p>
+                </div>
+            </footer>
         </div>
     `;
 }
