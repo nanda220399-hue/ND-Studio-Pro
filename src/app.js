@@ -984,6 +984,28 @@ function renderLandingPage() {
                     <p class="section-subtitle">Akses ekosistem AI terlengkap untuk produksi konten profesional dalam satu platform.</p>
                 </div>
                 
+                <!-- Prompt Templates Showcase -->
+                <div class="prompt-templates-grid">
+                    <div class="template-card">
+                        <div class="template-tool">NANO BANANA PRO</div>
+                        <div class="template-badge">Template Ganti Outfit</div>
+                        <div class="template-content">
+                            <p class="template-label">Prompt Example:</p>
+                            <code class="template-code">Full body shot of a woman wearing a professional [RED SUIT], office background, cinematic lighting, 8k resolution, photorealistic.</code>
+                            <p class="template-tip">Tip: Ganti teks di dalam kurung [] untuk mengubah jenis pakaian.</p>
+                        </div>
+                    </div>
+                    <div class="template-card">
+                        <div class="template-tool">KLING MOTION CONTROL (2.6 & 3)</div>
+                        <div class="template-badge">Template Motion Control</div>
+                        <div class="template-content">
+                            <p class="template-label">Prompt Example:</p>
+                            <code class="template-code">A cinematic tracking shot, moving forward through a neon forest, [DYNAMIC MOTION], high frame rate, masterpiece.</code>
+                            <p class="template-tip">Tip: Gunakan "Moving forward", "Panning left", atau "Zoom in" untuk kontrol gerakan.</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="tools-grid-categories">
                     <!-- VIDEO GENERATION -->
                     <div class="category-group">
@@ -1011,11 +1033,13 @@ function renderLandingPage() {
                     <div class="category-group">
                         <div class="category-header">
                             <i data-lucide="image"></i>
-                            <h3>🖼️ IMAGE GENERATION (7 Tools)</h3>
+                            <h3>🖼️ IMAGE GENERATION (9 Tools)</h3>
                         </div>
                         <div class="tools-list">
                             <div class="tool-list-item"><span>Nano Banana Pro (Gemini 3 - 4K)</span></div>
                             <div class="tool-list-item"><span>Nano Banana Pro Flash (Super Fast)</span></div>
+                            <div class="tool-list-item"><span>Imagen 4 Ultra (Ultimate Quality)</span></div>
+                            <div class="tool-list-item"><span>Imagen 4 Fast (Optimized Speed)</span></div>
                             <div class="tool-list-item"><span>SeeDream 4.5 Edit (Subject Consistency)</span></div>
                             <div class="tool-list-item"><span>Flux 2 Pro (Ultra Realistic)</span></div>
                             <div class="tool-list-item"><span>Flux 2 Turbo (Speed Optimized)</span></div>
@@ -1126,7 +1150,7 @@ function renderLandingPage() {
                             <div class="logo-text">ND</div>
                         </div>
                         <h3>ND STUDIO PRO</h3>
-                        <p>Platform AI Kreatif Terlengkap di Indonesia.</p>
+                        <p>Ekosistem Video AI Profesional.</p>
                     </div>
                     <div class="footer-links">
                         <h4>Navigasi</h4>
