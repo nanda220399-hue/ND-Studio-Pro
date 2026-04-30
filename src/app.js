@@ -1439,7 +1439,9 @@ function renderModelSelector() {
     return `
         <div class="model-selector">
             ${GENERATORS.map(gen => `
-                <div class="model-item ${state.activeGenerator === gen.id ? 'active' : ''}" onclick="setActiveGenerator('${gen.id}')">
+                <div class="model-item ${state.activeGenerator === gen.id ? 'active' : ''}" 
+                     data-id="${gen.id}"
+                     onclick="setActiveGenerator('${gen.id}')">
                     <div class="model-icon-wrapper">
                         <div class="model-icon-inner">${gen.icon}</div>
                         ${gen.badge ? `<div class="model-badge">${gen.badge}</div>` : ''}
@@ -3485,8 +3487,7 @@ function setActiveGenerator(id) {
     const modelItems = document.querySelectorAll('.model-item');
     if (modelItems.length > 0) {
         modelItems.forEach(item => {
-            const onclickAttr = item.getAttribute('onclick') || '';
-            if (onclickAttr.includes(`'${id}'`) || onclickAttr.includes(`"${id}"`)) {
+            if (item.dataset.id === id) {
                 item.classList.add('active');
             } else {
                 item.classList.remove('active');
