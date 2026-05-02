@@ -3094,16 +3094,27 @@ async function generate() {
                 throw new Error("Server sedang bersiap (Cold Start). Silakan tunggu 5 detik dan klik Generate lagi.");
             }
             if (text.includes("<!DOCTYPE html>") || text.includes("<html>") || text.includes("<title>403")) {
-                throw new Error("Akses dibatasi sementara (403). Saran: Silakan tunggu 5-10 menit atau hubungi developer webapp.");
+                throw new Error("Akses dibatasi sementara. Silakan tunggu 5-10 Menit atau hubungi developer.");
             }
             throw new Error("Respon server tidak valid. Silakan tunggu 5 detik dan klik Generate lagi.");
         }
 
         if (data.error) {
             console.error("Proxy returned error:", data);
-            if (data.message && data.message.includes("blocked due to suspicious activity")) {
-                throw new Error("Maaf, akses sedang dibatasi oleh sistem (IP Blocked). Ini bersifat sementara. Saran: Silakan tunggu 5-10 menit atau hubungi developer webapp jika masalah berlanjut.");
+            
+            const errorMessage = data.message ? data.message.toLowerCase() : "";
+            
+            if (errorMessage.includes("blocked due to suspicious activity")) {
+                throw new Error("Akses dibatasi sementara. Silakan tunggu 5-10 Menit atau hubungi developer.");
             }
+            
+            // Handle Limit / Quota / Credits issues
+            if (data.status === 429 || data.status === 402 || 
+                errorMessage.includes("limit") || errorMessage.includes("quota") || 
+                errorMessage.includes("insufficient") || errorMessage.includes("credits")) {
+                throw new Error("Kuota Api key anda telah habis, silakan membuat api key baru.");
+            }
+
             throw new Error(data.message || "Gagal menghubungi API Freepik.");
         }
 

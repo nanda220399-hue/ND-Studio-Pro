@@ -448,7 +448,7 @@ async function startServer() {
           return res.status(200).json({ 
             error: true,
             status: 403,
-            message: "Akses dibatasi sementara (403). Saran: Silakan tunggu 5-10 menit atau hubungi developer webapp."
+            message: "Akses dibatasi sementara. Silakan tunggu 5-10 Menit atau hubungi developer."
           });
         }
         
