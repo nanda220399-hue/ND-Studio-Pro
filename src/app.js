@@ -3186,7 +3186,9 @@ async function generate() {
             generatorId: state.activeGenerator,
             prompt: state.currentPrompt || "",
             progress: 0,
-            status: 'Processing'
+            status: 'Processing',
+            pollCount: 0,
+            startTime: Date.now()
         });
         
         // Record generation for queue limit tracking
@@ -3195,8 +3197,12 @@ async function generate() {
         showToast("✨ Task berhasil dibuat! Sedang diproses...", "success");
         updateTasksAndResultsDOM();
         
-        // Add a small initial delay before polling to ensure task is registered
-        setTimeout(() => pollTaskStatus(taskId), 2000);
+        // Strategy: Delay initial poll based on output type
+        // Video takes much longer (min 60s), so wait 15s instead of 2s
+        const initialDelay = activeGen.outputType === 'video' ? 15000 : 3000;
+        console.log(`Initial polling delay set to ${initialDelay}ms for ${activeGen.outputType}`);
+        
+        setTimeout(() => pollTaskStatus(taskId), initialDelay);
 
     } catch (error) {
         console.error("Generate error:", error);
@@ -3495,11 +3501,35 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
             state.activeTasks.splice(currentTaskIndex, 1);
             updateTasksAndResultsDOM();
         } else {
-            // Still processing (PENDING, PROCESSING, etc.)
-            state.activeTasks[currentTaskIndex].progress = newProgress;
-            state.activeTasks[currentTaskIndex].status = status || 'Processing';
-            updateTasksAndResultsDOM();
-            setTimeout(() => pollTaskStatus(taskId, fallbackIndex), 5000);
+        // Still processing (PENDING, PROCESSING, etc.)
+        state.activeTasks[currentTaskIndex].progress = newProgress;
+        state.activeTasks[currentTaskIndex].status = status || 'Processing';
+        state.activeTasks[currentTaskIndex].pollCount = (state.activeTasks[currentTaskIndex].pollCount || 0) + 1;
+        
+        const pollCount = state.activeTasks[currentTaskIndex].pollCount;
+        
+        // Adaptive Polling Strategy:
+        // Increase interval as task stays longer in processing
+        let nextPollDelay = 5000; // Default 5s
+        
+        if (activeGen && activeGen.outputType === 'video') {
+            if (pollCount > 10) {
+                nextPollDelay = 20000; // After 10 polls (~2 mins), check every 20s
+            } else if (pollCount > 5) {
+                nextPollDelay = 15000; // After 5 polls (~1 min), check every 15s
+            } else {
+                nextPollDelay = 10000; // Initial video polls every 10s
+            }
+        } else {
+            // For images/music (usually faster)
+            if (pollCount > 5) {
+                nextPollDelay = 15000; // If still not done after 5 polls, slow down
+            }
+        }
+
+        console.log(`Polling task ${taskId} (Poll #${pollCount}). Next check in ${nextPollDelay}ms`);
+        updateTasksAndResultsDOM();
+        setTimeout(() => pollTaskStatus(taskId, fallbackIndex), nextPollDelay);
         }
     } catch (error) {
         console.error("Polling error:", error);
