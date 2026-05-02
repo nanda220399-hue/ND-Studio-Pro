@@ -3045,10 +3045,25 @@ async function generate() {
                 body.seed = parseInt(state.settings.seed);
             }
         } else if (activeGen.id === 'flux-2-turbo') {
+            let width = 1024;
+            let height = 1024;
+            const ar = state.settings.aspect_ratio || "16:9";
+            
+            if (ar === '16:9') {
+                width = 1440;
+                height = 810;
+            } else if (ar === '9:16') {
+                width = 810;
+                height = 1440;
+            } else if (ar === '1:1') {
+                width = 1024;
+                height = 1024;
+            }
+
             body = {
                 prompt: finalPrompt,
-                aspect_ratio: state.settings.aspect_ratio || "16:9",
                 guidance_scale: state.settings.guidance_scale !== undefined ? parseFloat(state.settings.guidance_scale) : 2.5,
+                image_size: { width, height },
                 seed: state.settings.seed !== '' && state.settings.seed !== undefined ? parseInt(state.settings.seed) : Math.floor(Math.random() * 4294967295),
                 enable_safety_checker: state.settings.safety_checker !== undefined ? state.settings.safety_checker : true
             };
