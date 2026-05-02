@@ -2933,6 +2933,24 @@ header {
     color: var(--accent-gold);
 }
 
+.tool-list-item.flash-highlight {
+    background: rgba(14, 165, 233, 0.1);
+    border: 1px solid rgba(14, 165, 233, 0.3);
+    color: #38bdf8;
+    font-weight: 600;
+}
+
+.tool-list-item.flash-highlight::before {
+    color: #38bdf8;
+    text-shadow: 0 0 8px rgba(14, 165, 233, 0.8);
+}
+
+.tool-list-item.flash-highlight:hover {
+    background: rgba(14, 165, 233, 0.2);
+    border-color: #38bdf8;
+    color: #fff;
+}
+
 @media (max-width: 600px) {
     .tools-grid-categories {
         grid-template-columns: 1fr;

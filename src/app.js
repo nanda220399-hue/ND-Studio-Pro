@@ -267,7 +267,7 @@ const GENERATORS = [
     {
         id: 'nano-banana-pro-flash',
         name: 'Nano Banana Pro Flash',
-        icon: '<div class="tool-icon-container tool-icon-image" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i data-lucide="zap" class="model-icon-lucide"></i></div>',
+        icon: '<div class="tool-icon-container tool-icon-image" style="background: linear-gradient(135deg, #0ea5e9, #2563eb);"><i data-lucide="zap" class="model-icon-lucide"></i></div>',
         badge: 'FLASH',
         description: 'Nano Banana Pro Flash (Gemini 3.1 Flash) - Faster variant optimized for quick image generation.',
         inputs: ['prompt', 'image', 'video', 'image3'],
@@ -1037,7 +1037,7 @@ function renderLandingPage() {
                         </div>
                         <div class="tools-list">
                             <div class="tool-list-item"><span>Nano Banana Pro (Gemini 3 - 4K)</span></div>
-                            <div class="tool-list-item"><span>Nano Banana Pro Flash (Super Fast)</span></div>
+                            <div class="tool-list-item flash-highlight"><span>Nano Banana Pro Flash (Super Fast)</span></div>
                             <div class="tool-list-item"><span>Imagen 4 Ultra (Ultimate Quality)</span></div>
                             <div class="tool-list-item"><span>Imagen 4 Fast (Optimized Speed)</span></div>
                             <div class="tool-list-item"><span>SeeDream 4.5 Edit (Subject Consistency)</span></div>
