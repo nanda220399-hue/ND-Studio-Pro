@@ -8,11 +8,20 @@
     {
       "src": "package.json",
       "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
+      "config": {
+        "distDir": "dist"
+      }
     }
   ],
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/server.ts" },
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+    {
+      "source": "/api/(.*)",
+      "destination": "/server.ts"
+    },
+    {
+      "source": "/((?!api|logo.png|favicon.svg|assets/).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "cleanUrls": true
 }
