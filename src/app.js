@@ -3045,25 +3045,10 @@ async function generate() {
                 body.seed = parseInt(state.settings.seed);
             }
         } else if (activeGen.id === 'flux-2-turbo') {
-            let width = 1024;
-            let height = 1024;
-            const ar = state.settings.aspect_ratio || "16:9";
-            
-            if (ar === '16:9') {
-                width = 1440;
-                height = 810;
-            } else if (ar === '9:16') {
-                width = 810;
-                height = 1440;
-            } else if (ar === '1:1') {
-                width = 1024;
-                height = 1024;
-            }
-
             body = {
                 prompt: finalPrompt,
+                aspect_ratio: state.settings.aspect_ratio || "16:9",
                 guidance_scale: state.settings.guidance_scale !== undefined ? parseFloat(state.settings.guidance_scale) : 2.5,
-                image_size: { width, height },
                 seed: state.settings.seed !== '' && state.settings.seed !== undefined ? parseInt(state.settings.seed) : Math.floor(Math.random() * 4294967295),
                 enable_safety_checker: state.settings.safety_checker !== undefined ? state.settings.safety_checker : true
             };
@@ -3090,13 +3075,21 @@ async function generate() {
             data = JSON.parse(text);
         } catch (e) {
             console.error("Failed to parse JSON response:", text);
-            if (text.includes("Starting Server") || text.includes("Ready in")) {
+            if (text.includes("Starting Server") || text.includes("Ready in") || text.includes("Cold Start")) {
                 throw new Error("Server sedang bersiap (Cold Start). Silakan tunggu 5 detik dan klik Generate lagi.");
             }
-            if (text.includes("<!DOCTYPE html>") || text.includes("<!doctype html>")) {
-                throw new Error("API Freepik sedang mengalami gangguan (Error 500/502). Silakan coba lagi nanti.");
+            if (text.includes("<!DOCTYPE html>") || text.includes("<html>") || text.includes("<title>403")) {
+                throw new Error("Akses dibatasi sementara (403). Saran: Silakan tunggu 5-10 menit atau hubungi developer webapp.");
             }
-            throw new Error("Server sedang sibuk. Silakan tunggu 5 detik dan klik Generate lagi.");
+            throw new Error("Respon server tidak valid. Silakan tunggu 5 detik dan klik Generate lagi.");
+        }
+
+        if (data.error) {
+            console.error("Proxy returned error:", data);
+            if (data.message && data.message.includes("blocked due to suspicious activity")) {
+                throw new Error("Maaf, akses sedang dibatasi oleh sistem (IP Blocked). Ini bersifat sementara. Saran: Silakan tunggu 5-10 menit atau hubungi developer webapp jika masalah berlanjut.");
+            }
+            throw new Error(data.message || "Gagal menghubungi API Freepik.");
         }
 
         if (!response.ok) {
@@ -3265,10 +3258,15 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
             data = JSON.parse(text);
         } catch (e) {
             console.error("Failed to parse JSON response in polling:", text);
-            if (text.includes("Starting Server...")) {
-                console.log("Server is restarting, will retry polling...");
-            }
             return; // Ignore parse errors in polling and try again later
+        }
+        
+        if (data.error) {
+            console.error("Polling proxy returned error:", data);
+            if (data.status === 404 && fallbackIndex < fallbacks.length - 1) {
+                return pollTaskStatus(taskId, fallbackIndex + 1);
+            }
+            return;
         }
         
         // Re-find task index in case it was modified during the await

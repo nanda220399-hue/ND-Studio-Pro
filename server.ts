@@ -413,42 +413,58 @@ async function startServer() {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
-          'Accept': 'application/json',
+          'Accept': '*/*',
           'Content-Type': 'application/json',
-          'x-api-key': cleanKey,
           'x-freepik-api-key': cleanKey,
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive'
         },
         body: JSON.stringify(body)
       });
 
       const contentType = response.headers.get("content-type");
       console.log(`Proxy POST Response Status: ${response.status} (${response.statusText})`);
-      console.log(`Proxy POST Content-Type: ${contentType}`);
-
+      
       const text = await response.text();
       let data;
+      
       if (contentType && contentType.includes("application/json")) {
         try {
           data = JSON.parse(text);
         } catch (e) {
-          data = { message: text };
+          data = { message: text, error: "Failed to parse API JSON response" };
         }
       } else {
-        data = { message: text };
+        data = { message: text, isHtml: text.includes("<html") || text.includes("<!DOCTYPE") };
       }
 
       if (!response.ok) {
-        console.error(`Freepik API Error (${response.status}) POST to ${endpoint}:`, JSON.stringify(data, null, 2));
-      } else {
-        console.log(`Freepik API Success POST to ${endpoint}`);
-        console.log(`Freepik API Response Data:`, JSON.stringify(data, null, 2));
+        console.error(`Freepik API Error (${response.status}) POST to ${endpoint}:`, typeof data === 'object' ? JSON.stringify(data).substring(0, 500) : data);
+        
+        // If it's a 403 Forbidden from Cloudflare (HTML), provide a better message
+        if (response.status === 403 && data.isHtml) {
+          return res.status(200).json({ 
+            error: true,
+            status: 403,
+            message: "Akses dibatasi sementara (403). Saran: Silakan tunggu 5-10 menit atau hubungi developer webapp."
+          });
+        }
+        
+        // Wrap error in 200 to avoid WAF interception of error codes
+        return res.status(200).json({
+          error: true,
+          status: response.status,
+          message: data.message || data.error || `API Error ${response.status}`,
+          details: data
+        });
       }
       
-      res.status(response.status).json(data);
+      res.status(200).json(data);
     } catch (error: any) {
       console.error("Proxy Generate Error:", error.message);
-      res.status(500).json({ message: "Gagal menghubungi API Freepik (Proxy Error)", details: error.message });
+      res.status(200).json({ error: true, message: "Gagal menghubungi API Freepik (Proxy Error)", details: error.message });
     }
   });
 
@@ -485,15 +501,14 @@ async function startServer() {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'x-api-key': cleanKey,
           'x-freepik-api-key': cleanKey,
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept-Language': 'en-US,en;q=0.9'
         }
       });
 
       const contentType = response.headers.get("content-type");
-      console.log(`Proxy Response Status: ${response.status} (${response.statusText})`);
-      console.log(`Proxy Content-Type: ${contentType}`);
+      console.log(`Proxy Status GET Response Status: ${response.status}`);
 
       const text = await response.text();
       let data;
@@ -501,22 +516,27 @@ async function startServer() {
         try {
           data = JSON.parse(text);
         } catch (e) {
-          data = { message: text };
+          data = { message: text, error: "Failed to parse JSON" };
         }
       } else {
-        data = { message: text };
+        data = { message: text, isHtml: text.includes("<html") };
       }
 
       if (!response.ok) {
-        console.error(`Freepik API Error (${response.status}) GET to ${fullUrl}:`, JSON.stringify(data, null, 2));
-      } else {
-        console.log(`Freepik API Success GET to ${fullUrl}`);
+        console.error(`Freepik API Error (${response.status}) GET to ${fullUrl}:`, typeof data === 'object' ? JSON.stringify(data).substring(0, 500) : data);
+        
+        return res.status(200).json({
+          error: true,
+          status: response.status,
+          message: data.message || `API Error ${response.status}`,
+          isHtml: data.isHtml
+        });
       }
       
-      res.status(response.status).json(data);
+      res.status(200).json(data);
     } catch (error: any) {
       console.error("Proxy Status Error:", error.message);
-      res.status(500).json({ message: "Gagal menghubungi API Freepik (Proxy Error)", details: error.message });
+      res.status(200).json({ error: true, message: "Gagal menghubungi API Freepik (Proxy Error)", details: error.message });
     }
   });
 
