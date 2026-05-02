@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&family=Space+Grotesk:wght@500;700&family=Outfit:wght@600;800&family=JetBrains+Mono:wght@500&display=swap');
 
 /* ND Studio AI - Custom Styles */
 :root {
@@ -15,6 +15,10 @@
     --shadow: 0 8px 32px rgba(0,0,0,0.5);
     --font-premium: 'Playfair Display', serif;
     --font-sans: 'Plus Jakarta Sans', sans-serif;
+    --font-syne: 'Syne', sans-serif;
+    --font-space: 'Space Grotesk', sans-serif;
+    --font-outfit: 'Outfit', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
     --border-color: rgba(212, 175, 55, 0.2);
 }
 
@@ -137,32 +141,11 @@ header {
     gap: 12px;
 }
 
-.premium-logo {
-    position: relative;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.logo-diamond {
-    position: absolute;
-    width: 28px;
-    height: 28px;
-    background: var(--primary-gradient);
-    transform: rotate(45deg);
-    border-radius: 4px;
-    box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
-}
-
-.logo-text {
-    position: relative;
-    z-index: 1;
-    color: #000;
-    font-weight: 900;
-    font-size: 14px;
-    letter-spacing: -0.5px;
+.app-logo-img {
+    height: 38px;
+    width: auto;
+    object-fit: contain;
+    display: block;
 }
 
 .brand-name {
@@ -2314,6 +2297,101 @@ header {
 }
 
 /* Footer Styles */
+/* Marquee Styling */
+.tools-marquee-section {
+    width: 100%;
+    overflow: hidden;
+    padding: 60px 0;
+    background: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+}
+
+.tools-marquee-section::before,
+.tools-marquee-section::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 150px;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.tools-marquee-section::before {
+    left: 0;
+    background: linear-gradient(to right, var(--bg-color), transparent);
+}
+
+.tools-marquee-section::after {
+    right: 0;
+    background: linear-gradient(to left, var(--bg-color), transparent);
+}
+
+.marquee-container {
+    display: flex;
+    white-space: nowrap;
+    overflow: hidden;
+    position: relative;
+    user-select: none;
+}
+
+.marquee-track {
+    display: flex;
+    animation: marquee-scroll 60s linear infinite;
+}
+
+.marquee-track-reverse {
+    display: flex;
+    animation: marquee-scroll-reverse 50s linear infinite;
+    margin-top: 24px;
+}
+
+.marquee-item {
+    font-size: 32px;
+    font-weight: 800;
+    margin: 0 40px;
+    color: var(--text-main);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    opacity: 0.8;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.marquee-item:hover {
+    opacity: 1;
+    transform: scale(1.05);
+    color: var(--accent-gold);
+}
+
+.marquee-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent-gold);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent-gold);
+}
+
+/* Font Variations */
+.font-syne { font-family: var(--font-syne); font-weight: 800; letter-spacing: -0.02em; }
+.font-space { font-family: var(--font-space); text-transform: none; }
+.font-outfit { font-family: var(--font-outfit); font-weight: 800; font-style: italic; }
+.font-premium { font-family: var(--font-premium); text-transform: uppercase; font-style: italic; }
+.font-mono { font-family: var(--font-mono); font-size: 28px; opacity: 0.6; }
+
+@keyframes marquee-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee-scroll-reverse {
+    0% { transform: translateX(-50%); }
+    100% { transform: translateX(0); }
+}
+
 .app-footer {
     text-align: center;
     padding: 40px 20px 32px;

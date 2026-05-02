@@ -916,16 +916,42 @@ function renderLandingPage() {
         'cOfZFfnOAd5', 'cOfZFfnOAdE', 'cOfZFfnOAdG'
     ];
 
+    const toolNames = [
+        'Kling 3 Omni Pro', 'Nano Banana Pro', 'Veo 3.1 Google AI', 
+        'Imagen 4 Ultra', 'Flux 2 Realistic', 'Seedance Pro', 
+        'Pixverse V5', 'ElevenLabs Turbo', 'Kling 30s Motion', 
+        'Gemini 2.5 Flash', 'Runway Gen', 'SeeDream 4.5', 
+        'Music AI Generation', 'Voice Over Pro', 'Flux 2 Turbo',
+        'Kling 2.6 Pro', 'Imagen 4 Fast', 'Kling 3 Standard'
+    ];
+
+    const fonts = ['font-syne', 'font-space', 'font-outfit', 'font-premium', 'font-mono'];
+
+    const renderMarqueeRow = (items, isReverse = false) => {
+        const doubledItems = [...items, ...items]; // Repeat for seamless scroll
+        return `
+            <div class="marquee-container">
+                <div class="${isReverse ? 'marquee-track-reverse' : 'marquee-track'}">
+                    ${doubledItems.map((name, i) => {
+                        const fontClass = fonts[i % fonts.length];
+                        return `
+                            <div class="marquee-item ${fontClass}">
+                                ${name}
+                                <div class="marquee-dot"></div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    };
+
     return `
         <div class="landing-page">
             <!-- Floating Nav -->
             <nav class="landing-nav">
                 <div class="header-left">
-                    <div class="premium-logo">
-                        <div class="logo-diamond"></div>
-                        <div class="logo-text">ND</div>
-                    </div>
-                    <div class="brand-name">ND STUDIO PRO</div>
+                    <img src="./logo.png" alt="ND Studio Pro" class="app-logo-img">
                 </div>
                 <div class="landing-nav-actions">
                     <button class="nav-link" onclick="navigateToLogin()">Login</button>
@@ -975,6 +1001,12 @@ function renderLandingPage() {
                         `).join('')}
                     </div>
                 </div>
+            </section>
+
+            <!-- Tools Marquee -->
+            <section class="tools-marquee-section">
+                ${renderMarqueeRow(toolNames)}
+                ${renderMarqueeRow([...toolNames].reverse(), true)}
             </section>
 
             <!-- Tools & Features Section -->
@@ -1145,11 +1177,7 @@ function renderLandingPage() {
             <footer class="landing-footer">
                 <div class="footer-top">
                     <div class="footer-brand">
-                        <div class="premium-logo">
-                            <div class="logo-diamond"></div>
-                            <div class="logo-text">ND</div>
-                        </div>
-                        <h3>ND STUDIO PRO</h3>
+                        <img src="./logo.png" alt="ND Studio Pro" class="app-logo-img" style="height: 70px; margin-bottom: 12px;">
                         <p>Ekosistem Video AI Profesional.</p>
                     </div>
                     <div class="footer-links">
@@ -1404,11 +1432,7 @@ function renderHeader() {
     return `
         <header>
             <div class="header-left" onclick="navigateToLanding()" style="cursor: pointer;">
-                <div class="premium-logo">
-                    <div class="logo-diamond"></div>
-                    <div class="logo-text">ND</div>
-                </div>
-                <div class="brand-name">ND STUDIO PRO</div>
+                <img src="./logo.png" alt="ND Studio Pro" class="app-logo-img">
             </div>
             <div class="header-actions">
                 ${state.isAdmin ? `
@@ -1474,10 +1498,7 @@ function renderSetupPage() {
         <div class="setup-page">
             <div class="setup-hero">
                 <div class="setup-logo-large" style="background: transparent; box-shadow: none;">
-                    <div class="premium-logo" style="width: 80px; height: 80px;">
-                        <div class="logo-diamond" style="width: 60px; height: 60px; box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);"></div>
-                        <div class="logo-text" style="font-size: 32px;">ND</div>
-                    </div>
+                    <img src="./logo.png" alt="ND Studio Pro" style="height: 100px; width: auto; object-fit: contain;">
                 </div>
                 <h1 style="font-size: 24px; line-height: 1.3; margin-top: 16px;">Selamat Datang di<br><span style="color: var(--accent-gold); font-weight: 900; font-family: var(--font-premium);">ND STUDIO PRO</span></h1>
                 <p>AI Video Generator dengan 10+ model AI</p>
