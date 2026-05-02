@@ -1463,7 +1463,7 @@ function renderFooter() {
                     <span class="footer-privacy">Local API Storage</span>
                 </div>
                 <div class="app-footer-copyright">©Nanda Studio Pro</div>
-                <div class="app-footer-powered">POWERED BY <a href="https://freepik.com" target="_blank" class="app-footer-link">FREEPIK API</a></div>
+                <div class="app-footer-powered">POWERED BY FREEPIK API</div>
             </div>
         </footer>
     `;
