@@ -55,6 +55,26 @@ async function startServer() {
 
   app.use(express.json({ limit: '50mb' }));
   
+  // Serve public directory explicitly
+  const publicPath = path.join(__dirname, 'public');
+  console.log(`Checking public directory at: ${publicPath}`);
+  if (fs.existsSync(publicPath)) {
+    console.log("Public directory found.");
+    app.use(express.static(publicPath));
+  } else {
+    console.error("Public directory NOT found!");
+  }
+
+  // Explicit route for logo.png as a fail-safe
+  app.get('/logo.png', (req, res) => {
+    const logoPath = path.join(__dirname, 'public', 'logo.png');
+    if (fs.existsSync(logoPath)) {
+      res.sendFile(logoPath);
+    } else {
+      res.status(404).send('Logo not found');
+    }
+  });
+  
   // Serve uploads publicly with CORS enabled
   app.use('/uploads', (req, res, next) => {
     res.set('Access-Control-Allow-Origin', '*');
