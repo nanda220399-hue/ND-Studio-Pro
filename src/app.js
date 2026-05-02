@@ -794,7 +794,6 @@ function renderContent() {
             } else {
                 app.innerHTML = `
                     ${renderLandingPage()}
-                    ${renderFooter()}
                 `;
             }
             if (window.lucide) lucide.createIcons();
