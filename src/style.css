@@ -2934,20 +2934,20 @@ header {
 }
 
 .tool-list-item.flash-highlight {
-    background: rgba(14, 165, 233, 0.1);
-    border: 1px solid rgba(14, 165, 233, 0.3);
-    color: #38bdf8;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: var(--accent-gold);
     font-weight: 600;
 }
 
 .tool-list-item.flash-highlight::before {
-    color: #38bdf8;
-    text-shadow: 0 0 8px rgba(14, 165, 233, 0.8);
+    color: var(--accent-gold);
+    text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
 }
 
 .tool-list-item.flash-highlight:hover {
-    background: rgba(14, 165, 233, 0.2);
-    border-color: #38bdf8;
+    background: rgba(212, 175, 55, 0.2);
+    border-color: var(--accent-gold);
     color: #fff;
 }
 

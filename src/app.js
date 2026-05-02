@@ -267,7 +267,7 @@ const GENERATORS = [
     {
         id: 'nano-banana-pro-flash',
         name: 'Nano Banana Pro Flash',
-        icon: '<div class="tool-icon-container tool-icon-image" style="background: linear-gradient(135deg, #0ea5e9, #2563eb);"><i data-lucide="zap" class="model-icon-lucide"></i></div>',
+        icon: '<div class="tool-icon-container tool-icon-image" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i data-lucide="zap" class="model-icon-lucide"></i></div>',
         badge: 'FLASH',
         description: 'Nano Banana Pro Flash (Gemini 3.1 Flash) - Faster variant optimized for quick image generation.',
         inputs: ['prompt', 'image', 'video', 'image3'],
