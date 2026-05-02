@@ -951,7 +951,7 @@ function renderLandingPage() {
             <!-- Floating Nav -->
             <nav class="landing-nav">
                 <div class="header-left">
-                    <img src="./logo.png" alt="ND Studio Pro" class="app-logo-img">
+                    <img src="/logo.png" alt="ND Studio Pro" class="app-logo-img">
                 </div>
                 <div class="landing-nav-actions">
                     <button class="nav-link" onclick="navigateToLogin()">Login</button>
@@ -1177,7 +1177,7 @@ function renderLandingPage() {
             <footer class="landing-footer">
                 <div class="footer-top">
                     <div class="footer-brand">
-                        <img src="./logo.png" alt="ND Studio Pro" class="app-logo-img" style="height: 70px; margin-bottom: 12px;">
+                        <img src="/logo.png" alt="ND Studio Pro" class="app-logo-img" style="height: 70px; margin-bottom: 12px;">
                         <p>Ekosistem Video AI Profesional.</p>
                     </div>
                     <div class="footer-links">
@@ -1432,7 +1432,7 @@ function renderHeader() {
     return `
         <header>
             <div class="header-left" onclick="navigateToLanding()" style="cursor: pointer;">
-                <img src="./logo.png" alt="ND Studio Pro" class="app-logo-img">
+                <img src="/logo.png" alt="ND Studio Pro" class="app-logo-img">
             </div>
             <div class="header-actions">
                 ${state.isAdmin ? `
@@ -1498,7 +1498,7 @@ function renderSetupPage() {
         <div class="setup-page">
             <div class="setup-hero">
                 <div class="setup-logo-large" style="background: transparent; box-shadow: none;">
-                    <img src="./logo.png" alt="ND Studio Pro" style="height: 100px; width: auto; object-fit: contain;">
+                    <img src="/logo.png" alt="ND Studio Pro" style="height: 100px; width: auto; object-fit: contain;">
                 </div>
                 <h1 style="font-size: 24px; line-height: 1.3; margin-top: 16px;">Selamat Datang di<br><span style="color: var(--accent-gold); font-weight: 900; font-family: var(--font-premium);">ND STUDIO PRO</span></h1>
                 <p>AI Video Generator dengan 10+ model AI</p>
