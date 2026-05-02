@@ -4,11 +4,18 @@
     {
       "src": "server.ts",
       "use": "@vercel/node"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
     }
   ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/server.ts" },
-    { "source": "/(.*)", "destination": "/server.ts" }
+    { "source": "/((?!api|logo.png|favicon.svg|assets/).*)", "destination": "/index.html" }
   ],
   "cleanUrls": true
 }
