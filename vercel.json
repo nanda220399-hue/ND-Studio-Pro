@@ -19,7 +19,19 @@
       "destination": "/server.ts"
     },
     {
-      "source": "/((?!api|logo.png|favicon.svg|assets/).*)",
+      "source": "/logo.png",
+      "destination": "/logo.png"
+    },
+    {
+      "source": "/favicon.svg",
+      "destination": "/favicon.svg"
+    },
+    {
+      "source": "/assets/(.*)",
+      "destination": "/assets/$1"
+    },
+    {
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
