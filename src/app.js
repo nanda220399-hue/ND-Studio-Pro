@@ -3112,12 +3112,12 @@ async function generate() {
         } catch (e) {
             console.error("Failed to parse JSON response:", text);
             if (text.includes("Starting Server") || text.includes("Ready in") || text.includes("Cold Start")) {
-                throw new Error("Server sedang bersiap (Cold Start). Silakan tunggu 5 detik dan klik Generate lagi.");
+                throw new Error("Server sedang bersiap (Cold Start). Silakan tunggu 10 detik dan klik Generate lagi.");
             }
             if (text.includes("<!DOCTYPE html>") || text.includes("<html>") || text.includes("<title>403")) {
                 throw new Error("Akses dibatasi sementara. Silakan tunggu 5-10 Menit atau hubungi developer.");
             }
-            throw new Error("Respon server tidak valid. Silakan tunggu 5 detik dan klik Generate lagi.");
+            throw new Error("Respon server tidak valid. Silakan tunggu 10 detik dan klik Generate lagi.");
         }
 
         if (data.error) {
@@ -3229,10 +3229,10 @@ async function generate() {
         console.error("Generate error:", error);
         showToast(error.message, "error");
     } finally {
-        state.cooldownUntil = Date.now() + 5000; // 5 seconds cooldown
+        state.cooldownUntil = Date.now() + 10000; // 10 seconds cooldown
         if (btn) {
             const activeGen = GENERATORS.find(g => g.id === state.activeGenerator) || GENERATORS[0];
-            let secondsLeft = 5;
+            let secondsLeft = 10;
             btn.innerHTML = `⏳ Cooldown (${secondsLeft}s)...`;
             
             const countdownInterval = setInterval(() => {
