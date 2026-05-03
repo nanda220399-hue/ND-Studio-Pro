@@ -1496,8 +1496,8 @@ function renderSetupPage() {
     return `
         <div class="setup-page">
             <div class="setup-hero">
-                <div class="setup-logo-large" style="background: transparent; box-shadow: none;">
-                    <img src="https://i.ibb.co.com/6c7LC9vh/logo.png" alt="ND Studio Pro" style="height: 100px; width: auto; object-fit: contain;">
+                <div class="setup-logo-large" style="background: transparent; box-shadow: none; width: auto; height: auto; border: none; overflow: visible; margin-bottom: 0;">
+                    <img src="https://i.ibb.co.com/6c7LC9vh/logo.png" alt="ND Studio Pro" style="height: 60px; width: auto; max-width: 280px; object-fit: contain;">
                 </div>
                 <h1 style="font-size: 24px; line-height: 1.3; margin-top: 16px;">Selamat Datang di<br><span style="color: var(--accent-gold); font-weight: 900; font-family: var(--font-premium);">ND STUDIO PRO</span></h1>
                 <p>AI Video Generator dengan 10+ model AI</p>
