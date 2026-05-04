@@ -3218,8 +3218,8 @@ async function generate() {
         updateTasksAndResultsDOM();
         
         // Strategy: Delay initial poll based on output type
-        // Video takes much longer (min 60s), so wait 15s instead of 2s
-        const initialDelay = activeGen.outputType === 'video' ? 15000 : 3000;
+        // Video takes much longer, so wait 20s initially instead of 6s
+        const initialDelay = activeGen.outputType === 'video' ? 20000 : 6000;
         console.log(`Initial polling delay set to ${initialDelay}ms for ${activeGen.outputType}`);
         
         setTimeout(() => pollTaskStatus(taskId), initialDelay);
@@ -3471,13 +3471,13 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
                 const maxRetries = 6; // Total ~30 seconds of retrying for URL
                 
                 if (retryCount < maxRetries) {
-                    console.log(`Task ${taskId} is ${status} but URL is missing. Retrying in 5s (${retryCount + 1}/${maxRetries})...`);
+                    console.log(`Task ${taskId} is ${status} but URL is missing. Retrying in 10s (${retryCount + 1}/${maxRetries})...`);
                     state.activeTasks[currentTaskIndex].urlRetryCount = retryCount + 1;
                     state.activeTasks[currentTaskIndex].status = 'Finalizing...';
                     state.activeTasks[currentTaskIndex].progress = 99;
                     updateTasksAndResultsDOM();
                     
-                    setTimeout(() => pollTaskStatus(taskId, fallbackIndex), 5000);
+                    setTimeout(() => pollTaskStatus(taskId, fallbackIndex), 10000);
                     return;
                 }
 
@@ -3528,22 +3528,21 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
         
         const pollCount = state.activeTasks[currentTaskIndex].pollCount;
         
-        // Adaptive Polling Strategy:
-        // Increase interval as task stays longer in processing
-        let nextPollDelay = 5000; // Default 5s
+        // Adaptive Polling Strategy (Slowed down to reduce IP block risk):
+        let nextPollDelay = 8000; // Default 8s for images/others
         
         if (activeGen && activeGen.outputType === 'video') {
             if (pollCount > 10) {
-                nextPollDelay = 20000; // After 10 polls (~2 mins), check every 20s
+                nextPollDelay = 30000; // After 10 polls, check every 30s
             } else if (pollCount > 5) {
-                nextPollDelay = 15000; // After 5 polls (~1 min), check every 15s
+                nextPollDelay = 20000; // After 5 polls, check every 20s
             } else {
-                nextPollDelay = 10000; // Initial video polls every 10s
+                nextPollDelay = 15000; // Initial video polls every 15s
             }
         } else {
             // For images/music (usually faster)
             if (pollCount > 5) {
-                nextPollDelay = 15000; // If still not done after 5 polls, slow down
+                nextPollDelay = 20000; // If still not done after 5 polls, slow down significantly
             }
         }
 
