@@ -772,10 +772,43 @@ function renderContent() {
         // 1. Loading State
         if (state.isAuthLoading) {
             app.innerHTML = `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 20px; background: #0a0a0a;">
-                    <div class="spinner" style="width: 40px; height: 40px; border: 4px solid rgba(212, 175, 55, 0.1); border-top: 4px solid var(--accent-gold); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                    <p style="color: var(--text-muted); font-size: 14px; font-weight: 500;">Menghubungkan ke ND STUDIO...</p>
-                    <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 24px; background: #000; position: relative; overflow: hidden;">
+                    <!-- Background Glow Effect -->
+                    <div style="position: absolute; width: 300px; height: 300px; background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%); border-radius: 50%; animation: pulse-glow 3s ease-in-out infinite;"></div>
+                    
+                    <div class="loading-logo-container" style="position: relative; z-index: 2; animation: logo-entrance 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);">
+                        <img src="https://i.ibb.co.com/6c7LC9vh/logo.png" alt="ND Studio Pro" style="height: 60px; width: auto; object-fit: contain; filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.3)); animation: logo-float 3s ease-in-out infinite;">
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 2;">
+                        <p style="color: var(--accent-gold); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin: 0; opacity: 0.8; animation: text-fade 2s ease-in-out infinite;">ND STUDIO PRO</p>
+                        <div style="width: 120px; height: 2px; background: rgba(212, 175, 55, 0.1); border-radius: 10px; overflow: hidden; position: relative;">
+                            <div style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, var(--accent-gold), transparent); animation: loading-bar 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;"></div>
+                        </div>
+                    </div>
+
+                    <style>
+                        @keyframes logo-entrance {
+                            0% { transform: scale(0.8); opacity: 0; }
+                            100% { transform: scale(1); opacity: 1; }
+                        }
+                        @keyframes logo-float {
+                            0%, 100% { transform: translateY(0); }
+                            50% { transform: translateY(-10px); }
+                        }
+                        @keyframes pulse-glow {
+                            0%, 100% { transform: scale(1); opacity: 0.5; }
+                            50% { transform: scale(1.2); opacity: 1; }
+                        }
+                        @keyframes text-fade {
+                            0%, 100% { opacity: 0.4; }
+                            50% { opacity: 1; }
+                        }
+                        @keyframes loading-bar {
+                            0% { left: -100%; }
+                            100% { left: 100%; }
+                        }
+                    </style>
                 </div>
             `;
             return;
