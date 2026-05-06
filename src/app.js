@@ -777,7 +777,7 @@ function renderContent() {
                     <div style="position: absolute; width: 300px; height: 300px; background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%); border-radius: 50%; animation: pulse-glow 3s ease-in-out infinite;"></div>
                     
                     <div class="loading-logo-container" style="position: relative; z-index: 2; animation: logo-entrance 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);">
-                        <img src="https://i.ibb.co.com/6c7LC9vh/logo.png" alt="ND Studio Pro" style="height: 60px; width: auto; object-fit: contain; filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.3)); animation: logo-float 3s ease-in-out infinite;">
+                        <img src="https://i.ibb.co.com/6c7LC9vh/logo.png" alt="ND Studio Pro" style="height: 40px; width: auto; object-fit: contain; filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.3)); animation: logo-float 3s ease-in-out infinite;">
                     </div>
 
                     <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 2;">
