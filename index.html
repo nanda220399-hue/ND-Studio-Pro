@@ -54,6 +54,21 @@
         </div>
     </div>
 
+    <!-- Modal Confirm -->
+    <div id="modal-confirm" class="modal hidden">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div style="background: rgba(250, 82, 82, 0.1); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: #fa5252;">
+                <i data-lucide="alert-triangle" style="width: 30px; height: 30px;"></i>
+            </div>
+            <h3 id="confirm-title">Konfirmasi Hapus</h3>
+            <p id="confirm-message" style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px; line-height: 1.5;">Apakah Anda yakin ingin melakukan tindakan ini?</p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="btn-confirm-yes" class="btn-primary" style="background: #fa5252; color: white;">Yakin</button>
+                <button id="btn-confirm-no" class="btn-secondary" onclick="toggleModal('modal-confirm', false)">Tidak</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast-container"></div>
 

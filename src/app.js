@@ -65,6 +65,19 @@ let state = {
     }
 };
 
+let confirmCallback = null;
+
+function showConfirmModal(title, message, onConfirm) {
+    const titleEl = document.getElementById('confirm-title');
+    const msgEl = document.getElementById('confirm-message');
+    if (titleEl) titleEl.innerText = title;
+    if (msgEl) msgEl.innerText = message;
+    
+    confirmCallback = onConfirm;
+    toggleModal('modal-confirm', true);
+    if (window.lucide) lucide.createIcons();
+}
+
 // --- FIRESTORE ERROR HANDLING ---
 
 const OperationType = {
@@ -580,41 +593,55 @@ async function rejectUser(uid) {
 
 async function deleteUserAccount(uid) {
     if (!state.isAdmin) return;
-    try {
-        await deleteDoc(doc(db, 'users', uid));
-        showToast("🗑️ Akun pengguna berhasil dihapus.", "success");
-    } catch (error) {
-        handleFirestoreError(error, OperationType.DELETE, 'users/' + uid);
-    }
+    
+    showConfirmModal(
+        "Hapus Akun Pengguna",
+        "Apakah Anda yakin ingin menghapus akun ini secara permanen? Tindakan ini tidak dapat dibatalkan.",
+        async () => {
+            try {
+                await deleteDoc(doc(db, 'users', uid));
+                showToast("🗑️ Akun pengguna berhasil dihapus.", "success");
+            } catch (error) {
+                handleFirestoreError(error, OperationType.DELETE, 'users/' + uid);
+            }
+        }
+    );
 }
 
 async function clearCloudinaryStorage() {
     if (!state.isAdmin) return;
-    const btn = document.getElementById('btn-clear-cloudinary');
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<i data-lucide="loader" class="spin"></i> Menghapus...';
-        if (window.lucide) lucide.createIcons();
-    }
     
-    try {
-        const response = await fetch('/api/admin/clear-cloudinary', { method: 'POST' });
-        const data = await response.json();
-        if (data.success) {
-            showToast("✅ Berhasil mengosongkan storage Cloudinary.", "success");
-        } else {
-            throw new Error(data.message);
+    showConfirmModal(
+        "Kosongkan Storage",
+        "Apakah Anda yakin ingin menghapus semua file referensi di Cloudinary? Ini akan mengosongkan kuota penyimpanan Anda.",
+        async () => {
+            const btn = document.getElementById('btn-clear-cloudinary');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i data-lucide="loader" class="spin"></i> Menghapus...';
+                if (window.lucide) lucide.createIcons();
+            }
+            
+            try {
+                const response = await fetch('/api/admin/clear-cloudinary', { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    showToast("✅ Berhasil mengosongkan storage Cloudinary.", "success");
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                console.error("Clear Cloudinary error:", error);
+                showToast("❌ Gagal menghapus storage: " + error.message, "error");
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i data-lucide="trash-2"></i> Kosongkan Storage Cloudinary';
+                    if (window.lucide) lucide.createIcons();
+                }
+            }
         }
-    } catch (error) {
-        console.error("Clear Cloudinary error:", error);
-        showToast("❌ Gagal menghapus storage: " + error.message, "error");
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<i data-lucide="trash-2"></i> Kosongkan Storage Cloudinary';
-            if (window.lucide) lucide.createIcons();
-        }
-    }
+    );
 }
 
 async function toggleApiKeyVisibility() {
@@ -720,6 +747,17 @@ function init() {
     
     const btnCloseModal = document.getElementById('btn-close-modal');
     if (btnCloseModal) btnCloseModal.addEventListener('click', () => toggleModal('modal-disclaimer', false));
+
+    const btnConfirmYes = document.getElementById('btn-confirm-yes');
+    if (btnConfirmYes) {
+        btnConfirmYes.addEventListener('click', () => {
+            if (typeof confirmCallback === 'function') {
+                confirmCallback();
+            }
+            toggleModal('modal-confirm', false);
+            confirmCallback = null;
+        });
+    }
 
     // Listen for authentication completion from popup
     window.addEventListener('message', (event) => {
