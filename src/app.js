@@ -506,6 +506,7 @@ function initAuth() {
                     isApproved: state.isAdmin, // Admin is auto-approved
                     role: state.isAdmin ? 'admin' : 'user',
                     apiKey: '',
+                    lastActive: serverTimestamp(), // Initial online status
                     createdAt: serverTimestamp()
                 };
                 try {
@@ -568,6 +569,18 @@ function initAuth() {
     }, (error) => {
         console.warn("Global stats listener error:", error);
     });
+
+    // Auto-refresh UI every 1 minute to keep "Online" and "Time Ago" status fresh
+    setInterval(() => {
+        if (state.user && state.userDoc) {
+            renderContent();
+            
+            // Juga pastikan user yang sedang buka web tetap dianggap online di DB (Hemat!)
+            if (state.userDoc.isApproved) {
+                updateActivity();
+            }
+        }
+    }, 60000);
 }
 
 async function updateActivity() {
@@ -1473,10 +1486,26 @@ function renderAdminDashboard() {
                         <p style="color: var(--text-muted); font-size: 13px; margin:0;">Kelola akses pengguna ND STUDIO PRO (${state.allUsers.length} total).</p>
                     </div>
                 </div>
-                <button onclick="state.showAdminDashboard = false; renderContent();" style="padding: 10px 20px; border-radius: 12px; background: #1a1a1a; border: 1px solid var(--border-color); color: var(--text-main); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                    <i data-lucide="x" style="width: 18px; height: 18px;"></i>
-                    Tutup
-                </button>
+                <div style="display: flex; gap: 8px; position: relative; z-index: 10;">
+                    <button onclick="
+                        const icon = this.querySelector('svg, i');
+                        if(icon) {
+                            icon.style.transition = 'none';
+                            icon.style.transform = 'rotate(0deg)';
+                            icon.offsetHeight; // force reflow
+                            icon.style.transition = 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                            icon.style.transform = 'rotate(360deg)';
+                        }
+                        setTimeout(() => renderContent(), 600);
+                    " style="padding: 10px 20px; border-radius: 12px; background: rgba(212, 175, 55, 0.1); border: 1px solid var(--accent-gold); color: var(--accent-gold); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; user-select: none;" onmouseover="this.style.background='rgba(212, 175, 55, 0.2)'" onmouseout="this.style.background='rgba(212, 175, 55, 0.1)'" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                        <i data-lucide="refresh-cw" style="width: 18px; height: 18px;"></i>
+                        Refresh
+                    </button>
+                    <button onclick="state.showAdminDashboard = false; renderContent();" style="padding: 10px 20px; border-radius: 12px; background: #1a1a1a; border: 1px solid var(--border-color); color: var(--text-main); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.background='#222'" onmouseout="this.style.background='#1a1a1a'" onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+                        <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+                        Tutup
+                    </button>
+                </div>
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
