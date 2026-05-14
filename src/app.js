@@ -1,6 +1,6 @@
 import { auth, db, googleProvider } from './firebase.js';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot, collection, updateDoc, deleteDoc, query, where, serverTimestamp, getDocFromServer } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, collection, updateDoc, deleteDoc, query, where, serverTimestamp, getDocFromServer, increment } from 'firebase/firestore';
 
 /**
  * ND Studio Pro - Core Logic (Fixed Functionality)
@@ -53,6 +53,8 @@ let state = {
     userDoc: null,
     isAuthLoading: true,
     allUsers: [], // For admin dashboard
+    adminDashboardView: 'menu', // 'menu' or 'users'
+    globalStats: { totalGenerations: 0 },
     isAdmin: false,
     showAdminDashboard: false,
     showApiKey: false,
@@ -549,6 +551,19 @@ function initAuth() {
         }
         
         renderContent();
+    });
+
+    // Listen for global stats (accessible to everyone)
+    onSnapshot(doc(db, 'stats', 'global'), (snap) => {
+        if (snap.exists()) {
+            state.globalStats = snap.data();
+            renderContent();
+        } else if (state.isAdmin) {
+            // Admin can initialize the document if it doesn't exist
+            setDoc(doc(db, 'stats', 'global'), { totalGenerations: 0 }).catch(console.error);
+        }
+    }, (error) => {
+        console.warn("Global stats listener error:", error);
     });
 }
 
@@ -1367,19 +1382,32 @@ function renderPendingPage() {
 }
 
 function renderAdminDashboard() {
-    const pendingUsers = state.allUsers.filter(u => !u.isApproved);
-    const approvedUsers = state.allUsers.filter(u => u.isApproved && u.role !== 'admin');
+    if (state.adminDashboardView === 'menu') {
+        return renderAdminMenu();
+    }
+    
+    const pendingUsers = state.allUsers
+        .filter(u => !u.isApproved)
+        .sort((a, b) => (a.displayName || "").localeCompare(b.displayName || ""));
+    const approvedUsers = state.allUsers
+        .filter(u => u.isApproved && u.role !== 'admin')
+        .sort((a, b) => (a.displayName || "").localeCompare(b.displayName || ""));
     
     return `
         <div class="admin-dashboard" style="max-width: 900px; margin: 20px auto; padding: 0 20px; animation: fadeIn 0.4s ease-out;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                <div>
-                    <h1 style="font-size: 28px; font-weight: 800; color: var(--accent-gold); font-family: var(--font-premium);">Admin Dashboard</h1>
-                    <p style="color: var(--text-muted); font-size: 14px;">Kelola akses pengguna ND STUDIO PRO.</p>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button onclick="state.adminDashboardView = 'menu'; renderContent();" style="width: 40px; height: 40px; border-radius: 12px; background: #1a1a1a; border: 1px solid var(--border-color); color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="arrow-left" style="width: 20px; height: 20px;"></i>
+                    </button>
+                    <div>
+                        <h1 style="font-size: 24px; font-weight: 800; color: var(--accent-gold); font-family: var(--font-premium); margin:0;">Data Pengguna</h1>
+                        <p style="color: var(--text-muted); font-size: 13px; margin:0;">Kelola akses pengguna ND STUDIO PRO (${state.allUsers.length} total).</p>
+                    </div>
                 </div>
                 <button onclick="state.showAdminDashboard = false; renderContent();" style="padding: 10px 20px; border-radius: 12px; background: #1a1a1a; border: 1px solid var(--border-color); color: var(--text-main); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                    <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i>
-                    Kembali ke App
+                    <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+                    Tutup
                 </button>
             </div>
 
@@ -1439,19 +1467,56 @@ function renderAdminDashboard() {
                         `).join('')}
                     </div>
                 </div>
-                
-                <!-- Section: Storage Management -->
-                <div class="setup-card" style="background: #151515; padding: 24px; border-radius: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow); grid-column: 1 / -1;">
-                    <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 18px; color: var(--accent-gold);">
-                        <i data-lucide="hard-drive"></i>
-                        Manajemen Penyimpanan (Cloudinary)
-                    </h3>
-                    <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">
-                        Hapus semua gambar dan video referensi yang pernah diunggah oleh pengguna ke server Cloudinary untuk mengosongkan kuota penyimpanan. (File hasil generate AI dari Freepik tidak akan terhapus).
-                    </p>
-                    <button id="btn-clear-cloudinary" onclick="clearCloudinaryStorage()" style="background: #fa5252; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                        <i data-lucide="trash-2"></i> Kosongkan Storage Cloudinary
-                    </button>
+            </div>
+        </div>
+    `;
+}
+
+function renderAdminMenu() {
+    const totalGenerations = state.globalStats?.totalGenerations || 0;
+    
+    return `
+        <div class="admin-dashboard" style="max-width: 900px; margin: 20px auto; padding: 0 20px; animation: fadeIn 0.4s ease-out;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <div>
+                    <h1 style="font-size: 28px; font-weight: 800; color: var(--accent-gold); font-family: var(--font-premium);">Admin Menu</h1>
+                    <p style="color: var(--text-muted); font-size: 14px;">Pilih tindakan administrasi.</p>
+                </div>
+                <button onclick="state.showAdminDashboard = false; renderContent();" style="padding: 10px 20px; border-radius: 12px; background: #1a1a1a; border: 1px solid var(--border-color); color: var(--text-main); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+                    Tutup
+                </button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+                <!-- Stats Overview -->
+                <div class="setup-card" style="background: linear-gradient(135deg, #151515 0%, #1a1a1a 100%); padding: 32px; border-radius: 24px; border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; grid-column: 1 / -1; margin-bottom: 12px;">
+                    <div style="font-size: 12px; color: var(--accent-gold); font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">GLOBAL PERFORMANCE</div>
+                    <div style="font-size: 48px; font-weight: 900; color: var(--text-main); font-family: var(--font-premium);">${totalGenerations.toLocaleString()}</div>
+                    <div style="font-size: 14px; color: var(--text-muted);">Total Karya Yang Telah Dihasilkan</div>
+                </div>
+
+                <div class="setup-card" onclick="state.adminDashboardView = 'users'; renderContent();" style="background: #151515; padding: 32px; border-radius: 24px; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px;" onmouseover="this.style.borderColor='var(--accent-gold)'" onmouseout="this.style.borderColor='var(--border-color)'">
+                    <div style="width: 60px; height: 60px; background: rgba(212, 175, 55, 0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--accent-gold);">
+                        <i data-lucide="users" style="width: 32px; height: 32px;"></i>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 18px; color: var(--text-main); margin-bottom: 8px;">Cek Data User</h3>
+                        <p style="color: var(--text-muted); font-size: 13px;">Lihat dan kelola persetujuan akses pengguna.</p>
+                    </div>
+                </div>
+
+                <div class="setup-card" style="background: #151515; padding: 32px; border-radius: 24px; border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px;">
+                    <div style="width: 60px; height: 60px; background: rgba(250, 82, 82, 0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: #fa5252;">
+                        <i data-lucide="hard-drive" style="width: 32px; height: 32px;"></i>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 18px; color: var(--text-main); margin-bottom: 8px;">Pembersihan Storage</h3>
+                        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">Hapus file referensi di Cloudinary.</p>
+                        <button id="btn-clear-cloudinary" onclick="clearCloudinaryStorage()" style="background: #fa5252; color: white; border: none; padding: 10px 16px; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 12px; margin: 0 auto;">
+                            <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> Kosongkan
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1506,11 +1571,17 @@ function renderUsageStats() {
     state.generationHistory = (state.generationHistory || []).filter(t => now - t < 60000);
     const queueCount = state.generationHistory.length;
     
+    const totalGenerations = state.globalStats?.totalGenerations || 0;
+    
     return `
         <div class="usage-stats-bar">
             <div class="stat-item">
                 <i data-lucide="layers"></i>
                 <span>Task <strong>${activeCount}/${taskLimit}</strong> - <strong>${queueCount}/${queueLimit}/min</strong></span>
+            </div>
+            <div class="stat-item stat-item-global">
+                <i data-lucide="sparkles"></i>
+                <span>Total Karya: <strong>${totalGenerations.toLocaleString()}</strong></span>
             </div>
         </div>
     `;
@@ -1529,7 +1600,7 @@ function renderHeader() {
             </div>
             <div class="header-actions">
                 ${state.isAdmin ? `
-                    <button class="btn-icon-action ${state.showAdminDashboard ? 'active' : ''}" onclick="state.showAdminDashboard = !state.showAdminDashboard; renderContent();" title="Admin Dashboard" style="background: #fff9db; color: #fab005; border-color: #ffec99; position: relative;">
+                    <button class="btn-icon-action ${state.showAdminDashboard ? 'active' : ''}" onclick="state.showAdminDashboard = !state.showAdminDashboard; state.adminDashboardView = 'menu'; renderContent();" title="Admin Dashboard" style="background: #fff9db; color: #fab005; border-color: #ffec99; position: relative;">
                         <i data-lucide="shield-check"></i>
                         ${pendingUsersCount > 0 ? `
                             <span class="notification-badge">${pendingUsersCount}</span>
@@ -3421,6 +3492,15 @@ async function generate() {
         if (!taskId) {
             console.error("Full API Response for debugging:", JSON.stringify(data, null, 2));
             throw new Error("Task ID tidak ditemukan dalam respon API. Silakan coba lagi.");
+        }
+
+        // Increment global generation counter
+        try {
+            await updateDoc(doc(db, 'stats', 'global'), { 
+                totalGenerations: increment(1) 
+            });
+        } catch (e) {
+            console.warn("Failed to increment global counter:", e);
         }
 
         state.activeTasks.push({

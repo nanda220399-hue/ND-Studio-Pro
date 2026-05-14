@@ -15,12 +15,24 @@
         "createdAt": { "type": "string", "format": "date-time", "description": "Account creation timestamp" }
       },
       "required": ["uid", "email", "isApproved", "role"]
+    },
+    "GlobalStat": {
+      "title": "Global Stat",
+      "description": "Global statistics for the application",
+      "type": "object",
+      "properties": {
+        "totalGenerations": { "type": "number", "description": "Total number of generations across all users" }
+      }
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": "User",
       "description": "Collection of user profiles and their approval status"
+    },
+    "/stats/{statId}": {
+      "schema": "GlobalStat",
+      "description": "Collection for global application statistics"
     }
   }
 }
