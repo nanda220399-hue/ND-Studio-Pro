@@ -176,7 +176,7 @@ const GENERATORS = [
         outputType: 'video',
         settings: { orientation: true, cfg: true },
         endpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-std',
-        statusEndpoint: 'https://api.freepik.com/v1/ai/video/tasks',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-std',
         pollingType: 'path'
     },
     {
@@ -190,7 +190,7 @@ const GENERATORS = [
         outputType: 'video',
         settings: { orientation: true, cfg: true },
         endpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-pro',
-        statusEndpoint: 'https://api.freepik.com/v1/ai/video/tasks',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-pro',
         pollingType: 'path'
     },
     {
@@ -3628,8 +3628,8 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
             
             // Prioritize 'generated' array for SeeDream and similar models
             videoUrl = 
-                (taskData.generated && Array.isArray(taskData.generated) && (typeof taskData.generated[0] === 'string' ? taskData.generated[0] : taskData.generated[0].url)) ||
-                (output.generated && Array.isArray(output.generated) && (typeof output.generated[0] === 'string' ? output.generated[0] : output.generated[0].url)) ||
+                (taskData.generated && Array.isArray(taskData.generated) && taskData.generated.length > 0 && (typeof taskData.generated[0] === 'string' ? taskData.generated[0] : taskData.generated[0].url)) ||
+                (output.generated && Array.isArray(output.generated) && output.generated.length > 0 && (typeof output.generated[0] === 'string' ? output.generated[0] : output.generated[0].url)) ||
                 output.image_url || 
                 output.url || 
                 output.video_url || 
@@ -3639,7 +3639,7 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
                 (output.audio && output.audio.url) ||
                 (output.result && (output.result.url || (output.result.image && output.result.image.url) || (output.result.video && output.result.video.url) || (output.result.audio && output.result.audio.url))) ||
                 (output.items && output.items[0] && (typeof output.items[0] === 'string' ? output.items[0] : output.items[0].url)) ||
-                (output.data && (output.data.url || (Array.isArray(output.data) && output.data[0] && (typeof output.data[0] === 'string' ? output.data[0] : output.data[0].url)))) ||
+                (output.data && (output.data.url || (Array.isArray(output.data) && output.data.length > 0 && output.data[0] && (typeof output.data[0] === 'string' ? output.data[0] : output.data[0].url)))) ||
                 (taskData.result && taskData.result.url) ||
                 (taskData.image && taskData.image.url) ||
                 (taskData.video && taskData.video.url) ||
