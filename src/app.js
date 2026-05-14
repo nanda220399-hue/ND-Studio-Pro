@@ -4570,6 +4570,8 @@ window.addEventListener('DOMContentLoaded', () => {
     window.updateStrengthValue = updateStrengthValue;
     window.updateGuidanceValue = updateGuidanceValue;
     window.state = state;
+    window.syncHistory = syncHistory;
+    window.findUrlInObject = findUrlInObject;
     window.renderContent = renderContent;
 
     window.handleDownload = async function(url, filename) {
