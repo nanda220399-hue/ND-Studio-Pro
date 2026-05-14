@@ -531,6 +531,9 @@ function initAuth() {
                 if (doc.exists()) {
                     state.userDoc = doc.data();
                     state.apiKey = state.userDoc.apiKey || '';
+                    if (state.userDoc.isApproved) {
+                        updateActivity(); // Hemat activity tracking
+                    }
                     renderContent();
                 }
             }, (error) => {
@@ -565,6 +568,24 @@ function initAuth() {
     }, (error) => {
         console.warn("Global stats listener error:", error);
     });
+}
+
+async function updateActivity() {
+    if (!state.user || !state.userDoc) return;
+    
+    const now = new Date();
+    // Only update if last update was more than 5 minutes ago to save writes (Hemat!)
+    const lastUpdate = state.userDoc.lastActive?.toDate ? state.userDoc.lastActive.toDate() : (state.userDoc.lastActive ? new Date(state.userDoc.lastActive) : null);
+    
+    if (!lastUpdate || (now - lastUpdate > 300000)) {
+        try {
+            await updateDoc(doc(db, 'users', state.user.uid), {
+                lastActive: serverTimestamp()
+            });
+        } catch (e) {
+            console.warn("Silent activity update failed:", e);
+        }
+    }
 }
 
 async function login() {
@@ -1381,6 +1402,52 @@ function renderPendingPage() {
     `;
 }
 
+function formatTimeAgo(date) {
+    if (!date) return 'Belum pernah aktif';
+    const now = new Date();
+    const then = date instanceof Date ? date : (date.toDate ? date.toDate() : new Date(date));
+    const seconds = Math.floor((now - then) / 1000);
+    
+    if (seconds < 60) return 'Baru saja';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} menit lalu`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} jam lalu`;
+    return `${Math.floor(seconds / 86400)} hari lalu`;
+}
+
+function renderUserCard(user, type) {
+    const isOnline = user.lastActive && (new Date() - (user.lastActive.toDate ? user.lastActive.toDate() : new Date(user.lastActive)) < 600000);
+    
+    return `
+        <div class="user-card" style="background: #111; padding: 12px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+            <div style="position: relative;">
+                <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + user.displayName}" style="width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--border-color); object-fit: cover;">
+                <div style="position: absolute; bottom: -2px; right: -2px; width: 12px; height: 12px; border-radius: 50%; background: ${isOnline ? '#40c057' : '#444'}; border: 2px solid #111;"></div>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 700; color: var(--text-main); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.displayName || 'User'}</div>
+                <div style="color: var(--text-muted); font-size: 11px; display: flex; align-items: center; gap: 4px;">
+                    <i data-lucide="clock" style="width: 10px; height: 10px;"></i>
+                    ${formatTimeAgo(user.lastActive)}
+                </div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+                ${type === 'pending' ? `
+                    <button onclick="approveUser('${user.uid}')" style="background: var(--accent-green); color: white; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Setujui">
+                        <i data-lucide="check" style="width: 18px; height: 18px;"></i>
+                    </button>
+                ` : `
+                    <button onclick="rejectUser('${user.uid}')" style="background: rgba(250, 82, 82, 0.1); color: #fa5252; border: 1px solid rgba(250, 82, 82, 0.2); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Blokir/Cabut Akses">
+                        <i data-lucide="user-minus" style="width: 18px; height: 18px;"></i>
+                    </button>
+                `}
+                <button onclick="deleteUserAccount('${user.uid}')" style="background: #fa5252; color: white; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Hapus Akun">
+                    <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
+        </div>
+    `;
+}
+
 function renderAdminDashboard() {
     if (state.adminDashboardView === 'menu') {
         return renderAdminMenu();
@@ -1418,25 +1485,8 @@ function renderAdminDashboard() {
                         <i data-lucide="user-plus"></i>
                         Menunggu Persetujuan (${pendingUsers.length})
                     </h3>
-                    <div style="display: flex; flex-direction: column; gap: 16px;">
-                        ${pendingUsers.length === 0 ? '<p style="text-align: center; color: var(--text-muted); font-size: 14px; padding: 20px;">Tidak ada permintaan baru.</p>' : ''}
-                        ${pendingUsers.map(user => `
-                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(212, 175, 55, 0.05); border-radius: 16px; border: 1px solid var(--border-color);">
-                                <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + user.displayName}" style="width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--border-color);">
-                                <div style="flex-grow: 1; overflow: hidden;">
-                                    <div style="font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main);">${user.displayName}</div>
-                                    <div style="font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.email}</div>
-                                </div>
-                                <div style="display: flex; gap: 8px;">
-                                    <button onclick="approveUser('${user.uid}')" style="background: var(--accent-green); color: white; border: none; padding: 8px; border-radius: 8px; cursor: pointer;" title="Setujui">
-                                        <i data-lucide="check" style="width: 18px; height: 18px;"></i>
-                                    </button>
-                                    <button onclick="deleteUserAccount('${user.uid}')" style="background: #fa5252; color: white; border: none; padding: 8px; border-radius: 8px; cursor: pointer;" title="Hapus Akun">
-                                        <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('')}
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        ${pendingUsers.length === 0 ? '<p style="text-align: center; color: var(--text-muted); font-size: 14px; padding: 20px;">Tidak ada permintaan baru.</p>' : pendingUsers.map(u => renderUserCard(u, 'pending')).join('')}
                     </div>
                 </div>
 
@@ -1446,25 +1496,8 @@ function renderAdminDashboard() {
                         <i data-lucide="users"></i>
                         Pengguna Aktif (${approvedUsers.length})
                     </h3>
-                    <div style="display: flex; flex-direction: column; gap: 16px;">
-                        ${approvedUsers.length === 0 ? '<p style="text-align: center; color: var(--text-muted); font-size: 14px; padding: 20px;">Belum ada pengguna aktif.</p>' : ''}
-                        ${approvedUsers.map(user => `
-                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #1a1a1a; border-radius: 16px; border: 1px solid var(--border-color);">
-                                <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + user.displayName}" style="width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--border-color);">
-                                <div style="flex-grow: 1; overflow: hidden;">
-                                    <div style="font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-main);">${user.displayName}</div>
-                                    <div style="font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.email}</div>
-                                </div>
-                                <div style="display: flex; gap: 8px;">
-                                    <button onclick="rejectUser('${user.uid}')" style="background: var(--accent-red); color: white; border: none; padding: 8px; border-radius: 8px; cursor: pointer;" title="Cabut Akses">
-                                        <i data-lucide="user-minus" style="width: 18px; height: 18px;"></i>
-                                    </button>
-                                    <button onclick="deleteUserAccount('${user.uid}')" style="background: #fa5252; color: white; border: none; padding: 8px; border-radius: 8px; cursor: pointer;" title="Hapus Akun">
-                                        <i data-lucide="trash-2" style="width: 18px; height: 18px;"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('')}
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        ${approvedUsers.length === 0 ? '<p style="text-align: center; color: var(--text-muted); font-size: 14px; padding: 20px;">Belum ada pengguna aktif.</p>' : approvedUsers.map(u => renderUserCard(u, 'approved')).join('')}
                     </div>
                 </div>
             </div>
@@ -1474,6 +1507,9 @@ function renderAdminDashboard() {
 
 function renderAdminMenu() {
     const totalGenerations = state.globalStats?.totalGenerations || 0;
+    const totalUsers = state.allUsers.length;
+    const pendingUsers = state.allUsers.filter(u => !u.isApproved).length;
+    const approvedUsers = totalUsers - pendingUsers;
     
     return `
         <div class="admin-dashboard" style="max-width: 900px; margin: 20px auto; padding: 0 20px; animation: fadeIn 0.4s ease-out;">
@@ -1488,21 +1524,46 @@ function renderAdminMenu() {
                 </button>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
-                <!-- Stats Overview -->
-                <div class="setup-card" style="background: linear-gradient(135deg, #151515 0%, #1a1a1a 100%); padding: 32px; border-radius: 24px; border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; grid-column: 1 / -1; margin-bottom: 12px;">
-                    <div style="font-size: 12px; color: var(--accent-gold); font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">GLOBAL PERFORMANCE</div>
-                    <div style="font-size: 48px; font-weight: 900; color: var(--text-main); font-family: var(--font-premium);">${totalGenerations.toLocaleString()}</div>
-                    <div style="font-size: 14px; color: var(--text-muted);">Total Karya Yang Telah Dihasilkan</div>
+            <!-- Stats Overview Cards -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px;">
+                <div style="background: #151515; padding: 20px; border-radius: 20px; border: 1px solid var(--border-color); text-align: center;">
+                    <div style="font-size: 11px; color: var(--accent-gold); font-weight: 700; margin-bottom: 4px; text-transform: uppercase;">TOTAL KARYA</div>
+                    <div style="font-size: 24px; font-weight: 800; color: #fff;">${totalGenerations.toLocaleString()}</div>
                 </div>
+                <div style="background: #151515; padding: 20px; border-radius: 20px; border: 1px solid var(--border-color); text-align: center;">
+                    <div style="font-size: 11px; color: #40c057; font-weight: 700; margin-bottom: 4px; text-transform: uppercase;">USER AKTIF</div>
+                    <div style="font-size: 24px; font-weight: 800; color: #fff;">${approvedUsers}</div>
+                </div>
+                <div style="background: #151515; padding: 20px; border-radius: 20px; border: 1px solid var(--border-color); text-align: center;">
+                    <div style="font-size: 11px; color: #fab005; font-weight: 700; margin-bottom: 4px; text-transform: uppercase;">PENDING</div>
+                    <div style="font-size: 24px; font-weight: 800; color: #fff;">${pendingUsers}</div>
+                </div>
+            </div>
 
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
                 <div class="setup-card" onclick="state.adminDashboardView = 'users'; renderContent();" style="background: #151515; padding: 32px; border-radius: 24px; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px;" onmouseover="this.style.borderColor='var(--accent-gold)'" onmouseout="this.style.borderColor='var(--border-color)'">
                     <div style="width: 60px; height: 60px; background: rgba(212, 175, 55, 0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--accent-gold);">
                         <i data-lucide="users" style="width: 32px; height: 32px;"></i>
                     </div>
                     <div>
-                        <h3 style="font-size: 18px; color: var(--text-main); margin-bottom: 8px;">Cek Data User</h3>
-                        <p style="color: var(--text-muted); font-size: 13px;">Lihat dan kelola persetujuan akses pengguna.</p>
+                        <h3 style="font-size: 18px; color: var(--text-main); margin-bottom: 8px;">Kelola Data User</h3>
+                        <p style="color: var(--text-muted); font-size: 13px;">Lihat daftar user, setujui akses, atau hapus user.</p>
+                    </div>
+                </div>
+
+                <div class="setup-card" style="background: #151515; padding: 32px; border-radius: 24px; border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px;">
+                    <div style="width: 60px; height: 60px; background: rgba(212, 175, 55, 0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--accent-gold);">
+                        <i data-lucide="bar-chart-3" style="width: 32px; height: 32px;"></i>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 18px; color: var(--text-main); margin-bottom: 8px;">Counter Global</h3>
+                        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 12px;">Ubah angka "Total Karya" secara manual.</p>
+                        <div style="display: flex; gap: 8px; justify-content: center;">
+                            <input type="number" id="input-global-stats" value="${totalGenerations}" style="width: 100px; padding: 8px; background: #000; border: 1px solid var(--border-color); color: #fff; border-radius: 8px; text-align: center;">
+                            <button onclick="window.setGlobalStats(document.getElementById('input-global-stats').value)" style="background: var(--accent-gold); color: #000; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 12px;">
+                                Simpan
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1511,10 +1572,10 @@ function renderAdminMenu() {
                         <i data-lucide="hard-drive" style="width: 32px; height: 32px;"></i>
                     </div>
                     <div>
-                        <h3 style="font-size: 18px; color: var(--text-main); margin-bottom: 8px;">Pembersihan Storage</h3>
-                        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">Hapus file referensi di Cloudinary.</p>
+                        <h3 style="font-size: 18px; color: var(--text-main); margin-bottom: 8px;">Pembersihan</h3>
+                        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">Hapus file referensi Cloudinary.</p>
                         <button id="btn-clear-cloudinary" onclick="clearCloudinaryStorage()" style="background: #fa5252; color: white; border: none; padding: 10px 16px; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 12px; margin: 0 auto;">
-                            <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> Kosongkan
+                            <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> Hapus Storage
                         </button>
                     </div>
                 </div>
@@ -3472,6 +3533,8 @@ async function generate() {
         // Detect Task ID from various possible response structures
         let taskId = data.id || data.task_id || (data.data && (data.data.id || data.data.task_id));
         
+        updateActivity(); // Activity tracking
+
         // Recursive search for ID if not found in common paths
         if (!taskId) {
             const findId = (obj) => {
@@ -3494,14 +3557,7 @@ async function generate() {
             throw new Error("Task ID tidak ditemukan dalam respon API. Silakan coba lagi.");
         }
 
-        // Increment global generation counter
-        try {
-            await updateDoc(doc(db, 'stats', 'global'), { 
-                totalGenerations: increment(1) 
-            });
-        } catch (e) {
-            console.warn("Failed to increment global counter:", e);
-        }
+        // Task started (we don't increment here to ensure only successful works are counted)
 
         state.activeTasks.push({
             id: taskId,
@@ -3789,7 +3845,16 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
                 return;
             }
 
-            const result = {
+            // Increment global generation counter
+        try {
+            await setDoc(doc(db, 'stats', 'global'), { 
+                totalGenerations: increment(1) 
+            }, { merge: true });
+        } catch (e) {
+            console.warn("Failed to increment global counter on success:", e);
+        }
+
+        const result = {
                 id: taskId,
                 type: activeGen.outputType,
                 url: videoUrl,
@@ -4649,6 +4714,22 @@ window.addEventListener('DOMContentLoaded', () => {
     window.updateStepsValue = updateStepsValue;
     window.updateStrengthValue = updateStrengthValue;
     window.updateGuidanceValue = updateGuidanceValue;
+    window.setGlobalStats = async function(value) {
+        if (!state.isAdmin) return;
+        const newVal = parseInt(value);
+        if (isNaN(newVal)) {
+            showToast("⚠️ Masukkan angka yang valid", "warning");
+            return;
+        }
+        try {
+            await setDoc(doc(db, 'stats', 'global'), { totalGenerations: newVal }, { merge: true });
+            showToast("✅ Total karya berhasil diperbarui!", "success");
+            renderContent();
+        } catch (e) {
+            console.error("Gagal update stats:", e);
+            showToast("❌ Gagal update: " + e.message, "error");
+        }
+    };
     window.state = state;
     window.syncHistory = syncHistory;
     window.findUrlInObject = findUrlInObject;

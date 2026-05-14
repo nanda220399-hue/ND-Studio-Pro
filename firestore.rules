@@ -52,6 +52,7 @@ service cloud.firestore {
              (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 128)) &&
              (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 1024)) &&
              (!('apiKey' in data) || (data.apiKey is string && data.apiKey.size() <= 512)) &&
+             (!('lastActive' in data) || data.lastActive is timestamp) &&
              (!('createdAt' in data) || data.createdAt is timestamp);
     }
 
@@ -77,7 +78,7 @@ service cloud.firestore {
                       isValidUser(incoming()) &&
                       (
                         // Action: Admin updates anything (role, approval, etc)
-                        (isAdmin() && incoming().diff(existing()).affectedKeys().hasAny(['role', 'isApproved', 'apiKey', 'displayName', 'photoURL'])) ||
+                        (isAdmin() && incoming().diff(existing()).affectedKeys().hasAny(['role', 'isApproved', 'apiKey', 'displayName', 'photoURL', 'lastActive'])) ||
                         
                         // Action: User updates own data (restricted fields)
                         (isOwner(userId) && 
@@ -85,19 +86,16 @@ service cloud.firestore {
                          incoming().isApproved == existing().isApproved &&
                          incoming().uid == existing().uid &&
                          incoming().email == existing().email &&
-                         incoming().diff(existing()).affectedKeys().hasOnly(['apiKey', 'displayName', 'photoURL', 'createdAt']))
+                         incoming().diff(existing()).affectedKeys().hasOnly(['apiKey', 'displayName', 'photoURL', 'createdAt', 'lastActive']))
                       );
 
       allow delete: if isAdmin();
     }
 
-    match /stats/{statId} {
+    match /stats/global {
       allow read: if true;
-      allow create: if isAdmin();
-      allow update: if isSignedIn() && (
-        isAdmin() || 
-        (incoming().diff(existing()).affectedKeys().hasOnly(['totalGenerations']))
-      );
+      allow create, update: if isSignedIn() && 
+                             request.resource.data.totalGenerations is number;
     }
   }
 }

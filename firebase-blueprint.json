@@ -12,6 +12,7 @@
         "isApproved": { "type": "boolean", "description": "Whether the user is approved by admin" },
         "role": { "type": "string", "enum": ["admin", "user"], "description": "User role" },
         "apiKey": { "type": "string", "description": "User's personal Freepik API Key" },
+        "lastActive": { "type": "string", "format": "date-time", "description": "Last activity timestamp" },
         "createdAt": { "type": "string", "format": "date-time", "description": "Account creation timestamp" }
       },
       "required": ["uid", "email", "isApproved", "role"]
