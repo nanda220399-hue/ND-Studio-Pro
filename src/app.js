@@ -176,7 +176,7 @@ const GENERATORS = [
         outputType: 'video',
         settings: { orientation: true, cfg: true },
         endpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-std',
-        statusEndpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-std',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/video/tasks',
         pollingType: 'path'
     },
     {
@@ -190,7 +190,7 @@ const GENERATORS = [
         outputType: 'video',
         settings: { orientation: true, cfg: true },
         endpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-pro',
-        statusEndpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-pro',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/video/tasks',
         pollingType: 'path'
     },
     {
@@ -583,12 +583,19 @@ async function approveUser(uid) {
 
 async function rejectUser(uid) {
     if (!state.isAdmin) return;
-    try {
-        await updateDoc(doc(db, 'users', uid), { isApproved: false });
-        showToast("⚠️ Akses pengguna dicabut.", "warning");
-    } catch (error) {
-        handleFirestoreError(error, OperationType.UPDATE, 'users/' + uid);
-    }
+    
+    showConfirmModal(
+        "Cabut Akses Pengguna",
+        "Apakah Anda yakin ingin mencabut akses pengguna ini? Pengguna tidak akan bisa menggunakan fitur berbayar.",
+        async () => {
+            try {
+                await updateDoc(doc(db, 'users', uid), { isApproved: false });
+                showToast("⚠️ Akses pengguna dicabut.", "warning");
+            } catch (error) {
+                handleFirestoreError(error, OperationType.UPDATE, 'users/' + uid);
+            }
+        }
+    );
 }
 
 async function deleteUserAccount(uid) {
@@ -736,10 +743,20 @@ function getUploadState() {
 function init() {
     console.log("ND Studio Pro: Initializing...");
     testFirestoreConnection();
+    
+    // Load persisted state
+    loadStateFromLocalStorage();
+    
     renderContent();
     
     // Start real-time progress simulation
     startProgressSimulation();
+    
+    // Resume polling for active tasks
+    state.activeTasks.forEach(task => {
+        console.log(`Resuming polling for task: ${task.id}`);
+        pollTaskStatus(task.id);
+    });
     
     // Global Listeners for Modal (if still in HTML)
     const btnAgree = document.getElementById('btn-agree');
@@ -810,37 +827,43 @@ function renderContent() {
         // 1. Loading State
         if (state.isAuthLoading) {
             app.innerHTML = `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 24px; background: #000; position: relative; overflow: hidden;">
-                    <!-- Background Glow Effect -->
-                    <div style="position: absolute; width: 300px; height: 300px; background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%); border-radius: 50%; animation: pulse-glow 3s ease-in-out infinite;"></div>
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 20px; background: #070707; position: relative; overflow: hidden;">
+                    <!-- Multiple Background Glows -->
+                    <div style="position: absolute; width: 400px; height: 400px; background: radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, transparent 70%); border-radius: 50%; animation: pulse-glow 4s ease-in-out infinite;"></div>
+                    <div style="position: absolute; width: 250px; height: 250px; background: radial-gradient(circle, rgba(212, 175, 55, 0.03) 0%, transparent 60%); border-radius: 50%; animation: pulse-glow 3s ease-in-out infinite reverse; top: 30%; left: 40%;"></div>
                     
-                    <div class="loading-logo-container" style="position: relative; z-index: 2; animation: logo-entrance 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);">
-                        <img src="https://i.ibb.co.com/6c7LC9vh/logo.png" alt="ND Studio Pro" style="height: 40px; width: auto; object-fit: contain; filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.3)); animation: logo-float 3s ease-in-out infinite;">
+                    <div class="loading-logo-container" style="position: relative; z-index: 2; animation: logo-entrance 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);">
+                        <img src="https://i.ibb.co.com/6c7LC9vh/logo.png" alt="ND Studio Pro" style="height: 30px; width: auto; object-fit: contain; filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.4)); animation: logo-float 4s ease-in-out infinite;">
                     </div>
 
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 2;">
-                        <p style="color: var(--accent-gold); font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin: 0; opacity: 0.8; animation: text-fade 2s ease-in-out infinite;">ND STUDIO PRO</p>
-                        <div style="width: 120px; height: 2px; background: rgba(212, 175, 55, 0.1); border-radius: 10px; overflow: hidden; position: relative;">
-                            <div style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, var(--accent-gold), transparent); animation: loading-bar 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;"></div>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 2;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="height: 1px; width: 30px; background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.5));"></div>
+                            <p style="color: var(--accent-gold); font-size: 11px; font-weight: 800; letter-spacing: 4px; text-transform: uppercase; margin: 0; opacity: 0.9; font-family: var(--font-premium); animation: text-shimmer 3s linear infinite;">ND STUDIO PRO</p>
+                            <div style="height: 1px; width: 30px; background: linear-gradient(90deg, rgba(212, 175, 55, 0.5), transparent);"></div>
+                        </div>
+                        <div style="width: 140px; height: 1px; background: rgba(255, 255, 255, 0.05); border-radius: 10px; overflow: hidden; position: relative;">
+                            <div style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, var(--accent-gold), transparent); animation: loading-bar 1.5s cubic-bezier(0.65, 0, 0.35, 1) infinite;"></div>
                         </div>
                     </div>
 
                     <style>
                         @keyframes logo-entrance {
-                            0% { transform: scale(0.8); opacity: 0; }
-                            100% { transform: scale(1); opacity: 1; }
+                            0% { transform: scale(0.9) translateY(10px); opacity: 0; }
+                            100% { transform: scale(1) translateY(0); opacity: 1; }
                         }
                         @keyframes logo-float {
                             0%, 100% { transform: translateY(0); }
-                            50% { transform: translateY(-10px); }
+                            50% { transform: translateY(-6px); }
                         }
                         @keyframes pulse-glow {
-                            0%, 100% { transform: scale(1); opacity: 0.5; }
-                            50% { transform: scale(1.2); opacity: 1; }
+                            0%, 100% { transform: scale(1); opacity: 0.3; }
+                            50% { transform: scale(1.15); opacity: 0.6; }
                         }
-                        @keyframes text-fade {
-                            0%, 100% { opacity: 0.4; }
-                            50% { opacity: 1; }
+                        @keyframes text-shimmer {
+                            0% { opacity: 0.5; text-shadow: 0 0 0px var(--accent-gold); }
+                            50% { opacity: 1; text-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
+                            100% { opacity: 0.5; text-shadow: 0 0 0px var(--accent-gold); }
                         }
                         @keyframes loading-bar {
                             0% { left: -100%; }
@@ -2460,11 +2483,140 @@ function cancelTask(taskId) {
     }
 }
 
+async function syncHistory() {
+    if (!state.apiKey) return;
+    showToast("🔄 Menyinkronkan riwayat generasi...", "info");
+    
+    // Define endpoints to check for last generation tasks
+    const endpoints = [
+        'https://api.freepik.com/v1/ai/video/tasks',
+        'https://api.freepik.com/v1/ai/image-to-video/tasks',
+        'https://api.freepik.com/v1/ai/video/kling-v3-omni',
+        'https://api.freepik.com/v1/ai/text-to-image/tasks'
+    ];
+
+    let foundNew = 0;
+    
+    for (const endpoint of endpoints) {
+        try {
+            const url = `/api/freepik/list?endpoint=${encodeURIComponent(endpoint)}&apiKey=${encodeURIComponent(state.apiKey)}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            const items = data.data || data.items || (Array.isArray(data) ? data : []);
+            if (Array.isArray(items)) {
+                items.forEach(item => {
+                    const taskId = item.id || item.task_id;
+                    const status = (item.status || item.state || '').toUpperCase();
+                    const isDone = status === 'COMPLETED' || status === 'FINISHED' || status === 'SUCCESS' || status === 'SUCCEEDED';
+                    
+                    // If we found a completed task that isn't in our active tasks or results, we can handle it
+                    const inResults = state.completedResults.some(r => r.id === taskId);
+                    const inActive = state.activeTasks.some(t => t.id === taskId);
+                    
+                    if (isDone && !inResults) {
+                        // Attempt to find URL
+                        const videoUrl = findUrlInObject(item);
+                        if (videoUrl) {
+                            state.completedResults.unshift({
+                                id: taskId,
+                                url: videoUrl,
+                                type: videoUrl.includes('.mp4') || videoUrl.includes('.mov') ? 'video' : 'image',
+                                generatorId: 'unknown',
+                                prompt: item.prompt || "Synced from history",
+                                timestamp: item.created_at || new Date().toISOString()
+                            });
+                            foundNew++;
+                        } else {
+                            // If it's done but no URL in list, trigger a direct poll to get the URL
+                            console.log(`Task ${taskId} is done but URL missing in list. Triggering direct poll...`);
+                            state.activeTasks.push({
+                                id: taskId,
+                                modelName: "Recovering URL...",
+                                generatorId: 'unknown',
+                                prompt: item.prompt || "",
+                                progress: 100,
+                                status: 'Success',
+                                pollCount: 0,
+                                startTime: Date.now()
+                            });
+                            pollTaskStatus(taskId);
+                        }
+                    } else if (!isDone && !inResults && !inActive && taskId) {
+                        // Add back to active tasks if it's still processing
+                        state.activeTasks.push({
+                            id: taskId,
+                            modelName: "Recovered Task",
+                            generatorId: 'unknown',
+                            prompt: item.prompt || "",
+                            progress: item.progress || 0,
+                            status: status || 'Processing',
+                            pollCount: 0,
+                            startTime: Date.now()
+                        });
+                        pollTaskStatus(taskId);
+                        foundNew++;
+                    }
+                });
+            }
+        } catch (e) {
+            console.error(`Sync error for ${endpoint}:`, e);
+        }
+    }
+    
+    if (foundNew > 0) {
+        showToast(`✅ Berhasil menyinkronkan ${foundNew} hasil baru!`, "success");
+        updateTasksAndResultsDOM();
+    } else {
+        showToast("ℹ️ Tidak ditemukan hasil baru yang belum dicatat.", "info");
+    }
+}
+
+function findUrlInObject(obj, depth = 0) {
+    if (!obj || depth > 12) return null;
+    
+    if (typeof obj === 'string') {
+        const isUrl = obj.startsWith('http') || obj.startsWith('//');
+        const isMedia = obj.includes('.mp4') || obj.includes('.mov') || obj.includes('.webm') || obj.includes('.jpg') || obj.includes('.png') || obj.includes('.webp') || obj.includes('.mp3') || obj.includes('.wav') || obj.includes('video') || obj.includes('image') || obj.includes('audio') || obj.includes('freepik');
+        if (isUrl && isMedia) return obj;
+        return null;
+    }
+    
+    if (typeof obj !== 'object') return null;
+    
+    const priorityKeys = ['url', 'image_url', 'video_url', 'download_url', 'uri', 'link', 'src', 'video', 'image', 'output', 'generated_video', 'generated_image'];
+    for (const key of priorityKeys) {
+        const val = obj[key];
+        if (typeof val === 'string' && (val.startsWith('http') || val.startsWith('//'))) {
+            return val;
+        }
+        if (val && typeof val === 'object') {
+            const found = findUrlInObject(val, depth + 1);
+            if (found) return found;
+        }
+    }
+    
+    for (const key in obj) {
+        if (!priorityKeys.includes(key)) {
+            const val = obj[key];
+            if (val && typeof val === 'object') {
+                const found = findUrlInObject(val, depth + 1);
+                if (found) return found;
+            }
+        }
+    }
+    return null;
+}
+
 function renderResults() {
     return `
         <div class="results-section">
             <div class="results-header-row">
                 <h3>Hasil Generasi</h3>
+                <button class="btn-sync" onclick="syncHistory()" title="Cek status terbaru dari server Freepik">
+                    <i data-lucide="refresh-ccw" style="width: 14px; height: 14px; margin-right: 6px;"></i>
+                    Sync Status
+                </button>
             </div>
             ${state.completedResults.length === 0 ? `
                 <div class="empty-results">
@@ -3339,18 +3491,16 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
 
     // List of potential status endpoints and formats to try if 404 occurs
     const fallbacks = [
-        { base: activeGen.statusEndpoint || 'https://api.freepik.com/v1/ai/video/kling-v3', type: activeGen.pollingType || 'path' },
+        { base: activeGen.statusEndpoint || 'https://api.freepik.com/v1/ai/video/tasks', type: activeGen.pollingType || 'path' },
         { base: 'https://api.freepik.com/v1/ai/video/tasks', type: 'path' },
         { base: 'https://api.freepik.com/v1/ai/video/tasks', type: 'list' },
         { base: 'https://api.freepik.com/v1/ai/video/kling-v3', type: 'path' },
         { base: 'https://api.freepik.com/v1/ai/video/kling-v3', type: 'list' },
-        { base: 'https://api.freepik.com/v1/ai/text-to-image/seedream-v4-5-edit', type: 'path' },
-        { base: 'https://api.freepik.com/v1/ai/video/seedance-1-5-pro-720p', type: 'path' },
-        { base: 'https://api.freepik.com/v1/ai/video/status', type: 'query' },
+        { base: 'https://api.freepik.com/v1/ai/video/kling-v3-omni', type: 'path' },
         { base: 'https://api.freepik.com/v1/ai/image-to-video/kling-v2-6', type: 'path' },
-        { base: 'https://api.freepik.com/v1/ai/image-to-video/pixverse-v5', type: 'path' },
-        { base: 'https://api.freepik.com/v1/ai/voiceover/elevenlabs-turbo-v2-5', type: 'path' },
-        { base: 'https://api.freepik.com/v1/ai/music-generation', type: 'path' }
+        { base: 'https://api.freepik.com/v1/ai/image-to-video/tasks', type: 'list' },
+        { base: 'https://api.freepik.com/v1/ai/video/status', type: 'query' },
+        { base: 'https://api.freepik.com/v1/ai/text-to-image/tasks', type: 'list' }
     ];
     
     if (fallbackIndex >= fallbacks.length) {
@@ -4189,7 +4339,40 @@ let lastResultsData = null;
 let lastTasksData = null;
 let lastUsageData = null;
 
+function saveStateToLocalStorage() {
+    try {
+        const dataToSave = {
+            activeTasks: state.activeTasks,
+            completedResults: state.completedResults.slice(0, 50) // Limit persistence to last 50 results
+        };
+        localStorage.setItem('nd_studio_pro_state', JSON.stringify(dataToSave));
+    } catch (e) {
+        console.error("Failed to save state to localStorage:", e);
+    }
+}
+
+function loadStateFromLocalStorage() {
+    try {
+        const saved = localStorage.getItem('nd_studio_pro_state');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed.activeTasks && Array.isArray(parsed.activeTasks)) {
+                state.activeTasks = parsed.activeTasks;
+            }
+            if (parsed.completedResults && Array.isArray(parsed.completedResults)) {
+                state.completedResults = parsed.completedResults;
+            }
+            console.log("State loaded from localStorage:", parsed);
+        }
+    } catch (e) {
+        console.error("Failed to load state from localStorage:", e);
+    }
+}
+
 function updateTasksAndResultsDOM() {
+    // Auto-save state whenever DOM is updated (usually when tasks/results change)
+    saveStateToLocalStorage();
+
     const tasksContainer = document.getElementById('active-tasks-container');
     if (tasksContainer) {
         const currentTasksData = JSON.stringify(state.activeTasks);
