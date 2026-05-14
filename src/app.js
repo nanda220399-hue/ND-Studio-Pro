@@ -1425,6 +1425,7 @@ function renderUserCard(user, type) {
             </div>
             <div style="flex: 1; min-width: 0;">
                 <div style="font-weight: 700; color: var(--text-main); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.displayName || 'User'}</div>
+                <div style="color: var(--text-muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;">${user.email}</div>
                 <div style="color: var(--text-muted); font-size: 11px; display: flex; align-items: center; gap: 4px;">
                     <i data-lucide="clock" style="width: 10px; height: 10px;"></i>
                     ${formatTimeAgo(user.lastActive)}
