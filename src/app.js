@@ -238,6 +238,20 @@ const GENERATORS = [
         pollingType: 'path'
     },
     {
+        id: 'happy-horse-1',
+        name: 'Happy Horse 1.0',
+        icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
+        badge: 'NEW',
+        description: 'Happy Horse 1.0 - Create high-quality AI video from image using Alibaba\'s image-to-video model.',
+        tips: 'Model video yang sangat halus untuk animasi karakter dan pemandangan.',
+        inputs: ['image', 'prompt'],
+        outputType: 'video',
+        settings: { resolution: 'happy-horse', duration: 'happy-horse', seed: true },
+        endpoint: 'https://api.freepik.com/v1/ai/image-to-video/happy-horse-1',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/image-to-video/happy-horse-1',
+        pollingType: 'path'
+    },
+    {
         id: 'veo-3-1-i2v',
         name: 'Veo 3.1 Image to Video',
         icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
@@ -2202,6 +2216,9 @@ function renderSettings(gen) {
                             <option value="720p" ${state.settings.resolution === '720p' ? 'selected' : ''}>720p</option>
                             <option value="1080p" ${state.settings.resolution === '1080p' ? 'selected' : ''}>1080p</option>
                             <option value="4k" ${state.settings.resolution === '4k' ? 'selected' : ''}>4K</option>
+                        ` : gen.settings.resolution === 'happy-horse' ? `
+                            <option value="720P" ${state.settings.resolution === '720P' ? 'selected' : ''}>720P</option>
+                            <option value="1080P" ${state.settings.resolution === '1080P' ? 'selected' : ''}>1080P</option>
                         ` : `
                             <option value="360p" ${state.settings.resolution === '360p' ? 'selected' : ''}>360p</option>
                             <option value="540p" ${state.settings.resolution === '540p' ? 'selected' : ''}>540p</option>
@@ -2303,6 +2320,8 @@ function renderSettings(gen) {
                             <option value="6" ${state.settings.duration == 6 ? 'selected' : ''}>6 Seconds</option>
                             <option value="8" ${state.settings.duration == 8 ? 'selected' : ''}>8 Seconds</option>
                         ` : gen.settings.duration === 'kling26' ? [5,10].map(d => `
+                            <option value="${d}" ${state.settings.duration == d ? 'selected' : ''}>${d}s</option>
+                        `).join('') : gen.settings.duration === 'happy-horse' ? [5,10,15].map(d => `
                             <option value="${d}" ${state.settings.duration == d ? 'selected' : ''}>${d}s</option>
                         `).join('') : gen.settings.duration === 'seedance' ? [5,10,12].map(d => `
                             <option value="${d}" ${state.settings.duration == d ? 'selected' : ''}>${d}s</option>
@@ -3083,7 +3102,7 @@ async function generate() {
         // through Vercel proxy consumes expensive bandwidth. Public URLs are much more efficient.
 
         // Kling and Veo models strictly require public HTTPS URLs
-        const needsPublicUrl = activeGen.id.toLowerCase().includes('kling') || activeGen.id === 'seedance-1-5-pro' || activeGen.id === 'pixverse-v5' || activeGen.id === 'veo-3-1-i2v' || activeGen.id === 'veo-3-1-reference' || activeGen.id === 'kling-v2-6-pro-i2v';
+        const needsPublicUrl = activeGen.id.toLowerCase().includes('kling') || activeGen.id.toLowerCase().includes('happy-horse') || activeGen.id === 'seedance-1-5-pro' || activeGen.id === 'pixverse-v5' || activeGen.id === 'veo-3-1-i2v' || activeGen.id === 'veo-3-1-reference' || activeGen.id === 'kling-v2-6-pro-i2v';
         if (needsPublicUrl) {
             console.log(`[DEBUG] ${activeGen.name} Input URLs:`, {
                 image: imageInput,
@@ -3420,6 +3439,17 @@ async function generate() {
                 body.image_url = imgUrl;
                 body.image = imgUrl; 
             }
+        } else if (activeGen.id === 'happy-horse-1') {
+            if (!imageInput) {
+                throw new Error("Wajib upload Gambar (atau masukkan URL) untuk Happy Horse 1.0.");
+            }
+            body = {
+                image_url: ensureHttps(imageInput),
+                prompt: finalPrompt,
+                resolution: state.settings.resolution || "1080P",
+                duration: parseInt(state.settings.duration) || 5,
+                seed: state.settings.seed !== '' && state.settings.seed !== undefined ? parseInt(state.settings.seed) : Math.floor(Math.random() * 4294967295)
+            };
         } else if (activeGen.id === 'elevenlabs-turbo-v2-5') {
             if (!finalPrompt) {
                 throw new Error("Wajib masukkan teks untuk Voice Over.");
@@ -4043,6 +4073,10 @@ function setActiveGenerator(id) {
         state.settings.enhance_prompt = true;
         state.settings.seed = '';
     } else if (id === 'gemini-2-5-flash-image') {
+        state.settings.seed = '';
+    } else if (id === 'happy-horse-1') {
+        state.settings.resolution = '1080P';
+        state.settings.duration = '5';
         state.settings.seed = '';
     } else if (id === 'elevenlabs-turbo-v2-5') {
         state.settings.voice = 'URAuwR59OqCASDVp35yi';
