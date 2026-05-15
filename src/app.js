@@ -506,6 +506,7 @@ function initAuth() {
                     isApproved: state.isAdmin, // Admin is auto-approved
                     role: state.isAdmin ? 'admin' : 'user',
                     apiKey: '',
+                    lastActive: serverTimestamp(), // Initial online status
                     createdAt: serverTimestamp()
                 };
                 try {
@@ -531,6 +532,9 @@ function initAuth() {
                 if (doc.exists()) {
                     state.userDoc = doc.data();
                     state.apiKey = state.userDoc.apiKey || '';
+                    if (state.userDoc.isApproved) {
+                        updateActivity(); // Hemat activity tracking
+                    }
                     renderContent();
                 }
             }, (error) => {
@@ -566,12 +570,35 @@ function initAuth() {
         console.warn("Global stats listener error:", error);
     });
 
-    // Auto-refresh UI every 5 minutes just for general data updates if needed
+    // Auto-refresh UI every 1 minute to keep "Online" and "Time Ago" status fresh
     setInterval(() => {
         if (state.user && state.userDoc) {
             renderContent();
+            
+            // Juga pastikan user yang sedang buka web tetap dianggap online di DB (Hemat!)
+            if (state.userDoc.isApproved) {
+                updateActivity();
+            }
         }
-    }, 300000);
+    }, 60000);
+}
+
+async function updateActivity() {
+    if (!state.user || !state.userDoc) return;
+    
+    const now = new Date();
+    // Only update if last update was more than 5 minutes ago to save writes (Hemat!)
+    const lastUpdate = state.userDoc.lastActive?.toDate ? state.userDoc.lastActive.toDate() : (state.userDoc.lastActive ? new Date(state.userDoc.lastActive) : null);
+    
+    if (!lastUpdate || (now - lastUpdate > 300000)) {
+        try {
+            await updateDoc(doc(db, 'users', state.user.uid), {
+                lastActive: serverTimestamp()
+            });
+        } catch (e) {
+            console.warn("Silent activity update failed:", e);
+        }
+    }
 }
 
 async function login() {
@@ -1388,15 +1415,34 @@ function renderPendingPage() {
     `;
 }
 
+function formatTimeAgo(date) {
+    if (!date) return 'Belum pernah aktif';
+    const now = new Date();
+    const then = date instanceof Date ? date : (date.toDate ? date.toDate() : new Date(date));
+    const seconds = Math.floor((now - then) / 1000);
+    
+    if (seconds < 60) return 'Baru saja';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} menit lalu`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} jam lalu`;
+    return `${Math.floor(seconds / 86400)} hari lalu`;
+}
+
 function renderUserCard(user, type) {
+    const isOnline = user.lastActive && (new Date() - (user.lastActive.toDate ? user.lastActive.toDate() : new Date(user.lastActive)) < 600000);
+    
     return `
         <div class="user-card" style="background: #111; padding: 12px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
             <div style="position: relative;">
                 <img src="${user.photoURL || 'https://ui-avatars.com/api/?name=' + user.displayName}" style="width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--border-color); object-fit: cover;">
+                <div style="position: absolute; bottom: -2px; right: -2px; width: 12px; height: 12px; border-radius: 50%; background: ${isOnline ? '#40c057' : '#444'}; border: 2px solid #111;"></div>
             </div>
             <div style="flex: 1; min-width: 0;">
                 <div style="font-weight: 700; color: var(--text-main); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.displayName || 'User'}</div>
-                <div style="color: var(--text-muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.email}</div>
+                <div style="color: var(--text-muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;">${user.email}</div>
+                <div style="color: var(--text-muted); font-size: 11px; display: flex; align-items: center; gap: 4px;">
+                    <i data-lucide="clock" style="width: 10px; height: 10px;"></i>
+                    ${formatTimeAgo(user.lastActive)}
+                </div>
             </div>
             <div style="display: flex; gap: 6px;">
                 ${type === 'pending' ? `
