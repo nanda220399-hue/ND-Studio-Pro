@@ -490,10 +490,22 @@ function resetUserState() {
     state.showLogin = false;
 }
 
+let lastUserUid = null;
 function initAuth() {
     onAuthStateChanged(auth, async (user) => {
+        // Prevent clearing state if it's just a silent session refresh for the same user
+        if (user && user.uid === lastUserUid) {
+            state.currentUser = user;
+            state.isAuthLoading = false;
+            return;
+        }
+        lastUserUid = user ? user.uid : null;
+
         // Reset state immediately to prevent stale data between accounts
         resetUserState();
+        
+        // Reload state from local storage to recover tasks after account switches or resets
+        loadStateFromLocalStorage();
         
         state.currentUser = user;
         state.isAuthLoading = false;
@@ -1606,22 +1618,6 @@ function renderAdminMenu() {
                     <div>
                         <h3 style="font-size: 18px; color: var(--text-main); margin-bottom: 8px;">Kelola Data User</h3>
                         <p style="color: var(--text-muted); font-size: 13px;">Lihat daftar user, setujui akses, atau hapus user.</p>
-                    </div>
-                </div>
-
-                <div class="setup-card" style="background: #151515; padding: 32px; border-radius: 24px; border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px;">
-                    <div style="width: 60px; height: 60px; background: rgba(212, 175, 55, 0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--accent-gold);">
-                        <i data-lucide="bar-chart-3" style="width: 32px; height: 32px;"></i>
-                    </div>
-                    <div>
-                        <h3 style="font-size: 18px; color: var(--text-main); margin-bottom: 8px;">Counter Global</h3>
-                        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 12px;">Ubah angka "Total Karya" secara manual.</p>
-                        <div style="display: flex; gap: 8px; justify-content: center;">
-                            <input type="number" id="input-global-stats" value="${totalGenerations}" style="width: 100px; padding: 8px; background: #000; border: 1px solid var(--border-color); color: #fff; border-radius: 8px; text-align: center;">
-                            <button onclick="window.setGlobalStats(document.getElementById('input-global-stats').value)" style="background: var(--accent-gold); color: #000; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 12px;">
-                                Simpan
-                            </button>
-                        </div>
                     </div>
                 </div>
 
@@ -3741,7 +3737,9 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
             data = JSON.parse(text);
         } catch (e) {
             console.error("Failed to parse JSON response in polling:", text);
-            return; // Ignore parse errors in polling and try again later
+            // Retry later instead of just returning and losing the poll loop
+            setTimeout(() => pollTaskStatus(taskId, fallbackIndex), 10000);
+            return;
         }
         
         if (data.error) {
@@ -3749,6 +3747,8 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
             if (data.status === 404 && fallbackIndex < fallbacks.length - 1) {
                 return pollTaskStatus(taskId, fallbackIndex + 1);
             }
+            // For other proxy errors (like 500 or 403), retry the same task later instead of giving up
+            setTimeout(() => pollTaskStatus(taskId, fallbackIndex), 10000);
             return;
         }
         
@@ -3777,10 +3777,15 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
             let apiMsg = data.message || 'Unknown error';
             if (typeof apiMsg === 'string' && (apiMsg.toLowerCase().includes("<!doctype html>") || apiMsg.toLowerCase().includes("<html"))) {
                 apiMsg = "API Freepik sedang mengalami gangguan (Error 500/502).";
+                // Don't kill the task on transient 5xx errors
+                setTimeout(() => pollTaskStatus(taskId, fallbackIndex), 15000);
+                return;
             }
-            showToast(`Gagal mengecek status (${response.status}): ${apiMsg}`, "error");
-            state.activeTasks.splice(currentTaskIndex, 1);
-            updateTasksAndResultsDOM();
+            
+            // For 403 (blocked) or other fatal-seeming errors, we might want to retry rather than immediately delete
+            // because IP blocks can be temporary or endpoints might flip-flop
+            console.log("Transient or access error, retrying in 30s...");
+            setTimeout(() => pollTaskStatus(taskId, fallbackIndex), 30000);
             return;
         }
 
@@ -3992,7 +3997,8 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
         }
     } catch (error) {
         console.error("Polling error:", error);
-        showToast("Terjadi kesalahan saat mengecek status. Silakan coba lagi.", "error");
+        // Don't kill the task on unexpected error, retry in 30s
+        setTimeout(() => pollTaskStatus(taskId, fallbackIndex), 30000);
     }
 }
 
