@@ -54,6 +54,7 @@ let state = {
     isAuthLoading: true,
     allUsers: [], // For admin dashboard
     adminDashboardView: 'menu', // 'menu' or 'users'
+    adminUsersTab: 'pending', // 'pending' or 'approved'
     globalStats: { totalGenerations: 0 },
     isAdmin: false,
     showAdminDashboard: false,
@@ -1563,28 +1564,52 @@ function renderAdminDashboard() {
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
+            <!-- Tab Navigation for Users -->
+            <div style="display: flex; background: #111; padding: 6px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 24px; gap: 6px;">
+                <button onclick="state.adminUsersTab = 'pending'; renderContent();" style="flex: 1; padding: 12px; border-radius: 12px; border: none; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 14px; 
+                    ${state.adminUsersTab === 'pending' ? 'background: var(--accent-gold); color: #000; box-shadow: 0 4px 12px rgba(212,175,55,0.2);' : 'background: transparent; color: var(--text-muted);'}">
+                    <i data-lucide="user-plus" style="width: 18px; height: 18px;"></i>
+                    Persetujuan (${pendingUsers.length})
+                </button>
+                <button onclick="state.adminUsersTab = 'approved'; renderContent();" style="flex: 1; padding: 12px; border-radius: 12px; border: none; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 14px; 
+                    ${state.adminUsersTab === 'approved' ? 'background: var(--accent-gold); color: #000; box-shadow: 0 4px 12px rgba(212,175,55,0.2);' : 'background: transparent; color: var(--text-muted);'}">
+                    <i data-lucide="users" style="width: 18px; height: 18px;"></i>
+                    Pengguna Aktif (${approvedUsers.length})
+                </button>
+            </div>
+
+            <div style="width: 100%;">
                 <!-- Section: Pending Approval -->
-                <div class="setup-card" style="background: #151515; padding: 24px; border-radius: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow);">
-                    <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 18px; color: var(--accent-gold);">
-                        <i data-lucide="user-plus"></i>
-                        Menunggu Persetujuan (${pendingUsers.length})
-                    </h3>
+                ${state.adminUsersTab === 'pending' ? `
+                <div class="setup-card" style="background: #151515; padding: 24px; border-radius: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow); animation: slideUp 0.3s ease-out;">
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px; font-size: 18px; color: var(--accent-gold);">
+                            <i data-lucide="user-plus"></i>
+                            Menunggu Persetujuan
+                        </h3>
+                        <p style="color: var(--text-muted); font-size: 13px;">User baru yang mendaftar dan menunggu akses Anda.</p>
+                    </div>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
-                        ${pendingUsers.length === 0 ? '<p style="text-align: center; color: var(--text-muted); font-size: 14px; padding: 20px;">Tidak ada permintaan baru.</p>' : pendingUsers.map(u => renderUserCard(u, 'pending')).join('')}
+                        ${pendingUsers.length === 0 ? '<p style="text-align: center; color: var(--text-muted); font-size: 14px; padding: 40px;">Tidak ada permintaan persetujuan baru.</p>' : pendingUsers.map(u => renderUserCard(u, 'pending')).join('')}
                     </div>
                 </div>
+                ` : ''}
 
                 <!-- Section: Approved Users -->
-                <div class="setup-card" style="background: #151515; padding: 24px; border-radius: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow);">
-                    <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 18px; color: var(--accent-gold);">
-                        <i data-lucide="users"></i>
-                        Pengguna Aktif (${approvedUsers.length})
-                    </h3>
+                ${state.adminUsersTab === 'approved' ? `
+                <div class="setup-card" style="background: #151515; padding: 24px; border-radius: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow); animation: slideUp 0.3s ease-out;">
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px; font-size: 18px; color: #40c057;">
+                            <i data-lucide="users"></i>
+                            Pengguna Aktif
+                        </h3>
+                        <p style="color: var(--text-muted); font-size: 13px;">User yang saat ini memiliki akses penuh ke platform.</p>
+                    </div>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
-                        ${approvedUsers.length === 0 ? '<p style="text-align: center; color: var(--text-muted); font-size: 14px; padding: 20px;">Belum ada pengguna aktif.</p>' : approvedUsers.map(u => renderUserCard(u, 'approved')).join('')}
+                        ${approvedUsers.length === 0 ? '<p style="text-align: center; color: var(--text-muted); font-size: 14px; padding: 40px;">Belum ada pengguna yang disetujui.</p>' : approvedUsers.map(u => renderUserCard(u, 'approved')).join('')}
                     </div>
                 </div>
+                ` : ''}
             </div>
         </div>
     `;
