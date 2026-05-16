@@ -636,12 +636,22 @@ async function logout() {
 
 async function approveUser(uid) {
     if (!state.isAdmin) return;
-    try {
-        await updateDoc(doc(db, 'users', uid), { isApproved: true });
-        showToast("✅ Pengguna disetujui!", "success");
-    } catch (error) {
-        handleFirestoreError(error, OperationType.UPDATE, 'users/' + uid);
-    }
+    
+    showConfirmModal(
+        "Setujui Pengguna",
+        "Apakah Anda yakin ingin menyetujui akses pengguna ini?",
+        async () => {
+            try {
+                await updateDoc(doc(db, 'users', uid), { 
+                    isApproved: true,
+                    approvedAt: serverTimestamp()
+                });
+                showToast("✅ Pengguna disetujui!", "success");
+            } catch (error) {
+                handleFirestoreError(error, OperationType.UPDATE, 'users/' + uid);
+            }
+        }
+    );
 }
 
 async function rejectUser(uid) {
@@ -1486,7 +1496,11 @@ function renderAdminDashboard() {
         .sort((a, b) => (a.displayName || "").localeCompare(b.displayName || ""));
     const approvedUsers = state.allUsers
         .filter(u => u.isApproved && u.role !== 'admin')
-        .sort((a, b) => (a.displayName || "").localeCompare(b.displayName || ""));
+        .sort((a, b) => {
+            const timeA = a.approvedAt?.toDate ? a.approvedAt.toDate().getTime() : (a.approvedAt ? new Date(a.approvedAt).getTime() : 0);
+            const timeB = b.approvedAt?.toDate ? b.approvedAt.toDate().getTime() : (b.approvedAt ? new Date(b.approvedAt).getTime() : 0);
+            return timeA - timeB; // Ascending: oldest at top, newest at bottom
+        });
     
     return `
         <div class="admin-dashboard" style="max-width: 900px; margin: 20px auto; padding: 0 20px; animation: fadeIn 0.4s ease-out;">
