@@ -510,6 +510,17 @@ function initAuth() {
         state.currentUser = user;
         state.isAuthLoading = false;
         
+        // Restart polling for tasks loaded from local storage after login/auth change
+        if (state.activeTasks.length > 0) {
+            state.activeTasks.forEach(task => {
+                if (!activePolls.has(task.id)) {
+                    console.log(`Resuming polling after auth for task: ${task.id}`);
+                    // Wrap in timeout to ensure state is fully stabilized
+                    setTimeout(() => pollTaskStatus(task.id), 2000);
+                }
+            });
+        }
+        
         if (user) {
             // Check if user is admin based on email
             state.isAdmin = user.email === "nanda220399@gmail.com";
@@ -825,6 +836,8 @@ function getUploadState() {
 }
 
 // --- INITIALIZATION ---
+let activePolls = new Set();
+
 function init() {
     console.log("ND Studio Pro: Initializing...");
     testFirestoreConnection();
@@ -839,8 +852,10 @@ function init() {
     
     // Resume polling for active tasks
     state.activeTasks.forEach(task => {
-        console.log(`Resuming polling for task: ${task.id}`);
-        pollTaskStatus(task.id);
+        if (!activePolls.has(task.id)) {
+            console.log(`Resuming polling for task: ${task.id}`);
+            pollTaskStatus(task.id);
+        }
     });
     
     // Global Listeners for Modal (if still in HTML)
@@ -2678,6 +2693,14 @@ async function syncHistory() {
     if (!state.apiKey) return;
     showToast("🔄 Menyinkronkan riwayat generasi...", "info");
     
+    // Ensure all current active tasks are being polled
+    state.activeTasks.forEach(task => {
+        if (!activePolls.has(task.id)) {
+            console.log("Sync: Resuming idle task polling:", task.id);
+            pollTaskStatus(task.id);
+        }
+    });
+
     // Define endpoints to check for last generation tasks
     const endpoints = [
         'https://api.freepik.com/v1/ai/video/tasks',
@@ -3684,14 +3707,22 @@ async function generate() {
 
 async function pollTaskStatus(taskId, fallbackIndex = 0) {
     const taskIndex = state.activeTasks.findIndex(t => t.id === taskId);
-    if (taskIndex === -1) return;
+    if (taskIndex === -1) {
+        activePolls.delete(taskId);
+        return;
+    }
+    
+    // Track that we are actively polling this task
+    activePolls.add(taskId);
     
     const task = state.activeTasks[taskIndex];
     const activeGen = GENERATORS.find(g => g.id === task.generatorId) || GENERATORS.find(g => g.id === state.activeGenerator);
     
     const currentKey = state.apiKey ? state.apiKey.trim() : '';
     if (!currentKey) {
-        console.error("Polling error: No API Key in state");
+        console.warn("Polling paused: No API Key found yet for task", taskId);
+        // Retry in 5 seconds - maybe the database is still loading the key
+        setTimeout(() => pollTaskStatus(taskId, fallbackIndex), 5000);
         return;
     }
 
@@ -3711,12 +3742,30 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
     
     if (fallbackIndex >= fallbacks.length) {
         if (taskIndex !== -1) {
-            showToast(`Gagal mengecek status (404): Task ID tidak ditemukan di semua endpoint yang dicoba.`, "error");
-            state.activeTasks.splice(taskIndex, 1);
-            updateTasksAndResultsDOM();
+            const currentT = state.activeTasks[taskIndex];
+            currentT.consecutive404s = (currentT.consecutive404s || 0) + 1;
+            
+            // If we've tried all fallbacks many times and still get 404, only then give up
+            // Increased patience to 60 attempts (~10 minutes) to handle slow backends
+            if (currentT.consecutive404s > 60) {
+                showToast(`Task ${taskId} tidak ditemukan di server setelah 10 menit percobaan. Task dihapus.`, "error");
+                state.activeTasks.splice(taskIndex, 1);
+                activePolls.delete(taskId);
+                updateTasksAndResultsDOM();
+                return; // Ensure we exit
+            } else {
+                console.log(`Task ${taskId} not found in any endpoint. Retrying cycle ${currentT.consecutive404s}/60...`);
+                setTimeout(() => pollTaskStatus(taskId, 0), 10000);
+                return;
+            }
         }
+        activePolls.delete(taskId);
         return;
     }
+    
+    // Reset consecutive 404s if we actually REACH a successful request (even if response.ok is false, it's not a 404 from the proxy/network level)
+    // Actually, we should reset it further down when we get a valid taskData
+
 
     const fallback = fallbacks[fallbackIndex];
     const statusBase = fallback.base;
@@ -3754,7 +3803,10 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
         
         // Re-find task index in case it was modified during the await
         const currentTaskIndex = state.activeTasks.findIndex(t => t.id === taskId);
-        if (currentTaskIndex === -1) return;
+        if (currentTaskIndex === -1) {
+            activePolls.delete(taskId);
+            return;
+        }
 
         if (!response.ok) {
             // If we get a 429, don't try fallbacks, just show error
@@ -3813,6 +3865,9 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
         } else {
             taskData = data.data || data;
         }
+
+        // Reset consecutive 404s counter since we found the task
+        state.activeTasks[currentTaskIndex].consecutive404s = 0;
         
         // Robust status detection
         let status = (taskData.status || taskData.state || '').toUpperCase();
@@ -3920,6 +3975,7 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
                 console.error("Output URL not found after retries. Full data:", JSON.stringify(data, null, 2));
                 showToast("Error: Video URL tidak ditemukan meskipun status sudah selesai. Silakan cek console log.", "error");
                 state.activeTasks.splice(currentTaskIndex, 1);
+                activePolls.delete(taskId);
                 updateTasksAndResultsDOM();
                 return;
             }
@@ -3943,6 +3999,7 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
             };
             state.completedResults.unshift(result);
             state.activeTasks.splice(currentTaskIndex, 1);
+            activePolls.delete(taskId);
             updateTasksAndResultsDOM();
         } else if (isFailed) {
             console.error("Task failed. Full task data from Freepik:", JSON.stringify(taskData, null, 2));
@@ -3964,6 +4021,7 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
             
             showToast("Task Gagal: " + errMsg, "error");
             state.activeTasks.splice(currentTaskIndex, 1);
+            activePolls.delete(taskId);
             updateTasksAndResultsDOM();
         } else {
         // Still processing (PENDING, PROCESSING, etc.)
