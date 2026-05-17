@@ -1936,17 +1936,17 @@ function renderModelSelector() {
 
             <!-- Tool Selection (Sub-level) -->
             <div style="margin-top: 10px; padding-top: 15px; border-top: 1px dashed var(--border-color);">
-                <div class="model-selector" style="margin-top: 0; padding: 4px; display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 14px;">
+                <div class="model-selector" style="margin-top: 0; padding: 10px 4px; display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 14px; scrollbar-width: none;">
                     ${activeTools.length === 0 ? '<div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;">Segera hadir...</div>' : activeTools.map(gen => `
                         <div class="model-item ${state.activeGenerator === gen.id ? 'active' : ''}" 
                              data-id="${gen.id}"
                              onclick="setActiveGenerator('${gen.id}')"
-                             style="cursor: pointer; transition: all 0.3s; padding: 12px 8px; border-radius: 20px; background: ${state.activeGenerator === gen.id ? 'rgba(212, 175, 55, 0.12)' : 'rgba(255,255,255,0.02)'}; border: 1px solid ${state.activeGenerator === gen.id ? 'var(--accent-gold)' : 'transparent'}; flex: 0 0 110px; min-width: 110px;">
-                            <div class="model-icon-wrapper" style="width: 64px; height: 64px; margin: 0 auto 10px auto;">
+                             style="cursor: pointer; transition: all 0.3s; padding: 4px; border-radius: 20px; flex: 0 0 100px; min-width: 100px; border: none; background: transparent;">
+                            <div class="model-icon-wrapper" style="width: 80px; height: 80px; margin: 0 auto 10px auto; transform: translateZ(0);">
                                 <div class="model-icon-inner">${gen.icon}</div>
-                                ${gen.badge ? `<div class="model-badge">${gen.badge}</div>` : ''}
+                                ${gen.badge ? `<div class="model-badge" style="top: -5px; right: -5px; z-index: 20;">${gen.badge}</div>` : ''}
                             </div>
-                            <div class="model-name-label" style="font-weight: 700; font-size: 11px; line-height: 1.3; color: ${state.activeGenerator === gen.id ? 'var(--accent-gold)' : 'var(--text-muted)'}; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.6em; width: 100%; text-overflow: ellipsis;">${gen.name}</div>
+                            <div class="model-name-label" style="font-weight: 700; font-size: 11px; line-height: 1.2; color: ${state.activeGenerator === gen.id ? 'var(--accent-gold)' : 'var(--text-muted)'}; display: block; overflow: visible; height: auto; margin-top: 4px;">${gen.name}</div>
                         </div>
                     `).join('')}
                 </div>
