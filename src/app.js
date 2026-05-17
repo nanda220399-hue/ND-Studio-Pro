@@ -55,6 +55,7 @@ let state = {
     allUsers: [], // For admin dashboard
     adminDashboardView: 'menu', // 'menu' or 'users'
     adminUsersTab: 'pending', // 'pending' or 'approved'
+    activeToolsTab: 'motion-control', // 'motion-control', 'video', 'image', 'voice', 'music'
     globalStats: { totalGenerations: 0 },
     isAdmin: false,
     showAdminDashboard: false,
@@ -469,6 +470,32 @@ const GENERATORS = [
         pollingType: 'path'
     }
 ];
+
+// --- TOOL CATEGORIES ---
+const TOOL_CATEGORIES = [
+    { id: 'motion-control', name: 'Motion Control', icon: 'zap', badge: 'Popular' },
+    { id: 'video', name: 'Video Generation', icon: 'video' },
+    { id: 'image', name: 'Image Generation', icon: 'image' },
+    { id: 'voice', name: 'Voice Generation', icon: 'mic' },
+    { id: 'music', name: 'Music Generation', icon: 'music' }
+];
+
+function getToolsForTab(tabId) {
+    switch (tabId) {
+        case 'motion-control':
+            return GENERATORS.filter(g => g.id.includes('motion-control'));
+        case 'video':
+            return GENERATORS.filter(g => g.outputType === 'video' && !g.id.includes('motion-control'));
+        case 'image':
+            return GENERATORS.filter(g => g.outputType === 'image');
+        case 'voice':
+            return GENERATORS.filter(g => g.id === 'elevenlabs-turbo-v2-5');
+        case 'music':
+            return GENERATORS.filter(g => g.id === 'music-generation');
+        default:
+            return [];
+    }
+}
 
 
 // --- AUTH FUNCTIONS ---
@@ -1879,20 +1906,57 @@ function renderSetupPage() {
 }
 
 function renderModelSelector() {
+    const activeTools = getToolsForTab(state.activeToolsTab);
+
     return `
-        <div class="model-selector">
-            ${GENERATORS.map(gen => `
-                <div class="model-item ${state.activeGenerator === gen.id ? 'active' : ''}" 
-                     data-id="${gen.id}"
-                     onclick="setActiveGenerator('${gen.id}')">
-                    <div class="model-icon-wrapper">
-                        <div class="model-icon-inner">${gen.icon}</div>
-                        ${gen.badge ? `<div class="model-badge">${gen.badge}</div>` : ''}
-                    </div>
-                    <div class="model-name-label">${gen.name}</div>
+        <div class="tools-navigation-container" style="margin-bottom: 28px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 24px; border: 1px solid var(--border-color); overflow: visible;">
+            <!-- Categories Tabs -->
+            <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                <div style="width: 3px; height: 16px; background: var(--accent-gold); border-radius: 4px;"></div>
+                <span style="font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">Pilih Kategori Alat</span>
+            </div>
+            
+            <div class="tools-tabs-wrapper" style="display: flex; gap: 10px; overflow-x: auto; padding: 12px 4px 14px 4px; scrollbar-width: none; -ms-overflow-style: none; overflow-y: visible;">
+                ${TOOL_CATEGORIES.map(cat => {
+                    const isActive = state.activeToolsTab === cat.id;
+                    return `
+                        <button onclick="state.activeToolsTab = '${cat.id}'; renderContent();" class="tool-tab-btn" style="flex: 0 0 auto; padding: 12px 20px; border-radius: 16px; border: 1px solid ${isActive ? 'var(--accent-gold)' : 'var(--border-color)'}; background: ${isActive ? 'rgba(212, 175, 55, 0.15)' : '#111'}; color: ${isActive ? 'var(--accent-gold)' : 'var(--text-muted)'}; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; position: relative; box-shadow: ${isActive ? '0 8px 16px rgba(212, 175, 55, 0.1)' : 'none'}; overflow: visible;">
+                            <i data-lucide="${cat.icon}" style="width: 18px; height: 18px; color: ${isActive ? 'var(--accent-gold)' : 'var(--text-muted)'};"></i>
+                            ${cat.name}
+                            ${cat.badge ? `
+                                <div style="position: absolute; top: -12px; right: -5px; background: linear-gradient(135deg, #FFD700, #DAA520); color: #000; font-size: 8px; padding: 3px 8px; border-radius: 20px; font-weight: 900; text-transform: uppercase; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); pointer-events: none; z-index: 10; white-space: nowrap;">
+                                    ${cat.badge}
+                                </div>
+                            ` : ''}
+                            ${isActive ? '<div style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 22px; height: 3px; background: var(--accent-gold); border-radius: 10px;"></div>' : ''}
+                        </button>
+                    `;
+                }).join('')}
+            </div>
+
+            <!-- Tool Selection (Sub-level) -->
+            <div style="margin-top: 10px; padding-top: 15px; border-top: 1px dashed var(--border-color);">
+                <div class="model-selector" style="margin-top: 0; padding: 4px; display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 14px;">
+                    ${activeTools.length === 0 ? '<div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;">Segera hadir...</div>' : activeTools.map(gen => `
+                        <div class="model-item ${state.activeGenerator === gen.id ? 'active' : ''}" 
+                             data-id="${gen.id}"
+                             onclick="setActiveGenerator('${gen.id}')"
+                             style="cursor: pointer; transition: all 0.3s; padding: 12px 8px; border-radius: 20px; background: ${state.activeGenerator === gen.id ? 'rgba(212, 175, 55, 0.12)' : 'rgba(255,255,255,0.02)'}; border: 1px solid ${state.activeGenerator === gen.id ? 'var(--accent-gold)' : 'transparent'}; flex: 0 0 110px; min-width: 110px;">
+                            <div class="model-icon-wrapper" style="width: 64px; height: 64px; margin: 0 auto 10px auto;">
+                                <div class="model-icon-inner">${gen.icon}</div>
+                                ${gen.badge ? `<div class="model-badge">${gen.badge}</div>` : ''}
+                            </div>
+                            <div class="model-name-label" style="font-weight: 700; font-size: 11px; line-height: 1.3; color: ${state.activeGenerator === gen.id ? 'var(--accent-gold)' : 'var(--text-muted)'}; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.6em; width: 100%; text-overflow: ellipsis;">${gen.name}</div>
+                        </div>
+                    `).join('')}
                 </div>
-            `).join('')}
+            </div>
         </div>
+        <style>
+            .tools-tabs-wrapper::-webkit-scrollbar { display: none; }
+            .tool-tab-btn:hover { border-color: var(--accent-gold); transform: translateY(-2px); }
+            .tool-tab-btn:active { transform: scale(0.95); }
+        </style>
     `;
 }
 
@@ -4116,6 +4180,19 @@ function setActiveGenerator(id) {
     state.generatorPrompts[state.activeGenerator] = state.currentPrompt;
     
     state.activeGenerator = id;
+
+    // Auto-switch tab based on selected generator
+    if (id.includes('motion-control')) {
+        state.activeToolsTab = 'motion-control';
+    } else {
+        const gen = GENERATORS.find(g => g.id === id);
+        if (gen) {
+            if (gen.outputType === 'video') state.activeToolsTab = 'video';
+            else if (gen.outputType === 'image') state.activeToolsTab = 'image';
+            else if (id === 'elevenlabs-turbo-v2-5') state.activeToolsTab = 'voice';
+            else if (id === 'music-generation') state.activeToolsTab = 'music';
+        }
+    }
     
     // Restore prompt for the new generator
     state.currentPrompt = state.generatorPrompts[id] || '';
