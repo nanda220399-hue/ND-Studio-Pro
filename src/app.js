@@ -626,8 +626,7 @@ function initAuth() {
     onSnapshot(doc(db, 'stats', 'global'), (snap) => {
         if (snap.exists()) {
             state.globalStats = snap.data();
-            // Surgical update instead of full renderContent
-            updateUsageStatsBar();
+            renderContent();
         } else if (state.isAdmin) {
             // Admin can initialize the document if it doesn't exist
             setDoc(doc(db, 'stats', 'global'), { totalGenerations: 0 }).catch(console.error);
@@ -638,15 +637,8 @@ function initAuth() {
 
     // Auto-refresh UI every 1 minute to keep "Online" and "Time Ago" status fresh
     setInterval(() => {
-        if (state.currentUser && state.userDoc) {
-            // Update stats and tasks surgically
-            updateUsageStatsBar();
-            updateTasksAndResultsDOM();
-            
-            // If admin dashboard is open, we might need a fuller update for user cards time ago
-            if (state.showAdminDashboard) {
-                renderContent();
-            }
+        if (state.user && state.userDoc) {
+            renderContent();
             
             // Juga pastikan user yang sedang buka web tetap dianggap online di DB (Hemat!)
             if (state.userDoc.isApproved) {
@@ -657,7 +649,7 @@ function initAuth() {
 }
 
 async function updateActivity() {
-    if (!state.currentUser || !state.userDoc) return;
+    if (!state.user || !state.userDoc) return;
     
     const now = new Date();
     // Only update if last update was more than 5 minutes ago to save writes (Hemat!)
@@ -665,7 +657,7 @@ async function updateActivity() {
     
     if (!lastUpdate || (now - lastUpdate > 300000)) {
         try {
-            await updateDoc(doc(db, 'users', state.currentUser.uid), {
+            await updateDoc(doc(db, 'users', state.user.uid), {
                 lastActive: serverTimestamp()
             });
         } catch (e) {
@@ -1929,7 +1921,7 @@ function renderModelSelector() {
                 ${TOOL_CATEGORIES.map(cat => {
                     const isActive = state.activeToolsTab === cat.id;
                     return `
-                        <button onclick="switchToolsTab('${cat.id}')" class="tool-tab-btn" style="flex: 0 0 auto; padding: 12px 22px; border-radius: 18px; border: 1px solid ${isActive ? 'var(--accent-gold)' : 'rgba(255,255,255,0.05)'}; background: ${isActive ? 'rgba(212, 175, 55, 0.12)' : '#111'}; color: ${isActive ? 'var(--accent-gold)' : 'var(--text-muted)'}; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; position: relative; box-shadow: ${isActive ? '0 8px 20px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(212, 175, 55, 0.05)' : 'none'}; overflow: visible;">
+                        <button onclick="state.activeToolsTab = '${cat.id}'; renderContent();" class="tool-tab-btn" style="flex: 0 0 auto; padding: 12px 22px; border-radius: 18px; border: 1px solid ${isActive ? 'var(--accent-gold)' : 'rgba(255,255,255,0.05)'}; background: ${isActive ? 'rgba(212, 175, 55, 0.12)' : '#111'}; color: ${isActive ? 'var(--accent-gold)' : 'var(--text-muted)'}; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; position: relative; box-shadow: ${isActive ? '0 8px 20px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(212, 175, 55, 0.05)' : 'none'}; overflow: visible;">
                             <i data-lucide="${cat.icon}" style="width: 18px; height: 18px;"></i>
                             ${cat.name}
                             ${cat.badge ? `
@@ -4767,62 +4759,6 @@ function loadStateFromLocalStorage() {
     }
 }
 
-function switchToolsTab(tabId) {
-    if (state.activeToolsTab === tabId) return;
-    state.activeToolsTab = tabId;
-    
-    // Update active class on buttons surgically first for instant feedback
-    const tabs = document.querySelectorAll('.tool-tab-btn');
-    tabs.forEach(btn => {
-        // This is a bit tricky with string templates, but we can try to find the button by its text or use a data-id
-        // For now, let's just use the surgical outerHTML but hide the flash
-        const isTarget = btn.getAttribute('onclick')?.includes(`'${tabId}'`);
-        if (isTarget) {
-            btn.style.borderColor = 'var(--accent-gold)';
-            btn.style.color = 'var(--accent-gold)';
-            btn.style.background = 'rgba(212, 175, 55, 0.15)';
-        } else {
-            btn.style.borderColor = 'rgba(255,255,255,0.05)';
-            btn.style.color = 'var(--text-muted)';
-            btn.style.background = '#111';
-        }
-    });
-
-    const container = document.querySelector('.tools-navigation-container');
-    if (container) {
-        // Use a slight delay or animation frame to avoid layout shift flash
-        requestAnimationFrame(() => {
-            container.outerHTML = renderModelSelector();
-            const newContainer = document.querySelector('.tools-navigation-container');
-            if (newContainer && window.lucide) lucide.createIcons({ root: newContainer });
-        });
-    } else {
-        renderContent();
-    }
-}
-
-function updateUsageStatsBar() {
-    const usageStats = document.querySelector('.usage-stats-bar');
-    if (usageStats) {
-        const currentUsageData = JSON.stringify({
-            active: (state.activeTasks || []).length,
-            history: (state.generationHistory || []).length,
-            total: state.globalStats?.totalGenerations || 0,
-            taskLimit: state.taskLimit,
-            queueLimit: state.queueLimit
-        });
-
-        if (lastUsageData !== currentUsageData) {
-            // Update only if data changed
-            usageStats.outerHTML = renderUsageStats();
-            lastUsageData = currentUsageData;
-            
-            const newUsageStats = document.querySelector('.usage-stats-bar');
-            if (newUsageStats && window.lucide) lucide.createIcons({ root: newUsageStats });
-        }
-    }
-}
-
 function updateTasksAndResultsDOM() {
     // Auto-save state whenever DOM is updated (usually when tasks/results change)
     saveStateToLocalStorage();
@@ -4855,7 +4791,20 @@ function updateTasksAndResultsDOM() {
     }
     
     // Update usage stats bar
-    updateUsageStatsBar();
+    const usageStats = document.querySelector('.usage-stats-bar');
+    if (usageStats) {
+        const currentUsageData = JSON.stringify({
+            active: state.activeTasks.length,
+            history: state.generationHistory.length
+        });
+        if (lastUsageData !== currentUsageData) {
+            usageStats.outerHTML = renderUsageStats();
+            lastUsageData = currentUsageData;
+            // Re-find and re-init icons for the new usage bar
+            const newUsageStats = document.querySelector('.usage-stats-bar');
+            if (newUsageStats && window.lucide) lucide.createIcons({ root: newUsageStats });
+        }
+    }
 }
 
 function deleteResult(index) {
