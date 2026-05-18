@@ -1909,44 +1909,45 @@ function renderModelSelector() {
     const activeTools = getToolsForTab(state.activeToolsTab);
 
     return `
-        <div class="tools-navigation-container" style="margin-bottom: 28px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 24px; border: 1px solid var(--border-color); overflow: visible;">
-            <!-- Categories Tabs -->
-            <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-                <div style="width: 3px; height: 16px; background: var(--accent-gold); border-radius: 4px;"></div>
-                <span style="font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">Pilih Kategori Alat</span>
+        <div class="tools-navigation-container" style="margin-bottom: 28px; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 28px; border: 1px solid var(--border-color); overflow: visible; position: relative;">
+            <!-- Category Title -->
+            <div style="margin-bottom: 18px; display: flex; align-items: center; gap: 10px;">
+                <div style="width: 4px; height: 18px; background: var(--accent-gold); border-radius: 4px; box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);"></div>
+                <span style="font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted);">Kategori Alat</span>
             </div>
             
-            <div class="tools-tabs-wrapper" style="display: flex; gap: 10px; overflow-x: auto; padding: 12px 4px 14px 4px; scrollbar-width: none; -ms-overflow-style: none; overflow-y: visible;">
+            <!-- Categories Tabs -->
+            <div class="tools-tabs-wrapper" style="display: flex; gap: 12px; overflow-x: auto; padding: 12px 4px 16px 4px; scrollbar-width: none; -ms-overflow-style: none; overflow-y: visible;">
                 ${TOOL_CATEGORIES.map(cat => {
                     const isActive = state.activeToolsTab === cat.id;
                     return `
-                        <button onclick="state.activeToolsTab = '${cat.id}'; renderContent();" class="tool-tab-btn" style="flex: 0 0 auto; padding: 12px 20px; border-radius: 16px; border: 1px solid ${isActive ? 'var(--accent-gold)' : 'var(--border-color)'}; background: ${isActive ? 'rgba(212, 175, 55, 0.15)' : '#111'}; color: ${isActive ? 'var(--accent-gold)' : 'var(--text-muted)'}; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; position: relative; box-shadow: ${isActive ? '0 8px 16px rgba(212, 175, 55, 0.1)' : 'none'}; overflow: visible;">
-                            <i data-lucide="${cat.icon}" style="width: 18px; height: 18px; color: ${isActive ? 'var(--accent-gold)' : 'var(--text-muted)'};"></i>
+                        <button onclick="state.activeToolsTab = '${cat.id}'; renderContent();" class="tool-tab-btn" style="flex: 0 0 auto; padding: 12px 22px; border-radius: 18px; border: 1px solid ${isActive ? 'var(--accent-gold)' : 'rgba(255,255,255,0.05)'}; background: ${isActive ? 'rgba(212, 175, 55, 0.12)' : '#111'}; color: ${isActive ? 'var(--accent-gold)' : 'var(--text-muted)'}; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; position: relative; box-shadow: ${isActive ? '0 8px 20px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(212, 175, 55, 0.05)' : 'none'}; overflow: visible;">
+                            <i data-lucide="${cat.icon}" style="width: 18px; height: 18px;"></i>
                             ${cat.name}
                             ${cat.badge ? `
-                                <div style="position: absolute; top: -12px; right: -5px; background: linear-gradient(135deg, #FFD700, #DAA520); color: #000; font-size: 8px; padding: 3px 8px; border-radius: 20px; font-weight: 900; text-transform: uppercase; box-shadow: 0 4px 8px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); pointer-events: none; z-index: 10; white-space: nowrap;">
+                                <div style="position: absolute; top: -14px; right: -8px; background: linear-gradient(135deg, #FFD700, #DAA520); color: #000; font-size: 9px; padding: 3px 10px; border-radius: 20px; font-weight: 900; text-transform: uppercase; box-shadow: 0 4px 12px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.3); pointer-events: none; z-index: 100; white-space: nowrap;">
                                     ${cat.badge}
                                 </div>
                             ` : ''}
-                            ${isActive ? '<div style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 22px; height: 3px; background: var(--accent-gold); border-radius: 10px;"></div>' : ''}
+                            ${isActive ? '<div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 30%; height: 3px; background: var(--accent-gold); border-radius: 10px 10px 0 0; box-shadow: 0 0 10px var(--accent-gold);"></div>' : ''}
                         </button>
                     `;
                 }).join('')}
             </div>
 
             <!-- Tool Selection (Sub-level) -->
-            <div style="margin-top: 10px; padding-top: 15px; border-top: 1px dashed var(--border-color);">
-                <div class="model-selector" style="margin-top: 0; padding: 10px 4px; display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 14px; scrollbar-width: none;">
-                    ${activeTools.length === 0 ? '<div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px;">Segera hadir...</div>' : activeTools.map(gen => `
+            <div style="margin-top: 15px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); overflow: visible;">
+                <div class="model-selector" style="margin-top: 0; padding: 10px 0; display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 16px; scrollbar-width: none; overflow-y: visible;">
+                    ${activeTools.length === 0 ? '<div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 40px; width: 100%;">Segera hadir fitur baru...</div>' : activeTools.map(gen => `
                         <div class="model-item ${state.activeGenerator === gen.id ? 'active' : ''}" 
                              data-id="${gen.id}"
                              onclick="setActiveGenerator('${gen.id}')"
-                             style="cursor: pointer; transition: all 0.3s; padding: 4px; border-radius: 20px; flex: 0 0 100px; min-width: 100px; border: none; background: transparent;">
-                            <div class="model-icon-wrapper" style="width: 80px; height: 80px; margin: 0 auto 10px auto; transform: translateZ(0);">
-                                <div class="model-icon-inner">${gen.icon}</div>
-                                ${gen.badge ? `<div class="model-badge" style="top: -5px; right: -5px; z-index: 20;">${gen.badge}</div>` : ''}
+                             style="cursor: pointer; transition: all 0.3s; padding: 0; border-radius: 24px; flex: 0 0 110px; min-width: 110px; border: none; background: transparent; overflow: visible;">
+                            <div class="model-icon-wrapper" style="width: 88px; height: 88px; margin: 0 auto 12px auto; transform: translateZ(0); position: relative; border-radius: 24px;">
+                                <div class="model-icon-inner" style="border-radius: 22px;">${gen.icon}</div>
+                                ${gen.badge ? `<div class="model-badge" style="top: -4px; right: -4px; z-index: 20; background: var(--accent-red); padding: 3px 8px; border-radius: 8px; font-size: 9px;">${gen.badge}</div>` : ''}
                             </div>
-                            <div class="model-name-label" style="font-weight: 700; font-size: 11px; line-height: 1.2; color: ${state.activeGenerator === gen.id ? 'var(--accent-gold)' : 'var(--text-muted)'}; display: block; overflow: visible; height: auto; margin-top: 4px;">${gen.name}</div>
+                            <div class="model-name-label" style="font-weight: 700; font-size: 11px; line-height: 1.3; color: var(--text-muted); display: block; overflow: visible; height: auto; margin-top: 6px; padding: 0 4px;">${gen.name}</div>
                         </div>
                     `).join('')}
                 </div>
