@@ -626,7 +626,14 @@ function initAuth() {
     onSnapshot(doc(db, 'stats', 'global'), (snap) => {
         if (snap.exists()) {
             state.globalStats = snap.data();
-            renderContent();
+            
+            // Check if stats bar is already visible. If so, update it partially to avoid full page flicker
+            const statsBar = document.querySelector('.usage-stats-bar');
+            if (statsBar && !state.isAuthLoading && state.currentUser && state.userDoc?.isApproved) {
+                updateTasksAndResultsDOM();
+            } else {
+                renderContent();
+            }
         } else if (state.isAdmin) {
             // Admin can initialize the document if it doesn't exist
             setDoc(doc(db, 'stats', 'global'), { totalGenerations: 0 }).catch(console.error);
@@ -1092,6 +1099,11 @@ function renderContent() {
                 </main>
                 ${renderFooter()}
             `;
+            
+            // Reset DOM optimization tracking so the empty containers are populated
+            lastTasksData = null;
+            lastResultsData = null;
+            
             updateTasksAndResultsDOM();
         }
 
@@ -1759,11 +1771,11 @@ function renderUsageStats() {
         <div class="usage-stats-bar">
             <div class="stat-item">
                 <i data-lucide="layers"></i>
-                <span>Task <strong>${activeCount}/${taskLimit}</strong> - <strong>${queueCount}/${queueLimit}/min</strong></span>
+                <span>Task <strong class="stat-active-count">${activeCount}/${taskLimit}</strong> - <strong class="stat-queue-count">${queueCount}/${queueLimit}/min</strong></span>
             </div>
             <div class="stat-item stat-item-global">
                 <i data-lucide="sparkles"></i>
-                <span>Total Karya: <strong>${totalGenerations.toLocaleString()}</strong></span>
+                <span>Total Karya: <strong class="stat-total-generations">${totalGenerations.toLocaleString()}</strong></span>
             </div>
         </div>
     `;
@@ -2743,14 +2755,14 @@ function renderActiveTasks() {
             ${state.activeTasks.map(task => {
                 const gen = GENERATORS.find(g => g.id === task.generatorId) || GENERATORS[0];
                 return `
-                <div class="task-card">
+                <div class="task-card" id="task-card-${task.id}">
                     <div class="task-header">
                         <div class="task-header-left">
                             <div class="task-tool-icon">${gen.icon}</div>
                             <span>${task.modelName}</span>
                         </div>
                         <div class="task-header-right">
-                            <span>${Math.floor(task.progress)}%</span>
+                            <span class="task-progress-text">${Math.floor(task.progress)}%</span>
                             <button class="btn-task-action" onclick="pollTaskStatus('${task.id}')" title="Refresh Status">
                                 <i data-lucide="refresh-cw"></i>
                             </button>
@@ -4765,27 +4777,45 @@ function updateTasksAndResultsDOM() {
 
     const tasksContainer = document.getElementById('active-tasks-container');
     if (tasksContainer) {
-        const currentTasksData = JSON.stringify(state.activeTasks);
-        if (lastTasksData !== currentTasksData) {
+        const currentTaskIds = state.activeTasks.map(t => t.id).join(',');
+        const currentTasksFullData = JSON.stringify(state.activeTasks);
+        
+        // If lastTasksData is not an object (compatibility with old state)
+        if (typeof lastTasksData === 'string') lastTasksData = null;
+
+        if (!lastTasksData || lastTasksData.ids !== currentTaskIds || !tasksContainer.innerHTML) {
             tasksContainer.innerHTML = renderActiveTasks();
-            lastTasksData = currentTasksData;
+            lastTasksData = { ids: currentTaskIds, full: currentTasksFullData };
             if (window.lucide) lucide.createIcons({ root: tasksContainer });
+        } else if (lastTasksData.full !== currentTasksFullData) {
+            // Surgical update for progresses
+            state.activeTasks.forEach(task => {
+                const card = document.getElementById(`task-card-${task.id}`);
+                if (card) {
+                    const progressBar = card.querySelector('.task-progress-bar');
+                    const progressText = card.querySelector('.task-progress-text');
+                    const statusText = card.querySelector('.task-status');
+                    
+                    if (progressBar) progressBar.style.width = `${task.progress}%`;
+                    if (progressText) progressText.innerText = `${Math.floor(task.progress)}%`;
+                    if (statusText) statusText.innerText = `${task.status}...`;
+                }
+            });
+            lastTasksData.full = currentTasksFullData;
         }
     }
 
     const resultsContainer = document.getElementById('results-container');
     if (resultsContainer) {
-        // Compare data instead of innerHTML to avoid false positives from Lucide SVGs
         const currentResultsData = JSON.stringify({
             results: state.completedResults,
             activeGen: state.activeGenerator,
-            apiKey: !!state.apiKey // apiKey presence affects canSync button
+            apiKey: !!state.apiKey
         });
 
         if (lastResultsData !== currentResultsData) {
             resultsContainer.innerHTML = renderResults();
             lastResultsData = currentResultsData;
-            // Only re-initialize icons for the results container
             if (window.lucide) lucide.createIcons({ root: resultsContainer });
         }
     }
@@ -4793,16 +4823,42 @@ function updateTasksAndResultsDOM() {
     // Update usage stats bar
     const usageStats = document.querySelector('.usage-stats-bar');
     if (usageStats) {
+        const activeCount = state.activeTasks.length;
+        const taskLimit = state.taskLimit || 10;
+        const queueLimit = state.queueLimit || 10;
+        
+        // Re-calculate queue
+        const now = Date.now();
+        state.generationHistory = (state.generationHistory || []).filter(t => now - t < 60000);
+        const queueCount = state.generationHistory.length;
+        const total = state.globalStats?.totalGenerations || 0;
+
         const currentUsageData = JSON.stringify({
-            active: state.activeTasks.length,
-            history: state.generationHistory.length
+            active: activeCount,
+            queue: queueCount,
+            total: total
         });
+
         if (lastUsageData !== currentUsageData) {
-            usageStats.outerHTML = renderUsageStats();
-            lastUsageData = currentUsageData;
-            // Re-find and re-init icons for the new usage bar
-            const newUsageStats = document.querySelector('.usage-stats-bar');
-            if (newUsageStats && window.lucide) lucide.createIcons({ root: newUsageStats });
+            const totalEl = usageStats.querySelector('.stat-total-generations');
+            const activeEl = usageStats.querySelector('.stat-active-count');
+            const queueEl = usageStats.querySelector('.stat-queue-count');
+            
+            if (totalEl && activeEl && queueEl) {
+                // Surgical update
+                if (totalEl.innerText !== total.toLocaleString()) {
+                    totalEl.innerText = total.toLocaleString();
+                }
+                activeEl.innerText = `${activeCount}/${taskLimit}`;
+                queueEl.innerText = `${queueCount}/${queueLimit}/min`;
+                lastUsageData = currentUsageData;
+            } else {
+                // Full update if structure missing
+                usageStats.outerHTML = renderUsageStats();
+                lastUsageData = currentUsageData;
+                const newUsageStats = document.querySelector('.usage-stats-bar');
+                if (newUsageStats && window.lucide) lucide.createIcons({ root: newUsageStats });
+            }
         }
     }
 }
