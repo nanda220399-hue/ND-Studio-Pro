@@ -240,6 +240,20 @@ const GENERATORS = [
         pollingType: 'path'
     },
     {
+        id: 'runway-4-5',
+        name: 'Runway Gen 4.5 I2V',
+        icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
+        badge: 'NEW',
+        description: 'Runway Gen 4.5 - High-quality image-to-video generation with precise motion control.',
+        tips: 'Gunakan prompt deskriptif untuk kontrol gerakan yang lebih presisi.',
+        inputs: ['image', 'prompt'],
+        outputType: 'video',
+        settings: { aspect_ratio: 'runway-4-5', duration: 'runway-4-5', seed: true },
+        endpoint: 'https://api.freepik.com/v1/ai/image-to-video/runway-4-5',
+        statusEndpoint: 'https://api.magnific.com/v1/ai/image-to-video/runway-4-5',
+        pollingType: 'path'
+    },
+    {
         id: 'veo-3-1-i2v',
         name: 'Veo 3.1 Image to Video',
         icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
@@ -1139,7 +1153,7 @@ function renderLandingPage() {
         'Kling 3 Omni Pro', 'Nano Banana Pro', 'Veo 3.1 Google AI', 
         'Imagen 4 Ultra', 'Flux 2 Realistic', 
         'Pixverse V5', 'ElevenLabs Turbo', 'Kling 30s Motion', 
-        'Gemini 2.5 Flash', 'Runway Gen', 'SeeDream 4.5', 
+        'Gemini 2.5 Flash', 'Runway Gen 4.5', 'SeeDream 4.5', 
         'Music AI Generation', 'Voice Over Pro', 'Flux 2 Turbo',
         'Kling 2.6 Pro', 'Imagen 4 Fast', 'Kling 3 Standard'
     ];
@@ -1276,6 +1290,7 @@ function renderLandingPage() {
                             <div class="tool-list-item"><span>Veo 3.1 Image to Video (Google AI)</span></div>
                             <div class="tool-list-item"><span>Veo 3.1 Reference to Video</span></div>
                             <div class="tool-list-item"><span>Pixverse V5 (Advanced Motion)</span></div>
+                            <div class="tool-list-item"><span>Runway Gen 4.5 I2V (Precise Motion)</span></div>
                         </div>
                     </div>
 
@@ -2371,6 +2386,12 @@ function renderSettings(gen) {
                             <option value="widescreen_16_9" ${state.settings.aspect_ratio === 'widescreen_16_9' ? 'selected' : ''}>16:9 (Widescreen)</option>
                             <option value="social_story_9_16" ${state.settings.aspect_ratio === 'social_story_9_16' ? 'selected' : ''}>9:16 (Portrait)</option>
                             <option value="square_1_1" ${state.settings.aspect_ratio === 'square_1_1' ? 'selected' : ''}>1:1 (Square)</option>
+                        ` : gen.settings.aspect_ratio === 'runway-4-5' ? `
+                            <option value="1280:720" ${state.settings.aspect_ratio === '1280:720' ? 'selected' : ''}>Landscape (16:9)</option>
+                            <option value="720:1280" ${state.settings.aspect_ratio === '720:1280' ? 'selected' : ''}>Portrait (9:16)</option>
+                            <option value="1104:832" ${state.settings.aspect_ratio === '1104:832' ? 'selected' : ''}>Landscape (4:3)</option>
+                            <option value="960:960" ${state.settings.aspect_ratio === '960:960' ? 'selected' : ''}>Square (1:1)</option>
+                            <option value="832:1104" ${state.settings.aspect_ratio === '832:1104' ? 'selected' : ''}>Portrait (3:4)</option>
                         ` : gen.settings.aspect_ratio === 'imagen4' ? `
                             <option value="square_1_1" ${state.settings.aspect_ratio === 'square_1_1' ? 'selected' : ''}>Square (1:1)</option>
                             <option value="social_story_9_16" ${state.settings.aspect_ratio === 'social_story_9_16' ? 'selected' : ''}>Social Story (9:16)</option>
@@ -2430,6 +2451,8 @@ function renderSettings(gen) {
                             <option value="6" ${state.settings.duration == 6 ? 'selected' : ''}>6 Seconds</option>
                             <option value="8" ${state.settings.duration == 8 ? 'selected' : ''}>8 Seconds</option>
                         ` : gen.settings.duration === 'kling26' ? [5,10].map(d => `
+                            <option value="${d}" ${state.settings.duration == d ? 'selected' : ''}>${d}s</option>
+                        `).join('') : gen.settings.duration === 'runway-4-5' ? [5,8,10].map(d => `
                             <option value="${d}" ${state.settings.duration == d ? 'selected' : ''}>${d}s</option>
                         `).join('') : gen.settings.duration === 'happy-horse' ? [5,10,15].map(d => `
                             <option value="${d}" ${state.settings.duration == d ? 'selected' : ''}>${d}s</option>
@@ -3548,6 +3571,17 @@ async function generate() {
                 duration: parseInt(state.settings.duration) || 5,
                 seed: state.settings.seed !== '' && state.settings.seed !== undefined ? parseInt(state.settings.seed) : Math.floor(Math.random() * 4294967295)
             };
+        } else if (activeGen.id === 'runway-4-5') {
+            if (!imageInput || !finalPrompt) {
+                throw new Error("Wajib upload Gambar dan masukkan Prompt untuk Runway Gen 4.5.");
+            }
+            body = {
+                image: ensureHttps(imageInput),
+                prompt: finalPrompt,
+                ratio: state.settings.aspect_ratio || "1280:720",
+                duration: parseInt(state.settings.duration) || 5,
+                seed: state.settings.seed !== '' && state.settings.seed !== undefined ? parseInt(state.settings.seed) : Math.floor(Math.random() * 4294967295)
+            };
         } else if (activeGen.id === 'elevenlabs-turbo-v2-5') {
             if (!finalPrompt) {
                 throw new Error("Wajib masukkan teks untuk Voice Over.");
@@ -4207,6 +4241,10 @@ function setActiveGenerator(id) {
         state.settings.generate_audio = true;
         state.settings.cfg_scale = 0.5;
         state.settings.negative_prompt = '';
+    } else if (id === 'runway-4-5') {
+        state.settings.aspect_ratio = '1280:720';
+        state.settings.duration = '8';
+        state.settings.seed = '';
     } else if (id === 'nano-banana-pro' || id === 'nano-banana-pro-flash') {
         state.settings.aspect_ratio = '1:1';
         state.settings.resolution = '2K';
