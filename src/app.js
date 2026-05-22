@@ -226,20 +226,6 @@ const GENERATORS = [
         pollingType: 'path'
     },
     {
-        id: 'seedance-1-5-pro',
-        name: 'Seedance 1.5 Pro',
-        icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
-        badge: 'PRO',
-        description: 'Seedance 1.5 Pro - High-quality AI video generation with audio and camera control.',
-        tips: 'Gunakan pengaturan kamera untuk hasil yang lebih dinamis.',
-        inputs: ['image', 'prompt'],
-        outputType: 'video',
-        settings: { aspect_ratio: 'seedance', duration: 'seedance', generate_audio: true, camera_fixed: true, seed: true },
-        endpoint: 'https://api.freepik.com/v1/ai/video/seedance-1-5-pro-720p',
-        statusEndpoint: 'https://api.freepik.com/v1/ai/video/seedance-1-5-pro-720p',
-        pollingType: 'path'
-    },
-    {
         id: 'happy-horse-1',
         name: 'Happy Horse 1.0',
         icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
@@ -1151,7 +1137,7 @@ function renderLandingPage() {
 
     const toolNames = [
         'Kling 3 Omni Pro', 'Nano Banana Pro', 'Veo 3.1 Google AI', 
-        'Imagen 4 Ultra', 'Flux 2 Realistic', 'Seedance Pro', 
+        'Imagen 4 Ultra', 'Flux 2 Realistic', 
         'Pixverse V5', 'ElevenLabs Turbo', 'Kling 30s Motion', 
         'Gemini 2.5 Flash', 'Runway Gen', 'SeeDream 4.5', 
         'Music AI Generation', 'Voice Over Pro', 'Flux 2 Turbo',
@@ -1290,7 +1276,6 @@ function renderLandingPage() {
                             <div class="tool-list-item"><span>Veo 3.1 Image to Video (Google AI)</span></div>
                             <div class="tool-list-item"><span>Veo 3.1 Reference to Video</span></div>
                             <div class="tool-list-item"><span>Pixverse V5 (Advanced Motion)</span></div>
-                            <div class="tool-list-item"><span>Seedance 1.5 Pro (Camera Control)</span></div>
                         </div>
                     </div>
 
@@ -2032,7 +2017,7 @@ function renderUploadSection(gen) {
                     ` : `
                         <div class="upload-placeholder">
                             <i data-lucide="image"></i>
-                            <span>${gen.id === 'kling-v3-std' || gen.id === 'kling-v3-omni-pro' ? 'Start Image<br>(Awal)' : (gen.id === 'kling-v3-pro' ? 'Upload Gambar' : (gen.id === 'seedream-4-5-edit' || isVeoRef || isNanoPro || isGeminiFlash ? 'Reference Image 1' : (gen.id === 'seedance-1-5-pro' ? 'Upload Image<br>(Optional)' : 'Gambar<br>Karakter')))}</span>
+                            <span>${gen.id === 'kling-v3-std' || gen.id === 'kling-v3-omni-pro' ? 'Start Image<br>(Awal)' : (gen.id === 'kling-v3-pro' ? 'Upload Gambar' : (gen.id === 'seedream-4-5-edit' || isVeoRef || isNanoPro || isGeminiFlash ? 'Reference Image 1' : 'Gambar<br>Karakter'))}</span>
                         </div>
                     `}
                 </div>
@@ -2134,8 +2119,6 @@ function renderPromptSection() {
     let placeholder = "Masukkan prompt deskripsi di sini...";
     if (activeGen.id === 'flux-2-pro') {
         placeholder = "Describe your image (e.g. cinematic portrait, ultra realistic, 4k, soft lighting)";
-    } else if (activeGen.id === 'seedance-1-5-pro') {
-        placeholder = "Describe your video (e.g. cinematic scene, person talking, realistic motion)";
     } else if (activeGen.id === 'elevenlabs-turbo-v2-5') {
         placeholder = "Enter text for voice over (supports multiple languages)";
     } else if (activeGen.id === 'music-generation') {
@@ -3237,7 +3220,7 @@ async function generate() {
         // through Vercel proxy consumes expensive bandwidth. Public URLs are much more efficient.
 
         // Kling and Veo models strictly require public HTTPS URLs
-        const needsPublicUrl = activeGen.id.toLowerCase().includes('kling') || activeGen.id.toLowerCase().includes('happy-horse') || activeGen.id === 'seedance-1-5-pro' || activeGen.id === 'pixverse-v5' || activeGen.id === 'veo-3-1-i2v' || activeGen.id === 'veo-3-1-reference' || activeGen.id === 'kling-v2-6-pro-i2v';
+        const needsPublicUrl = activeGen.id.toLowerCase().includes('kling') || activeGen.id.toLowerCase().includes('happy-horse') || activeGen.id === 'pixverse-v5' || activeGen.id === 'veo-3-1-i2v' || activeGen.id === 'veo-3-1-reference' || activeGen.id === 'kling-v2-6-pro-i2v';
         if (needsPublicUrl) {
             console.log(`[DEBUG] ${activeGen.name} Input URLs:`, {
                 image: imageInput,
@@ -3270,10 +3253,6 @@ async function generate() {
             }
             if (!state.currentPrompt) {
                 throw new Error("Wajib masukkan Prompt untuk SeeDream 4.5 Edit.");
-            }
-        } else if (activeGen.id === 'seedance-1-5-pro') {
-            if (!state.currentPrompt && !imageInput) {
-                throw new Error("Wajib masukkan Prompt atau Image untuk Seedance 1.5 Pro.");
             }
         } else if (activeGen.id === 'runway') {
             if (!state.currentPrompt) {
@@ -3557,22 +3536,6 @@ async function generate() {
             
             if (refs.length > 0) {
                 body.reference_images = refs;
-            }
-        } else if (activeGen.id === 'seedance-1-5-pro') {
-            body = {
-                prompt: finalPrompt,
-                duration: parseInt(state.settings.duration) || 5,
-                generate_audio: state.settings.generate_audio !== undefined ? state.settings.generate_audio : true,
-                camera_fixed: state.settings.camera_fixed !== undefined ? state.settings.camera_fixed : false,
-                aspect_ratio: state.settings.aspect_ratio || "widescreen_16_9",
-                seed: state.settings.seed !== '' && state.settings.seed !== undefined ? parseInt(state.settings.seed) : -1
-            };
-            
-            if (imageInput) {
-                // Seedance 1.5 Pro on Freepik usually expects 'image_url', but 'image' is sometimes used
-                const imgUrl = ensureHttps(imageInput);
-                body.image_url = imgUrl;
-                body.image = imgUrl; 
             }
         } else if (activeGen.id === 'happy-horse-1') {
             if (!imageInput) {
@@ -4216,12 +4179,6 @@ function setActiveGenerator(id) {
         state.settings.duration = '5';
         state.settings.cfg_scale = 0.5;
         state.settings.negative_prompt = 'blur, distort, and low quality';
-    } else if (id === 'seedance-1-5-pro') {
-        state.settings.aspect_ratio = 'widescreen_16_9';
-        state.settings.duration = '5';
-        state.settings.generate_audio = true;
-        state.settings.camera_fixed = false;
-        state.settings.seed = '';
     } else if (id === 'seedream-4-5-edit') {
         state.settings.aspect_ratio = 'square_1_1';
         state.settings.safety_checker = true;
