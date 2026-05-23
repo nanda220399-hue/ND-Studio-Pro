@@ -1,6 +1,6 @@
 import { auth, db, googleProvider } from './firebase.js';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot, collection, updateDoc, deleteDoc, query, where, serverTimestamp, getDocFromServer, increment } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, collection, updateDoc, deleteDoc, query, where, serverTimestamp, getDocFromServer, increment, orderBy, limit, getDocs } from 'firebase/firestore';
 
 /**
  * ND Studio Pro - Core Logic (Fixed Functionality)
@@ -57,6 +57,7 @@ let state = {
     adminUsersTab: 'pending', // 'pending' or 'approved'
     activeToolsTab: 'motion-control', // 'motion-control', 'video', 'image', 'voice', 'music'
     globalStats: { totalGenerations: 0 },
+    dailyStats: [], // For admin usage stats
     isAdmin: false,
     showAdminDashboard: false,
     showApiKey: false,
@@ -1651,6 +1652,33 @@ function renderAdminDashboard() {
     `;
 }
 
+async function fetchDailyStats() {
+    if (!state.isAdmin) return;
+    try {
+        const statsQuery = query(
+            collection(db, 'stats'),
+            orderBy('date', 'desc'),
+            limit(7)
+        );
+        const snapshot = await getDocs(statsQuery);
+        state.dailyStats = snapshot.docs
+            .map(doc => doc.data())
+            .filter(d => d.date);
+        renderContent();
+    } catch (e) {
+        console.error("Gagal mengambil statistik harian:", e);
+    }
+}
+
+window.toggleAdminDashboard = function() {
+    state.showAdminDashboard = !state.showAdminDashboard;
+    if (state.showAdminDashboard) {
+        state.adminDashboardView = 'menu';
+        fetchDailyStats();
+    }
+    renderContent();
+};
+
 function renderAdminMenu() {
     const totalGenerations = state.globalStats?.totalGenerations || 0;
     const totalUsers = state.allUsers.length;
@@ -1670,7 +1698,6 @@ function renderAdminMenu() {
                 </button>
             </div>
 
-            <!-- Stats Overview Cards -->
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px;">
                 <div style="background: #151515; padding: 20px; border-radius: 20px; border: 1px solid var(--border-color); text-align: center;">
                     <div style="display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 11px; color: var(--accent-gold); font-weight: 700; margin-bottom: 4px; text-transform: uppercase;">
@@ -1685,6 +1712,39 @@ function renderAdminMenu() {
                 <div style="background: #151515; padding: 20px; border-radius: 20px; border: 1px solid var(--border-color); text-align: center;">
                     <div style="font-size: 11px; color: #fab005; font-weight: 700; margin-bottom: 4px; text-transform: uppercase;">PENDING</div>
                     <div style="font-size: 24px; font-weight: 800; color: #fff;">${pendingUsers}</div>
+                </div>
+            </div>
+
+            <!-- Daily Statistics Chart-like view -->
+            <div style="background: #151515; padding: 24px; border-radius: 24px; border: 1px solid var(--border-color); margin-bottom: 32px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="font-size: 16px; color: var(--text-main); font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="bar-chart-3" style="width: 18px; color: var(--accent-gold);"></i>
+                        Statistik 7 Hari Terakhir
+                    </h3>
+                    <span style="font-size: 11px; color: var(--text-muted); background: #1a1a1a; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border-color);">Hemat Data Mode</span>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    ${state.dailyStats.length === 0 ? `
+                        <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">
+                            Belum ada data statistik harian. Data akan muncul setelah ada karya baru dibuat.
+                        </div>
+                    ` : state.dailyStats.map(day => {
+                        const maxCount = Math.max(...state.dailyStats.map(d => d.count), 1);
+                        const width = (day.count / maxCount) * 100;
+                        const date = new Date(day.date).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
+                        
+                        return `
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 85px; font-size: 12px; color: var(--text-muted);">${date}</div>
+                                <div style="flex-grow: 1; height: 10px; background: #111; border-radius: 5px; overflow: hidden; border: 1px solid #1a1a1a;">
+                                    <div style="height: 100%; width: ${width}%; background: linear-gradient(90deg, #d4af37, #f1c40f); border-radius: 5px;"></div>
+                                </div>
+                                <div style="width: 40px; text-align: right; font-size: 12px; font-weight: 700; color: #fff;">${day.count}</div>
+                            </div>
+                        `;
+                    }).join('')}
                 </div>
             </div>
 
@@ -1793,7 +1853,7 @@ function renderHeader() {
             </div>
             <div class="header-actions">
                 ${state.isAdmin ? `
-                    <button class="btn-icon-action ${state.showAdminDashboard ? 'active' : ''}" onclick="state.showAdminDashboard = !state.showAdminDashboard; state.adminDashboardView = 'menu'; renderContent();" title="Admin Dashboard" style="background: #fff9db; color: #fab005; border-color: #ffec99; position: relative;">
+                    <button class="btn-icon-action ${state.showAdminDashboard ? 'active' : ''}" onclick="toggleAdminDashboard();" title="Admin Dashboard" style="background: #fff9db; color: #fab005; border-color: #ffec99; position: relative;">
                         <i data-lucide="shield-check"></i>
                         ${pendingUsersCount > 0 ? `
                             <span class="notification-badge">${pendingUsersCount}</span>
@@ -4078,13 +4138,21 @@ async function pollTaskStatus(taskId, fallbackIndex = 0) {
                 return;
             }
 
-            // Increment global generation counter
+            // Increment global and daily generation counter
         try {
-            await setDoc(doc(db, 'stats', 'global'), { 
-                totalGenerations: increment(1) 
-            }, { merge: true });
+            const today = new Date().toISOString().split('T')[0];
+            const dailyStatsRef = doc(db, 'stats', `daily_${today}`);
+            
+            await Promise.all([
+                setDoc(doc(db, 'stats', 'global'), { totalGenerations: increment(1) }, { merge: true }),
+                setDoc(dailyStatsRef, { 
+                    count: increment(1),
+                    date: today,
+                    lastUpdated: serverTimestamp() 
+                }, { merge: true })
+            ]);
         } catch (e) {
-            console.warn("Failed to increment global counter on success:", e);
+            console.warn("Failed to increment stats on success:", e);
         }
 
         const result = {

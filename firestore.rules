@@ -92,10 +92,9 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    match /stats/global {
-      allow read: if true;
-      allow create, update: if isSignedIn() && 
-                             request.resource.data.totalGenerations is number;
+    match /stats/{statId} {
+      allow read: if statId == 'global' || isAdmin();
+      allow create, update: if isSignedIn();
     }
   }
 }
