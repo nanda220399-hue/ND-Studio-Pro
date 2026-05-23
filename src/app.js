@@ -1672,10 +1672,9 @@ function renderAdminMenu() {
 
             <!-- Stats Overview Cards -->
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px;">
-                <div onclick="window.handleEditTotalKarya();" style="background: #151515; padding: 20px; border-radius: 20px; border: 1px solid var(--border-color); text-align: center; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='#1a1a1a'; this.style.borderColor='var(--accent-gold)';" onmouseout="this.style.background='#151515'; this.style.borderColor='var(--border-color)'">
+                <div style="background: #151515; padding: 20px; border-radius: 20px; border: 1px solid var(--border-color); text-align: center;">
                     <div style="display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 11px; color: var(--accent-gold); font-weight: 700; margin-bottom: 4px; text-transform: uppercase;">
                         TOTAL KARYA
-                        <i data-lucide="edit-3" style="width: 12px; height: 12px; color: var(--text-muted);"></i>
                     </div>
                     <div style="font-size: 24px; font-weight: 800; color: #fff;">${totalGenerations.toLocaleString()}</div>
                 </div>
@@ -1697,21 +1696,6 @@ function renderAdminMenu() {
                     <div>
                         <h3 style="font-size: 18px; color: var(--text-main); margin-bottom: 8px;">Kelola Data User</h3>
                         <p style="color: var(--text-muted); font-size: 13px;">Lihat daftar user, setujui akses, atau hapus user.</p>
-                    </div>
-                </div>
-
-                <div class="setup-card" style="background: #151515; padding: 32px; border-radius: 24px; border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px;">
-                    <div style="width: 60px; height: 60px; background: rgba(212, 175, 55, 0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--accent-gold);">
-                        <i data-lucide="line-chart" style="width: 32px; height: 32px;"></i>
-                    </div>
-                    <div style="width: 100%;">
-                        <h3 style="font-size: 18px; color: var(--text-main); margin-bottom: 8px;">Statistik Global</h3>
-                        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">Ubah total karya secara manual.</p>
-                        
-                        <div style="display: flex; gap: 8px; max-width: 240px; margin: 0 auto;">
-                            <input type="number" id="input-total-karya" value="${totalGenerations}" style="flex: 1; background: #111; border: 1px solid var(--border-color); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 14px; outline: none; width: 100%;">
-                            <button onclick="const val = document.getElementById('input-total-karya').value; window.setGlobalStats(val);" style="background: var(--accent-gold); color: #000; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px;">Save</button>
-                        </div>
                     </div>
                 </div>
 
@@ -1788,7 +1772,7 @@ function renderUsageStats() {
                 <i data-lucide="layers"></i>
                 <span>Task <strong class="stat-active-count">${activeCount}/${taskLimit}</strong> - <strong class="stat-queue-count">${queueCount}/${queueLimit}/min</strong></span>
             </div>
-            <div class="stat-item stat-item-global" ${state.isAdmin ? 'onclick="window.handleEditTotalKarya();" style="cursor: pointer;"' : ''}>
+            <div class="stat-item stat-item-global">
                 <i data-lucide="sparkles"></i>
                 <span>Total Karya: <strong class="stat-total-generations">${totalGenerations.toLocaleString()}</strong></span>
             </div>
@@ -4863,12 +4847,7 @@ function updateTasksAndResultsDOM() {
                 activeEl.innerText = `${activeCount}/${taskLimit}`;
                 queueEl.innerText = `${queueCount}/${queueLimit}/min`;
                 
-                // Ensure admin click handler is present if user is admin
-                if (state.isAdmin && (!globalItem.getAttribute('onclick') || !globalItem.getAttribute('onclick').includes('handleEditTotalKarya'))) {
-                    globalItem.setAttribute('onclick', "window.handleEditTotalKarya();");
-                    globalItem.style.cursor = 'pointer';
-                }
-                
+
                 lastUsageData = currentUsageData;
             } else {
                 // Full update if structure missing
@@ -5033,39 +5012,7 @@ window.addEventListener('DOMContentLoaded', () => {
     window.updateStepsValue = updateStepsValue;
     window.updateStrengthValue = updateStrengthValue;
     window.updateGuidanceValue = updateGuidanceValue;
-    
-    // Admin Helper to edit total generations
-    window.handleEditTotalKarya = function() {
-        if (!state.isAdmin) return;
-        const current = state.globalStats?.totalGenerations || 0;
-        const val = prompt('Masukkan total karya (Manual Edit):', current);
-        if (val !== null) {
-            window.setGlobalStats(val);
-        }
-    };
 
-    window.setGlobalStats = async function(value) {
-        if (!state.isAdmin) return;
-        // Clean input from commas and spaces
-        const cleanValue = value.toString().replace(/[,.\s]/g, '');
-        const newVal = parseInt(cleanValue);
-        
-        if (isNaN(newVal)) {
-            showToast("⚠️ Masukkan angka yang valid", "warning");
-            return;
-        }
-        try {
-            // Optimistic update for immediate feedback
-            if (state.globalStats) state.globalStats.totalGenerations = newVal;
-            renderContent();
-            
-            await setDoc(doc(db, 'stats', 'global'), { totalGenerations: newVal }, { merge: true });
-            showToast("✅ Total karya berhasil diperbarui!", "success");
-        } catch (e) {
-            console.error("Gagal update stats:", e);
-            showToast("❌ Gagal update: " + e.message, "error");
-        }
-    };
     window.state = state;
     window.syncHistory = syncHistory;
     window.findUrlInObject = findUrlInObject;
