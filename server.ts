@@ -14,10 +14,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET || 'x9wjOixxcA2QxxDqKZK0ii_M2tk' 
 });
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// FIX: Use /tmp for Vercel compatibility
 const uploadsDir = path.join(os.tmpdir(), 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   try {
@@ -45,7 +41,12 @@ const upload = multer({
 
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT || 3000;
+  const PORT = 3000;
+
+  // Add Health Check
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", time: new Date().toISOString(), environment: process.env.NODE_ENV || 'development' });
+  });
 
   // Log all requests
   app.use((req, res, next) => {
