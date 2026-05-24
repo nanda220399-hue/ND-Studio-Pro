@@ -3411,7 +3411,7 @@ async function generate() {
                 character_orientation: state.settings.orientation,
                 cfg_scale: state.settings.cfg_scale
             };
-        } else if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro' || activeGen.id === 'kling-v3-omni-pro' || activeGen.id === 'kling-v2-6-pro-i2v') {
+        } else if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro' || activeGen.id === 'kling-v3-omni-pro' || activeGen.id === 'kling-v2-6-pro-i2v' || activeGen.id === 'kling-4k-i2v') {
             let ar = state.settings.aspect_ratio;
             if (ar === 'square_1_1') ar = '1:1';
             else if (ar === 'widescreen_16_9') ar = '16:9';
@@ -3454,7 +3454,7 @@ async function generate() {
                     prompt: finalPrompt,
                     negative_prompt: state.settings.negative_prompt,
                     cfg_scale: state.settings.cfg_scale !== undefined ? state.settings.cfg_scale : 0.5,
-                    duration: parseInt(state.settings.duration) || 5
+                    duration: (state.settings.duration || "5").toString()
                 };
             } else {
                 body = {
@@ -4342,6 +4342,11 @@ function setActiveGenerator(id) {
         state.settings.generate_audio = true;
         state.settings.cfg_scale = 0.5;
         state.settings.negative_prompt = '';
+    } else if (id === 'kling-4k-i2v') {
+        state.settings.aspect_ratio = '16:9';
+        state.settings.duration = '5';
+        state.settings.cfg_scale = 0.5;
+        state.settings.negative_prompt = 'blur, distort, and low quality';
     } else if (id === 'runway-4-5') {
         state.settings.aspect_ratio = '1280:720';
         state.settings.duration = '8';
