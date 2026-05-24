@@ -3354,7 +3354,7 @@ async function generate() {
         } else if (activeGen.id === 'elevenlabs-turbo-v2-5' || activeGen.id === 'music-generation') {
             shouldTranslate = false;
         } else if (activeGen.id.toLowerCase().includes('kling') || activeGen.id.toLowerCase().includes('veo')) {
-            // Kling and Veo models often work better with original intent or handle multi-lang well enough
+            // Kling and Veo support dialogue/audio, preservation of original language prompt is required
             shouldTranslate = false;
         } else if (activeGen.outputType === 'video' && !activeGen.id.includes('motion-control')) {
             shouldTranslate = false;
