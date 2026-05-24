@@ -3348,15 +3348,21 @@ async function generate() {
 
         let finalPrompt = state.currentPrompt || "";
         
+        // --- TRANSLATION LOGIC ---
         let shouldTranslate = true;
+        const isKling = activeGen.id.toLowerCase().includes('kling');
+        const isVeo = activeGen.id.toLowerCase().includes('veo');
+
         if (!finalPrompt) {
             shouldTranslate = false;
         } else if (activeGen.id === 'elevenlabs-turbo-v2-5' || activeGen.id === 'music-generation') {
             shouldTranslate = false;
-        } else if (activeGen.id.toLowerCase().includes('kling') || activeGen.id.toLowerCase().includes('veo')) {
-            // Kling and Veo support dialogue/audio, preservation of original language prompt is required
+        } else if (isKling || isVeo) {
+            // CRITICAL: Disable translation for Kling and Veo to preserve dialogue in original language
             shouldTranslate = false;
+            console.log(`[AUTH] Skipping translation for ${activeGen.name} to preserve original prompt: "${finalPrompt}"`);
         } else if (activeGen.outputType === 'video' && !activeGen.id.includes('motion-control')) {
+            // General video models also skip translation unless motion-control
             shouldTranslate = false;
         }
 
@@ -3409,7 +3415,8 @@ async function generate() {
                     duration: (durationVal === "5" || durationVal === "10") ? durationVal : "5",
                     negative_prompt: state.settings.negative_prompt,
                     cfg_scale: state.settings.cfg_scale !== undefined ? state.settings.cfg_scale : 0.5,
-                    generate_audio: state.settings.generate_audio !== undefined ? state.settings.generate_audio : true
+                    generate_audio: state.settings.generate_audio !== undefined ? state.settings.generate_audio : true,
+                    prompt_enhancement: false // Force original language
                 };
             } else if (activeGen.id === 'kling-v3-omni-pro') {
                 body = {
@@ -3418,7 +3425,8 @@ async function generate() {
                     end_image_url: ensureHttps(videoInput) || undefined,
                     aspect_ratio: ar,
                     duration: state.settings.duration,
-                    generate_audio: state.settings.generate_audio !== undefined ? state.settings.generate_audio : true
+                    generate_audio: state.settings.generate_audio !== undefined ? state.settings.generate_audio : true,
+                    prompt_enhancement: false // Force original language
                 };
                 // For image-to-video, if start_image_url is provided, image_url is also required by the API
                 if (body.start_image_url) {
@@ -3433,7 +3441,8 @@ async function generate() {
                     duration: state.settings.duration,
                     negative_prompt: state.settings.negative_prompt,
                     cfg_scale: state.settings.cfg_scale,
-                    generate_audio: true
+                    generate_audio: true,
+                    prompt_enhancement: false // Force original language
                 };
             }
         } else if (activeGen.id === 'seedream-4-5-edit') {
