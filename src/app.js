@@ -418,6 +418,20 @@ const GENERATORS = [
         pollingType: 'path'
     },
     {
+        id: 'kling-4k-i2v',
+        name: 'Kling 4K I2V',
+        icon: '<div class="tool-icon-container tool-icon-video"><i data-lucide="video" class="model-icon-lucide"></i></div>',
+        badge: '4K I2V',
+        description: 'Kling 4K Image-to-Video: Generate AI video in 4K resolution from an image with precise motion control.',
+        tips: 'Mendukung resolution 4K, End frame control (Image Tail), dan Motion brush.',
+        inputs: ['image', 'video', 'prompt'], // 'video' slot used for image_tail
+        outputType: 'video',
+        settings: { duration: true, cfg: true, negative_prompt: true },
+        endpoint: 'https://api.freepik.com/v1/ai/video/kling-4k-i2v',
+        statusEndpoint: 'https://api.freepik.com/v1/ai/video/kling-4k-i2v',
+        pollingType: 'path'
+    },
+    {
         id: 'seedream-4-5-edit',
         name: 'SeeDream 4.5 Edit',
         icon: '<div class="tool-icon-container tool-icon-image"><i data-lucide="image" class="model-icon-lucide"></i></div>',
@@ -2053,11 +2067,12 @@ function renderUploadSection(gen) {
     const isKling3Std = gen.id === 'kling-v3-std';
     const isKling3Pro = gen.id === 'kling-v3-pro';
     const isKling3OmniPro = gen.id === 'kling-v3-omni-pro';
+    const isKling4k = gen.id === 'kling-4k-i2v';
     const isSeeDream45 = gen.id === 'seedream-4-5-edit';
     const isVeoRef = gen.id === 'veo-3-1-reference';
     const isNanoPro = gen.id.includes('nano-banana-pro');
     const isGeminiFlash = gen.id === 'gemini-2-5-flash-image';
-    const hasTwoInputs = gen.inputs.includes('video') || (isKling3Std && gen.inputs.includes('image')) || (isSeeDream45 && gen.inputs.includes('video')) || (isKling3OmniPro && gen.inputs.includes('video')) || (isVeoRef && gen.inputs.includes('video')) || (isNanoPro && gen.inputs.includes('video')) || (isGeminiFlash && gen.inputs.includes('video'));
+    const hasTwoInputs = gen.inputs.includes('video') || (isKling3Std && gen.inputs.includes('image')) || (isSeeDream45 && gen.inputs.includes('video')) || (isKling3OmniPro && gen.inputs.includes('video')) || (isKling4k && gen.inputs.includes('video')) || (isVeoRef && gen.inputs.includes('video')) || (isNanoPro && gen.inputs.includes('video')) || (isGeminiFlash && gen.inputs.includes('video'));
     const hasThreeInputs = gen.inputs.includes('image3');
 
     const uploadState = getUploadState();
@@ -2091,7 +2106,7 @@ function renderUploadSection(gen) {
                     ` : `
                         <div class="upload-placeholder">
                             <i data-lucide="image"></i>
-                            <span>${gen.id === 'kling-v3-std' || gen.id === 'kling-v3-omni-pro' ? 'Start Image<br>(Awal)' : (gen.id === 'kling-v3-pro' ? 'Upload Gambar' : (gen.id === 'seedream-4-5-edit' || isVeoRef || isNanoPro || isGeminiFlash ? 'Reference Image 1' : 'Gambar<br>Karakter'))}</span>
+                            <span>${gen.id === 'kling-v3-std' || gen.id === 'kling-v3-omni-pro' || gen.id === 'kling-4k-i2v' ? 'Start Image<br>(Awal)' : (gen.id === 'kling-v3-pro' ? 'Upload Gambar' : (gen.id === 'seedream-4-5-edit' || isVeoRef || isNanoPro || isGeminiFlash ? 'Reference Image 1' : 'Gambar<br>Karakter'))}</span>
                         </div>
                     `}
                 </div>
@@ -2112,7 +2127,7 @@ function renderUploadSection(gen) {
                             </button>
                         </div>
                     ` : uploadState.files.video ? `
-                        ${(isKling3Std || isKling3OmniPro || isSeeDream45 || isVeoRef || isNanoPro || isGeminiFlash) ? `<img src="${uploadState.files.video}" class="upload-preview">` : `<video src="${uploadState.files.video}" class="upload-preview" muted autoplay loop playsinline></video>`}
+                        ${(isKling3Std || isKling3OmniPro || isKling4k || isSeeDream45 || isVeoRef || isNanoPro || isGeminiFlash) ? `<img src="${uploadState.files.video}" class="upload-preview">` : `<video src="${uploadState.files.video}" class="upload-preview" muted autoplay loop playsinline></video>`}
                         <button class="btn-remove" onclick="removeFile(event, 'video')"><i data-lucide="x"></i></button>
                     ` : uploadState.urls.video ? `
                         <div class="upload-placeholder">
@@ -2123,8 +2138,8 @@ function renderUploadSection(gen) {
                         </div>
                     ` : `
                         <div class="upload-placeholder">
-                            <i data-lucide="${(isKling3Std || isKling3OmniPro || isSeeDream45 || isVeoRef || isNanoPro || isGeminiFlash) ? 'image' : 'video'}"></i>
-                            <span>${(isKling3Std || isKling3OmniPro) ? 'End Image<br>(Akhir)' : (isSeeDream45 || isVeoRef || isNanoPro || isGeminiFlash ? 'Reference Image 2' : 'Video<br>Referensi')}</span>
+                            <i data-lucide="${(isKling3Std || isKling3OmniPro || isKling4k || isSeeDream45 || isVeoRef || isNanoPro || isGeminiFlash) ? 'image' : 'video'}"></i>
+                            <span>${(isKling3Std || isKling3OmniPro || isKling4k) ? 'End Image<br>(Akhir)' : (isSeeDream45 || isVeoRef || isNanoPro || isGeminiFlash ? 'Reference Image 2' : 'Video<br>Referensi')}</span>
                         </div>
                     `}
                 </div>
@@ -2183,7 +2198,7 @@ function renderUploadSection(gen) {
             ` : ''}
         </div>
         <input type="file" id="file-input-image" hidden accept="image/*" onchange="handleFileChange('image', this)">
-        <input type="file" id="file-input-video" hidden accept="${(isKling3Std || isKling3OmniPro || isSeeDream45 || isVeoRef || isNanoPro || isGeminiFlash) ? 'image/*' : 'video/*'}" onchange="handleFileChange('video', this)">
+        <input type="file" id="file-input-video" hidden accept="${(isKling3Std || isKling3OmniPro || isKling4k || isSeeDream45 || isVeoRef || isNanoPro || isGeminiFlash) ? 'image/*' : 'video/*'}" onchange="handleFileChange('video', this)">
         <input type="file" id="file-input-image3" hidden accept="image/*" onchange="handleFileChange('image3', this)">
     `;
 }
@@ -3067,8 +3082,8 @@ async function syncTasks() {
     let listType = activeGen.pollingType;
     
     // Kling 3 specific list endpoint fallback
-    if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro' || activeGen.id === 'kling-v3-motion-control-std' || activeGen.id === 'kling-v3-motion-control-pro' || activeGen.id === 'kling-v3-omni-pro' || activeGen.id === 'kling-v2-6-pro-i2v') {
-        listEndpoint = (activeGen.id === 'kling-v3-motion-control-std' || activeGen.id === 'kling-v3-motion-control-pro')
+    if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro' || activeGen.id === 'kling-v3-motion-control-std' || activeGen.id === 'kling-v3-motion-control-pro' || activeGen.id === 'kling-v3-omni-pro' || activeGen.id === 'kling-v2-6-pro-i2v' || activeGen.id === 'kling-4k-i2v') {
+        listEndpoint = (activeGen.id === 'kling-v3-motion-control-std' || activeGen.id === 'kling-v3-motion-control-pro' || activeGen.id === 'kling-4k-i2v')
             ? activeGen.endpoint
             : (activeGen.id === 'kling-v3-omni-pro' ? 'https://api.freepik.com/v1/ai/video/kling-v3-omni' : (activeGen.id === 'kling-v2-6-pro-i2v' ? 'https://api.freepik.com/v1/ai/image-to-video/kling-v2-6' : 'https://api.freepik.com/v1/ai/video/kling-v3'));
         listType = 'list';
@@ -3302,7 +3317,7 @@ async function generate() {
         // through Vercel proxy consumes expensive bandwidth. Public URLs are much more efficient.
 
         // Kling and Veo models strictly require public HTTPS URLs
-        const needsPublicUrl = activeGen.id.toLowerCase().includes('kling') || activeGen.id.toLowerCase().includes('happy-horse') || activeGen.id === 'pixverse-v5' || activeGen.id === 'veo-3-1-i2v' || activeGen.id === 'veo-3-1-reference' || activeGen.id === 'kling-v2-6-pro-i2v';
+        const needsPublicUrl = activeGen.id.toLowerCase().includes('kling') || activeGen.id.toLowerCase().includes('happy-horse') || activeGen.id === 'pixverse-v5' || activeGen.id === 'veo-3-1-i2v' || activeGen.id === 'veo-3-1-reference' || activeGen.id === 'kling-v2-6-pro-i2v' || activeGen.id === 'kling-4k-i2v';
         if (needsPublicUrl) {
             console.log(`[DEBUG] ${activeGen.name} Input URLs:`, {
                 image: imageInput,
@@ -3322,9 +3337,9 @@ async function generate() {
             if (!imageInput || !videoInput) {
                 throw new Error("Wajib upload Gambar Karakter & Video Referensi (atau masukkan URL)");
             }
-        } else if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro' || activeGen.id === 'kling-v3-omni-pro' || activeGen.id === 'kling-v2-6-pro-i2v') {
-            if (activeGen.id === 'kling-v2-6-pro-i2v' && !imageInput) {
-                throw new Error("Wajib upload Gambar (atau masukkan URL) untuk Kling 2.6 Pro I2V.");
+        } else if (activeGen.id === 'kling-v3-std' || activeGen.id === 'kling-v3-pro' || activeGen.id === 'kling-v3-omni-pro' || activeGen.id === 'kling-v2-6-pro-i2v' || activeGen.id === 'kling-4k-i2v') {
+            if ((activeGen.id === 'kling-v2-6-pro-i2v' || activeGen.id === 'kling-4k-i2v') && !imageInput) {
+                throw new Error(`Wajib upload Gambar (atau masukkan URL) untuk ${activeGen.name}.`);
             }
             if (!state.currentPrompt && !imageInput) {
                 throw new Error("Wajib masukkan Prompt atau Start Image untuk Kling.");
@@ -3432,6 +3447,15 @@ async function generate() {
                 if (body.start_image_url) {
                     body.image_url = body.start_image_url;
                 }
+            } else if (activeGen.id === 'kling-4k-i2v') {
+                body = {
+                    image: ensureHttps(imageInput),
+                    image_tail: videoInput ? ensureHttps(videoInput) : undefined,
+                    prompt: finalPrompt,
+                    negative_prompt: state.settings.negative_prompt,
+                    cfg_scale: state.settings.cfg_scale !== undefined ? state.settings.cfg_scale : 0.5,
+                    duration: parseInt(state.settings.duration) || 5
+                };
             } else {
                 body = {
                     prompt: finalPrompt,
