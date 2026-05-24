@@ -154,8 +154,7 @@ const GENERATORS = [
         settings: { orientation: true, cfg: true },
         endpoint: 'https://api.freepik.com/v1/ai/video/kling-v2-6-motion-control-std',
         statusEndpoint: 'https://api.freepik.com/v1/ai/image-to-video/kling-v2-6',
-        pollingType: 'path',
-        estTime: 90
+        pollingType: 'path'
     },
     {
         id: 'kling-v2-6-motion-control-pro',
@@ -169,8 +168,7 @@ const GENERATORS = [
         settings: { orientation: true, cfg: true },
         endpoint: 'https://api.freepik.com/v1/ai/video/kling-v2-6-motion-control-pro',
         statusEndpoint: 'https://api.freepik.com/v1/ai/image-to-video/kling-v2-6',
-        pollingType: 'path',
-        estTime: 120
+        pollingType: 'path'
     },
     {
         id: 'kling-v3-motion-control-std',
@@ -184,8 +182,7 @@ const GENERATORS = [
         settings: { orientation: true, cfg: true },
         endpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-std',
         statusEndpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-std',
-        pollingType: 'path',
-        estTime: 90
+        pollingType: 'path'
     },
     {
         id: 'kling-v3-motion-control-pro',
@@ -199,8 +196,7 @@ const GENERATORS = [
         settings: { orientation: true, cfg: true },
         endpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-pro',
         statusEndpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-motion-control-pro',
-        pollingType: 'path',
-        estTime: 150
+        pollingType: 'path'
     },
     {
         id: 'kling-v2-6-pro-i2v',
@@ -214,8 +210,7 @@ const GENERATORS = [
         settings: { aspect_ratio: 'seedance', duration: 'kling26', generate_audio: true, cfg: true, negative_prompt: true },
         endpoint: 'https://api.freepik.com/v1/ai/image-to-video/kling-v2-6-pro',
         statusEndpoint: 'https://api.freepik.com/v1/ai/image-to-video/kling-v2-6',
-        pollingType: 'path',
-        estTime: 120
+        pollingType: 'path'
     },
     {
         id: 'pixverse-v5',
@@ -229,8 +224,7 @@ const GENERATORS = [
         settings: { style: true, duration: 'pixverse', negative_prompt: true, seed: true },
         endpoint: 'https://api.freepik.com/v1/ai/image-to-video/pixverse-v5',
         statusEndpoint: 'https://api.freepik.com/v1/ai/image-to-video/pixverse-v5',
-        pollingType: 'path',
-        estTime: 60
+        pollingType: 'path'
     },
     {
         id: 'happy-horse-1',
@@ -244,8 +238,7 @@ const GENERATORS = [
         settings: { resolution: 'happy-horse', duration: 'happy-horse', seed: true },
         endpoint: 'https://api.freepik.com/v1/ai/image-to-video/happy-horse-1',
         statusEndpoint: 'https://api.freepik.com/v1/ai/image-to-video/happy-horse-1',
-        pollingType: 'path',
-        estTime: 60
+        pollingType: 'path'
     },
     {
         id: 'runway-4-5',
@@ -259,8 +252,7 @@ const GENERATORS = [
         settings: { aspect_ratio: 'runway-4-5', duration: 'runway-4-5', seed: true },
         endpoint: 'https://api.freepik.com/v1/ai/image-to-video/runway-4-5',
         statusEndpoint: 'https://api.magnific.com/v1/ai/image-to-video/runway-4-5',
-        pollingType: 'path',
-        estTime: 60
+        pollingType: 'path'
     },
     {
         id: 'veo-3-1-i2v',
@@ -274,8 +266,7 @@ const GENERATORS = [
         settings: { aspect_ratio: true, duration: 'veo', resolution: 'veo', generate_audio: true, negative_prompt: true, seed: true },
         endpoint: 'https://api.freepik.com/v1/ai/image-to-video/veo-3-1',
         statusEndpoint: 'https://api.freepik.com/v1/ai/image-to-video/veo-3-1',
-        pollingType: 'path',
-        estTime: 180
+        pollingType: 'path'
     },
     {
         id: 'veo-3-1-reference',
@@ -289,8 +280,7 @@ const GENERATORS = [
         settings: { aspect_ratio: true, resolution: 'veo', generate_audio: true, negative_prompt: true, seed: true },
         endpoint: 'https://api.freepik.com/v1/ai/reference-to-video/veo-3-1',
         statusEndpoint: 'https://api.freepik.com/v1/ai/reference-to-video/veo-3-1',
-        pollingType: 'path',
-        estTime: 180
+        pollingType: 'path'
     },
     {
         id: 'nano-banana-pro',
@@ -304,8 +294,7 @@ const GENERATORS = [
         settings: { aspect_ratio: 'nano', resolution: true, seed: true },
         endpoint: 'https://api.freepik.com/v1/ai/text-to-image/nano-banana-pro',
         statusEndpoint: 'https://api.freepik.com/v1/ai/text-to-image/nano-banana-pro',
-        pollingType: 'path',
-        estTime: 30
+        pollingType: 'path'
     },
     {
         id: 'nano-banana-pro-flash',
@@ -318,8 +307,7 @@ const GENERATORS = [
         settings: { aspect_ratio: 'nano', resolution: true, seed: true },
         endpoint: 'https://api.freepik.com/v1/ai/text-to-image/nano-banana-pro-flash',
         statusEndpoint: 'https://api.freepik.com/v1/ai/text-to-image/nano-banana-pro-flash',
-        pollingType: 'path',
-        estTime: 15
+        pollingType: 'path'
     },
     {
         id: 'imagen4-fast',
@@ -333,8 +321,7 @@ const GENERATORS = [
         settings: { aspect_ratio: 'imagen4', enhance_prompt: true, safety_settings: true, person_generation: true, seed: true },
         endpoint: 'https://api.freepik.com/v1/ai/text-to-image/imagen4-fast',
         statusEndpoint: 'https://api.freepik.com/v1/ai/text-to-image/imagen4-fast',
-        pollingType: 'path',
-        estTime: 10
+        pollingType: 'path'
     },
     {
         id: 'imagen4-ultra',
@@ -348,8 +335,7 @@ const GENERATORS = [
         settings: { aspect_ratio: 'imagen4', enhance_prompt: true, safety_settings: true, person_generation: true, seed: true },
         endpoint: 'https://api.freepik.com/v1/ai/text-to-image/imagen4-ultra',
         statusEndpoint: 'https://api.freepik.com/v1/ai/text-to-image/imagen4-ultra',
-        pollingType: 'path',
-        estTime: 30
+        pollingType: 'path'
     },
     {
         id: 'gemini-2-5-flash-image',
@@ -363,8 +349,7 @@ const GENERATORS = [
         settings: { seed: true },
         endpoint: 'https://api.freepik.com/v1/ai/gemini-2-5-flash-image-preview',
         statusEndpoint: 'https://api.freepik.com/v1/ai/gemini-2-5-flash-image-preview',
-        pollingType: 'path',
-        estTime: 15
+        pollingType: 'path'
     },
     {
         id: 'flux-2-pro',
@@ -378,8 +363,7 @@ const GENERATORS = [
         settings: { style_preset: true, aspect_ratio: 'flux', prompt_upsampling: true, seed: true },
         endpoint: 'https://api.freepik.com/v1/ai/text-to-image/flux-2-pro',
         statusEndpoint: 'https://api.freepik.com/v1/ai/text-to-image/flux-2-pro',
-        pollingType: 'path',
-        estTime: 45
+        pollingType: 'path'
     },
     {
         id: 'flux-2-turbo',
@@ -392,8 +376,7 @@ const GENERATORS = [
         settings: { aspect_ratio: 'flux', guidance_scale: true, seed: true, safety_checker: true },
         endpoint: 'https://api.freepik.com/v1/ai/text-to-image/flux-2-turbo',
         statusEndpoint: 'https://api.freepik.com/v1/ai/text-to-image/flux-2-turbo',
-        pollingType: 'path',
-        estTime: 20
+        pollingType: 'path'
     },
     {
         id: 'kling-v3-std',
@@ -406,8 +389,7 @@ const GENERATORS = [
         settings: { aspect_ratio: true, duration: true, cfg: true, negative_prompt: true },
         endpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-std',
         statusEndpoint: 'https://api.freepik.com/v1/ai/video/kling-v3',
-        pollingType: 'path',
-        estTime: 120
+        pollingType: 'path'
     },
     {
         id: 'kling-v3-omni-pro',
@@ -420,8 +402,7 @@ const GENERATORS = [
         settings: { aspect_ratio: true, duration: true, generate_audio: true },
         endpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-omni-pro',
         statusEndpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-omni',
-        pollingType: 'path',
-        estTime: 150
+        pollingType: 'path'
     },
     {
         id: 'kling-v3-pro',
@@ -434,8 +415,7 @@ const GENERATORS = [
         settings: { aspect_ratio: true, duration: true, cfg: true, negative_prompt: true },
         endpoint: 'https://api.freepik.com/v1/ai/video/kling-v3-pro',
         statusEndpoint: 'https://api.freepik.com/v1/ai/video/kling-v3',
-        pollingType: 'path',
-        estTime: 180
+        pollingType: 'path'
     },
     {
         id: 'seedream-4-5-edit',
@@ -448,8 +428,7 @@ const GENERATORS = [
         settings: { aspect_ratio: 'seedream', seed: true, safety_checker: true },
         endpoint: 'https://api.freepik.com/v1/ai/text-to-image/seedream-v4-5-edit',
         statusEndpoint: 'https://api.freepik.com/v1/ai/text-to-image/seedream-v4-5-edit',
-        pollingType: 'path',
-        estTime: 30
+        pollingType: 'path'
     },
     {
         id: 'runway',
@@ -462,8 +441,7 @@ const GENERATORS = [
         settings: { aspect_ratio: 'runway', seed: true },
         endpoint: 'https://api.freepik.com/v1/ai/text-to-image/runway',
         statusEndpoint: 'https://api.freepik.com/v1/ai/text-to-image/runway',
-        pollingType: 'path',
-        estTime: 30
+        pollingType: 'path'
     },
     {
         id: 'elevenlabs-turbo-v2-5',
@@ -946,12 +924,6 @@ function startProgressSimulation() {
     setInterval(() => {
         let changed = false;
         state.activeTasks.forEach(task => {
-            // Decrement remaining time
-            if (task.remainingTime !== undefined && task.remainingTime > 0) {
-                task.remainingTime--;
-                changed = true;
-            }
-
             if (task.progress < 98) {
                 // Determine increment based on model type
                 let inc = Math.random() * 2.5; // Default increment
@@ -2855,7 +2827,7 @@ function renderActiveTasks() {
                             <span>${task.modelName}</span>
                         </div>
                         <div class="task-header-right">
-                            <span class="task-progress-text">${task.remainingTime !== undefined ? `⏳ ${task.remainingTime}s` : `${Math.floor(task.progress)}%`}</span>
+                            <span class="task-progress-text">${Math.floor(task.progress)}%</span>
                             <button class="btn-task-action" onclick="pollTaskStatus('${task.id}')" title="Refresh Status">
                                 <i data-lucide="refresh-cw"></i>
                             </button>
@@ -3853,7 +3825,6 @@ async function generate() {
             generatorId: state.activeGenerator,
             prompt: state.currentPrompt || "",
             progress: 0,
-            remainingTime: activeGen.estTime || 60,
             status: 'Processing',
             pollCount: 0,
             startTime: Date.now()
@@ -4898,7 +4869,7 @@ function updateTasksAndResultsDOM() {
                     const statusText = card.querySelector('.task-status');
                     
                     if (progressBar) progressBar.style.width = `${task.progress}%`;
-                    if (progressText) progressText.innerText = task.remainingTime !== undefined ? `⏳ ${task.remainingTime}s` : `${Math.floor(task.progress)}%`;
+                    if (progressText) progressText.innerText = `${Math.floor(task.progress)}%`;
                     if (statusText) statusText.innerText = `${task.status}...`;
                 }
             });
